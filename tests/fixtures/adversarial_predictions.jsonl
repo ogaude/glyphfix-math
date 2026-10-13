@@ -1,0 +1,42 @@
+{"id": "r000", "paper_id": "fixture-a", "gt_latex": "f'", "pred_latex": "fl", "expect": "wrong", "expect_class": "prime_l"}
+{"id": "r001", "paper_id": "fixture-b", "gt_latex": "f'(x)", "pred_latex": "fl(x)", "expect": "wrong", "expect_class": "prime_l"}
+{"id": "r002", "paper_id": "fixture-c", "gt_latex": "f^{\\prime}", "pred_latex": "f^{l}", "expect": "wrong", "expect_class": "prime_l"}
+{"id": "r003", "paper_id": "fixture-d", "gt_latex": "f'", "pred_latex": "f\\ell", "expect": "wrong", "expect_class": "prime_l"}
+{"id": "r004", "paper_id": "fixture-a", "gt_latex": "f'", "pred_latex": "f", "expect": "wrong", "expect_class": "dropped_prime"}
+{"id": "r005", "paper_id": "fixture-b", "gt_latex": "f''", "pred_latex": "f'", "expect": "wrong", "expect_class": "dropped_prime"}
+{"id": "r006", "paper_id": "fixture-c", "gt_latex": "u^{\\prime}_n", "pred_latex": "u_n", "expect": "wrong", "expect_class": "dropped_prime"}
+{"id": "r007", "paper_id": "fixture-d", "gt_latex": "\\upsilon", "pred_latex": "v", "expect": "wrong", "expect_class": "greek_latin"}
+{"id": "r008", "paper_id": "fixture-a", "gt_latex": "\\nu", "pred_latex": "v", "expect": "wrong", "expect_class": "greek_latin"}
+{"id": "r009", "paper_id": "fixture-b", "gt_latex": "\\alpha", "pred_latex": "a", "expect": "wrong", "expect_class": "greek_latin"}
+{"id": "r010", "paper_id": "fixture-c", "gt_latex": "\\epsilon", "pred_latex": "e", "expect": "wrong", "expect_class": "greek_latin"}
+{"id": "r011", "paper_id": "fixture-d", "gt_latex": "\\mathbf{x}", "pred_latex": "x", "expect": "wrong", "expect_class": "decoration"}
+{"id": "r012", "paper_id": "fixture-a", "gt_latex": "\\boldsymbol{x}", "pred_latex": "x", "expect": "wrong", "expect_class": "decoration"}
+{"id": "r013", "paper_id": "fixture-b", "gt_latex": "\\bm{x}", "pred_latex": "x", "expect": "wrong", "expect_class": "decoration"}
+{"id": "r014", "paper_id": "fixture-c", "gt_latex": "\\bar{x}", "pred_latex": "x", "expect": "wrong", "expect_class": "decoration"}
+{"id": "r015", "paper_id": "fixture-d", "gt_latex": "\\underline{x}", "pred_latex": "x", "expect": "wrong", "expect_class": "decoration"}
+{"id": "r016", "paper_id": "fixture-a", "gt_latex": "\\hat{x}", "pred_latex": "x", "expect": "wrong", "expect_class": "decoration"}
+{"id": "r017", "paper_id": "fixture-b", "gt_latex": "\\mathbf{x}", "pred_latex": "\\mathrm{x}", "expect": "wrong", "expect_class": "decoration"}
+{"id": "r018", "paper_id": "fixture-c", "gt_latex": "\\mathbf{x}", "pred_latex": "\\bm{x}", "expect": "wrong", "expect_class": "decoration"}
+{"id": "r019", "paper_id": "fixture-d", "gt_latex": "\\bar{x}", "pred_latex": "\\overline{x}", "expect": "wrong", "expect_class": "decoration"}
+{"id": "r020", "paper_id": "fixture-a", "gt_latex": "\\mathrm{d}x", "pred_latex": "dx", "expect": "wrong", "expect_class": "decoration"}
+{"id": "r021", "paper_id": "fixture-b", "gt_latex": "I", "pred_latex": "1", "expect": "wrong", "expect_class": "i_1"}
+{"id": "r022", "paper_id": "fixture-c", "gt_latex": "x_I", "pred_latex": "x_1", "expect": "wrong", "expect_class": "i_1"}
+{"id": "r023", "paper_id": "fixture-d", "gt_latex": "A^{-1}", "pred_latex": "A^{-I}", "expect": "wrong", "expect_class": "i_1"}
+{"id": "r024", "paper_id": "fixture-a", "gt_latex": "f'", "pred_latex": "f^{\\prime}", "expect": "right"}
+{"id": "r025", "paper_id": "fixture-b", "gt_latex": "f'", "pred_latex": "f^\\prime", "expect": "right"}
+{"id": "r026", "paper_id": "fixture-c", "gt_latex": "f'", "pred_latex": "f^{'}", "expect": "right"}
+{"id": "r027", "paper_id": "fixture-d", "gt_latex": "f''", "pred_latex": "f^{\\prime\\prime}", "expect": "right"}
+{"id": "r028", "paper_id": "fixture-a", "gt_latex": "u^{\\prime}_n", "pred_latex": "u'_n", "expect": "right"}
+{"id": "r029", "paper_id": "fixture-b", "gt_latex": "\\le", "pred_latex": "\\leq", "expect": "right"}
+{"id": "r030", "paper_id": "fixture-c", "gt_latex": "\\ge", "pred_latex": "\\geq", "expect": "right"}
+{"id": "r031", "paper_id": "fixture-d", "gt_latex": "\\ne", "pred_latex": "\\neq", "expect": "right"}
+{"id": "r032", "paper_id": "fixture-a", "gt_latex": "\\bigl( x \\bigr)", "pred_latex": "( x )", "expect": "right"}
+{"id": "r033", "paper_id": "fixture-b", "gt_latex": "\\Big[ x \\Big]", "pred_latex": "[ x ]", "expect": "right"}
+{"id": "r034", "paper_id": "fixture-c", "gt_latex": "x_{a}", "pred_latex": "x_a", "expect": "right"}
+{"id": "r035", "paper_id": "fixture-d", "gt_latex": "x^{2}", "pred_latex": "x^2", "expect": "right"}
+{"id": "r036", "paper_id": "fixture-a", "gt_latex": "\\boldsymbol{x}", "pred_latex": "\\bm{x}", "expect": "wrong", "expect_class": "decoration", "note": "render-identical"}
+{"id": "r037", "paper_id": "fixture-b", "gt_latex": "x+1", "pred_latex": "\\undefinedcmd{x}", "expect": "wrong", "expect_class": "other"}
+{"id": "r038", "paper_id": "fixture-c", "gt_latex": "\\R^n", "pred_latex": "\\mathbb{R}^n", "expect": "wrong", "expect_class": "decoration", "note": "gt uses an undefined macro"}
+{"id": "r039", "paper_id": "fixture-d", "gt_latex": "x+1", "pred_latex": "", "expect": "wrong", "expect_class": "other", "pred_error": "timeout"}
+{"id": "r040", "paper_id": "fixture-a", "gt_latex": "x+1", "pred_latex": "x+2", "expect": "wrong", "expect_class": "other"}
+{"id": "r041", "paper_id": "fixture-b", "gt_latex": "a=b", "pred_latex": "a=b", "expect": "right"}

@@ -1,0 +1,63 @@
+{"gt": "f'", "pred": "fl"}
+{"gt": "f'(x)", "pred": "fl(x)"}
+{"gt": "f^{\\prime}", "pred": "f^{l}"}
+{"gt": "f'", "pred": "f\\ell"}
+{"gt": "f'", "pred": "f"}
+{"gt": "f''", "pred": "f'"}
+{"gt": "u^{\\prime}_n", "pred": "u_n"}
+{"gt": "\\upsilon", "pred": "v"}
+{"gt": "\\nu", "pred": "v"}
+{"gt": "\\alpha", "pred": "a"}
+{"gt": "\\epsilon", "pred": "e"}
+{"gt": "\\mathbf{x}", "pred": "x"}
+{"gt": "\\boldsymbol{x}", "pred": "x"}
+{"gt": "\\bm{x}", "pred": "x"}
+{"gt": "\\bar{x}", "pred": "x"}
+{"gt": "\\underline{x}", "pred": "x"}
+{"gt": "\\hat{x}", "pred": "x"}
+{"gt": "\\mathbf{x}", "pred": "\\mathrm{x}"}
+{"gt": "\\mathbf{x}", "pred": "\\bm{x}"}
+{"gt": "\\bar{x}", "pred": "\\overline{x}"}
+{"gt": "\\mathrm{d}x", "pred": "dx"}
+{"gt": "I", "pred": "1"}
+{"gt": "x_I", "pred": "x_1"}
+{"gt": "A^{-1}", "pred": "A^{-I}"}
+{"gt": "\\ell", "pred": "l"}
+{"gt": "\\varepsilon", "pred": "\\epsilon"}
+{"gt": "\\phi", "pred": "\\varphi"}
+{"gt": "\\left( x \\right)", "pred": "( x )"}
+{"gt": "\\bigl( x \\bigr)", "pred": "\\left( x \\right)"}
+{"gt": "x_{ab}", "pred": "x_a b"}
+{"gt": "\\frac{a}{b}c", "pred": "\\frac{a}{bc}"}
+{"gt": "e^{x+1}", "pred": "e^x+1"}
+{"gt": "\\sqrt{ab}", "pred": "\\sqrt{a}b"}
+{"gt": "f'", "pred": "f^{\\prime}"}
+{"gt": "f'", "pred": "f^\\prime"}
+{"gt": "f'", "pred": "f^{'}"}
+{"gt": "f''", "pred": "f^{\\prime\\prime}"}
+{"gt": "u^{\\prime}_n", "pred": "u'_n"}
+{"gt": "\\le", "pred": "\\leq"}
+{"gt": "\\ge", "pred": "\\geq"}
+{"gt": "\\ne", "pred": "\\neq"}
+{"gt": "\\bigl( x \\bigr)", "pred": "( x )"}
+{"gt": "\\Big[ x \\Big]", "pred": "[ x ]"}
+{"gt": "x_{a}", "pred": "x_a"}
+{"gt": "x^{2}", "pred": "x^2"}
+{"gt": "\\frac{a}{b}", "pred": "\\frac ab"}
+{"gt": "\\sqrt{2}", "pred": "\\sqrt2"}
+{"gt": "\\hat{x}", "pred": "\\hat x"}
+{"gt": "x^a_b", "pred": "x_b^a"}
+{"gt": "x^{2}_{n}", "pred": "x_n^2"}
+{"gt": "a\\,b", "pred": "a b"}
+{"gt": "a\\;b", "pred": "a b"}
+{"gt": "a\\quad b", "pred": "a b"}
+{"gt": "a~b", "pred": "a b"}
+{"gt": "\\left. x \\right|", "pred": "x \\right|"}
+{"gt": "$$ x+1 $$", "pred": "x+1"}
+{"gt": "\\[x+1\\]", "pred": "x+1"}
+{"gt": "\\begin{equation} x+1 \\label{eq:a} \\end{equation}", "pred": "x+1"}
+{"gt": "x+1 \\tag{3}", "pred": "x+1"}
+{"gt": "x+1 \\nonumber", "pred": "x+1"}
+{"gt": "x+1,", "pred": "x+1"}
+{"gt": "x+1 \\qquad (12a)", "pred": "x+1"}
+{"gt": "a &= b", "pred": "a = b"}
