@@ -3,15 +3,16 @@
 It merges only strings that render to the same glyphs, so that prime/l, dropped
 primes, Greek/Latin, bold/bar/underline and I/1 errors are never hidden.
 
-Rules (NORMALIZE_RULES_VERSION 2), applied in this fixed order:
+Rules (NORMALIZE_RULES_VERSION 3), applied in this fixed order:
 
 1. ``strip_layout`` on the string: outer ``$$..$$``, ``$..$``, ``\\[..\\]``,
-   ``\\(..\\)`` and outer ``\\begin{X}..\\end{X}`` for equation/align-like
-   environments; remove ``\\label{}``, ``\\tag{}``, ``\\tag*{}``, ``\\nonumber``,
-   ``\\notag``; trailing equation number ``(12a)`` after a long gap (``\\quad``,
+   ``\\(..\\)`` and outer ``\\begin{X}..\\end{X}`` (plain or starred) for the
+   environments in latex_tokens.DISPLAY_ENVS; remove ``\\label{}``, ``\\tag{}``,
+   ``\\tag*{}``, ``\\nonumber``, ``\\notag``; trailing equation number ``(12a)`` after a long gap (``\\quad``,
    ``\\qquad``, ``\\hfill``, ``\\;\\;``, two control spaces or ``~~``); trailing
    ``, . ;`` unless the dot closes ``\\left.`` or ``\\right.``.
-2. Tokenize; drop ``&`` (alignment only). ``\\\\`` and inner environments stay.
+2. Tokenize; drop ``&`` only at top level. ``&`` inside an inner ``\\begin..\\end`` is kept
+   (cell structure of matrices, arrays and cases). ``\\\\`` and inner environments stay.
 3. Drop spacing tokens (SPACING_TOKENS) and the invisible ``\\left.`` /
    ``\\right.`` pairs.
 4. Drop ``\\big``-family sizing commands (_SIZING_RE). ``\\left``/``\\right``
@@ -30,15 +31,19 @@ Unbalanced braces never raise; unmatched groups are left as they are.
 Changes in 2: a bare trailing ``\\right`` no longer equals ``\\right.``, and a real
 trailing argument such as ``\\ln (2)`` or ``f (3)`` is no longer stripped as an
 equation number.
+
+Changes in 3: ``&`` inside an inner environment is kept, so ``a & b`` no longer equals ``ab``
+there. The outer environment list is shared with the renderer (latex_tokens.DISPLAY_ENVS),
+which adds alignat, flalign and math.
 """
 
 from __future__ import annotations
 
 import re
 
-from lightonocr_math.latex_tokens import detokenize, tokenize
+from lightonocr_math.latex_tokens import DISPLAY_ENVS, detokenize, tokenize
 
-NORMALIZE_RULES_VERSION = "2"
+NORMALIZE_RULES_VERSION = "3"
 
 SPACING_TOKENS = frozenset(
     {"\\,", "\\;", "\\:", "\\!", "\\ ", "\\quad", "\\qquad", "~", "\\enspace", "\\thinspace", "\\medspace", "\\thickspace"}
@@ -70,11 +75,8 @@ ONE_ARG_COMMANDS = frozenset(
 )  # fmt: skip
 TWO_ARG_COMMANDS = frozenset({"\\frac", "\\dfrac", "\\tfrac", "\\binom", "\\dbinom", "\\tbinom"})
 
-_ENVS = (
-    "equation", "equation*", "displaymath", "align", "align*", "gather", "gather*", "multline", "multline*",
-    "eqnarray", "eqnarray*",
-)  # fmt: skip
-_ENV_RE = re.compile(r"^\\begin\{(" + "|".join(re.escape(e) for e in _ENVS) + r")\}(.*)\\end\{\1\}$", re.DOTALL)
+_ENV_NAMES = "|".join(re.escape(e) for e in DISPLAY_ENVS)
+_ENV_RE = re.compile(r"^\\begin\{(" + _ENV_NAMES + r")(\*?)\}(.*)\\end\{\1\2\}$", re.DOTALL)
 _LABEL_RE = re.compile(r"\\label\s*\{[^{}]*\}")
 _TAG_RE = re.compile(r"\\tag\*?\s*\{[^{}]*\}")
 _NONUM_RE = re.compile(r"\\(?:nonumber|notag)(?![A-Za-z])")
@@ -107,7 +109,7 @@ def _strip_outer(s: str) -> str:
         else:
             m = _ENV_RE.match(s)
             if m:
-                s = m.group(2).strip()
+                s = m.group(3).strip()
                 changed = True
     return s
 
@@ -142,9 +144,15 @@ def _drop_spacing_and_sizing(tokens: list[str]) -> list[str]:
     out: list[str] = []
     i = 0
     n = len(tokens)
+    depth = 0
     while i < n:
         t = tokens[i]
-        if t == "&" or t in SPACING_TOKENS or _SIZING_RE.fullmatch(t):
+        if t in ("\\begin", "\\end") and i + 1 < n and tokens[i + 1] == "{":
+            depth = depth + 1 if t == "\\begin" else max(depth - 1, 0)
+        elif t == "&" and depth == 0:
+            i += 1
+            continue
+        if t in SPACING_TOKENS or _SIZING_RE.fullmatch(t):
             i += 1
             continue
         if t in ("\\left", "\\right") and i + 1 < n and tokens[i + 1] == ".":

@@ -9,6 +9,10 @@ from __future__ import annotations
 
 import re
 
+# Outer display environments stripped by both normalize._ENV_RE and render._ENV_RE; a starred
+# variant is matched by the regex, not listed here.
+DISPLAY_ENVS = ("equation", "align", "alignat", "flalign", "gather", "multline", "eqnarray", "displaymath", "math")
+
 _TOKEN_RE = re.compile(r"\\[A-Za-z]+|\\.|\s+|.", re.DOTALL)
 
 

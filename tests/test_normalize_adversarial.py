@@ -62,6 +62,20 @@ MUST_DIFFER = [
     (r"\left\{ a \right.", r"\left\{ a \right", "other"),
     (r"= \ln (2)", r"= \ln", "other"),
     (r"y = f (3)", r"y = f", "other"),
+    # cell structure of inner environments
+    (r"\begin{pmatrix}a & b\end{pmatrix}", r"\begin{pmatrix}ab\end{pmatrix}", "other"),
+    (r"\begin{pmatrix}a & b & c\end{pmatrix}", r"\begin{pmatrix}a & bc\end{pmatrix}", "other"),
+    (r"\begin{array}{cc} a & b \\ c & d \end{array}", r"\begin{array}{cc} ab \\ cd \end{array}", "other"),
+    (
+        r"\begin{cases} x & y>0 \\ 0 & y\leq 0 \end{cases}",
+        r"\begin{cases} x y>0 \\ 0 y\leq 0 \end{cases}",
+        "other",
+    ),
+    (
+        r"\begin{aligned} a &= b \\ c &= d \end{aligned}",
+        r"\begin{aligned} a = b \\ c = d \end{aligned}",
+        "other",
+    ),
 ]
 
 MUST_EQUAL = [
@@ -99,6 +113,9 @@ MUST_EQUAL = [
     (r"\left\{ a \right. ,", r"\left\{ a \right."),
     (r"x+1 \quad (3)", "x+1"),
     (r"x+1 \hfill (3)", "x+1"),
+    (r"\begin{pmatrix}a&b\\c&d\end{pmatrix}", r"\begin{pmatrix} a & b \\ c & d \end{pmatrix}"),
+    (r"\begin{flalign*} x+1 \end{flalign*}", "x+1"),
+    (r"\begin{math} x+1 \end{math}", "x+1"),
 ]
 
 
@@ -114,8 +131,8 @@ def test_must_equal(a, b):
 
 
 def test_row_counts():
-    assert len(MUST_DIFFER) >= 37
-    assert len(MUST_EQUAL) >= 34
+    assert len(MUST_DIFFER) >= 42
+    assert len(MUST_EQUAL) >= 37
 
 
 def test_alias_table_is_glyph_identical_only():
@@ -128,7 +145,7 @@ def test_alias_table_is_glyph_identical_only():
 
 
 def test_rules_version():
-    assert N.NORMALIZE_RULES_VERSION == "2"
+    assert N.NORMALIZE_RULES_VERSION == "3"
 
 
 def test_old_normalizer_holes_are_closed():
@@ -159,3 +176,25 @@ def test_idempotent():
     for gt, pred, _ in MUST_DIFFER:
         for s in (gt, pred):
             assert normalize_tokens(canonical(s)) == normalize_tokens(s)
+
+
+def test_unmatched_end_does_not_raise_or_go_negative():
+    assert normalize_tokens(r"\end{pmatrix} a & b") == ["\\end", "{", "p", "m", "a", "t", "r", "i", "x", "}", "a", "b"]
+    assert equivalent(r"\end{x} a &= b", r"\end{x} a = b")
+
+
+def test_env_list_is_shared():
+    from lightonocr_math import latex_tokens, render
+
+    assert N.DISPLAY_ENVS is latex_tokens.DISPLAY_ENVS
+    assert render.DISPLAY_ENVS is latex_tokens.DISPLAY_ENVS
+
+
+def test_every_display_env_strips_like_render_wrap():
+    from lightonocr_math import latex_tokens, render
+
+    for name in latex_tokens.DISPLAY_ENVS:
+        for star in ("", "*"):
+            src = rf"\begin{{{name}{star}}} x+1 \end{{{name}{star}}}"
+            assert equivalent(src, "x+1"), src
+            assert render.wrap(src) == render.wrap("x+1"), src

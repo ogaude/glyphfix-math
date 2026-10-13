@@ -31,6 +31,11 @@
 {"gt": "\\frac{a}{b}c", "pred": "\\frac{a}{bc}"}
 {"gt": "e^{x+1}", "pred": "e^x+1"}
 {"gt": "\\sqrt{ab}", "pred": "\\sqrt{a}b"}
+{"gt": "\\begin{pmatrix}a & b\\end{pmatrix}", "pred": "\\begin{pmatrix}ab\\end{pmatrix}"}
+{"gt": "\\begin{pmatrix}a & b & c\\end{pmatrix}", "pred": "\\begin{pmatrix}a & bc\\end{pmatrix}"}
+{"gt": "\\begin{array}{cc} a & b \\\\ c & d \\end{array}", "pred": "\\begin{array}{cc} ab \\\\ cd \\end{array}"}
+{"gt": "\\begin{cases} x & y>0 \\\\ 0 & y\\leq 0 \\end{cases}", "pred": "\\begin{cases} x y>0 \\\\ 0 y\\leq 0 \\end{cases}"}
+{"gt": "\\begin{aligned} a &= b \\\\ c &= d \\end{aligned}", "pred": "\\begin{aligned} a = b \\\\ c = d \\end{aligned}"}
 {"gt": "f'", "pred": "f^{\\prime}"}
 {"gt": "f'", "pred": "f^\\prime"}
 {"gt": "f'", "pred": "f^{'}"}
@@ -65,3 +70,6 @@
 {"gt": "\\left\\{ a \\right.", "pred": "\\left\\{ a \\right"}
 {"gt": "= \\ln (2)", "pred": "= \\ln"}
 {"gt": "y = f (3)", "pred": "y = f"}
+{"gt": "\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}", "pred": "\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}"}
+{"gt": "\\begin{flalign*} x+1 \\end{flalign*}", "pred": "x+1"}
+{"gt": "\\begin{math} x+1 \\end{math}", "pred": "x+1"}

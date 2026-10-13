@@ -35,9 +35,9 @@ from lightonocr_math.guard import GuardError
 from lightonocr_math.normalize import NORMALIZE_RULES_VERSION, canonical, equivalent
 from lightonocr_math.render import RenderInfrastructureError
 
-SCORER_VERSION = "1.1.0"
+SCORER_VERSION = "1.2.0"
 RESULT_SCHEMA_VERSION = "1"
-SCORER_FINGERPRINT = "8e462d68b3ee89eb2a2429ca6b1ddd1a9c04ac3d3e340fb68188b139394274e8"
+SCORER_FINGERPRINT = "6616416ed4841f410166a1daf0e6a0fb403689c98b9fc4884dbf7d7f49c4b7c2"
 # scorer_fingerprint() needs the repository test fixture, so it is a development/test check only; score_file stores the constant
 GOLDEN_PATH = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "scorer_golden.jsonl"
 

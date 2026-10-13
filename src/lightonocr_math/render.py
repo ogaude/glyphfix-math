@@ -56,6 +56,7 @@ from pathlib import Path
 import numpy as np
 
 from lightonocr_math import guard
+from lightonocr_math.latex_tokens import DISPLAY_ENVS
 from lightonocr_math.paths import cache_dir
 
 # Pinned by digest, not the floating :latest tag: a silent image update would change rendering mid-project and
@@ -146,7 +147,7 @@ def check_safe(latex: str) -> str | None:
 
 # --------------------------------------------------------------------------- wrap
 
-_ENV_NAMES = r"(?:equation|align|alignat|flalign|gather|multline|eqnarray|displaymath|math)"
+_ENV_NAMES = "|".join(re.escape(e) for e in DISPLAY_ENVS)
 _ENV_RE = re.compile(r"^\\begin\{(" + _ENV_NAMES + r")(\*?)\}(.*)\\end\{\1\2\}$", re.DOTALL)
 _LAYOUT_RES = [
     re.compile(r"\\label\{[^{}]*\}"),
