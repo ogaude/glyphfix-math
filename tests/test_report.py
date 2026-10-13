@@ -82,3 +82,56 @@ def test_cli_compare(tmp_path):
     out = tmp_path / "flips.md"
     assert R.main(["compare", str(ra), str(rb), "--out", str(out), "--bootstrap", "100"]) == 0
     assert "right to wrong" in out.read_text()
+
+
+def _mutate(rp, **changes):
+    res = json.loads(rp.read_text())
+    for k, v in changes.items():
+        if "." in k:
+            a, b = k.split(".")
+            res[a] = {**(res.get(a) or {}), b: v}
+        else:
+            res[k] = v
+    rp.write_text(json.dumps(res))
+
+
+@pytest.mark.parametrize("change", [{"scorer_fingerprint": "x"}, {"split_digest": "x"}, {"render_dpi": 150}])
+def test_compare_refuses_more_version_keys(tmp_path, change):
+    ra = S.score_file(FIX, tmp_path / "a", render=False, B=50)
+    rb = S.score_file(FIX, tmp_path / "b", render=False, B=50)
+    _mutate(rb, **change)
+    with pytest.raises(R.VersionMismatchError, match=next(iter(change))):
+        R.compare_runs(ra, rb)
+
+
+def test_compare_refuses_render_image_and_render_enabled_mismatch(tmp_path):
+    ra = S.score_file(FIX, tmp_path / "a", render=False, B=50)
+    rb = S.score_file(FIX, tmp_path / "b", render=False, B=50)
+    _mutate(rb, **{"render.enabled": True})
+    with pytest.raises(R.VersionMismatchError, match="render tiers"):
+        R.compare_runs(ra, rb)
+    _mutate(ra, **{"render.enabled": True, "render.image": "img@a"})
+    _mutate(rb, **{"render.enabled": True, "render.image": "img@b"})
+    with pytest.raises(R.VersionMismatchError, match="render image"):
+        R.compare_runs(ra, rb)
+
+
+def test_compare_refuses_different_ground_truth(tmp_path):
+    ra = S.score_file(FIX, tmp_path / "a", render=False, B=50)
+    rb = S.score_file(FIX, tmp_path / "b", render=False, B=50)
+    p = tmp_path / "b" / "records.jsonl"
+    rows = [json.loads(line) for line in p.read_text().splitlines()]
+    rows[0]["gt_latex"] += " y"
+    p.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    with pytest.raises(ValueError, match="ground truth differs"):
+        R.compare_runs(ra, rb)
+
+
+def test_compare_refuses_different_class_denominators(tmp_path):
+    ra = S.score_file(FIX, tmp_path / "a", render=False, B=50)
+    rb = S.score_file(FIX, tmp_path / "b", render=False, B=50)
+    res = json.loads(rb.read_text())
+    res["per_class"][R.CLASSES[0]]["denom"] += 1
+    rb.write_text(json.dumps(res))
+    with pytest.raises(ValueError, match="denominators differ"):
+        R.compare_runs(ra, rb)

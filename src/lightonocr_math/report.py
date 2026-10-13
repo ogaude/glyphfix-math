@@ -23,7 +23,17 @@ from pathlib import Path
 from lightonocr_math import stats
 from lightonocr_math.errors import CLASSES
 
-VERSION_KEYS = ("scorer_version", "normalize_rules_version", "error_rules_version", "preamble_sha256", "wrap_version", "split_rule_version")
+VERSION_KEYS = (
+    "scorer_version",
+    "scorer_fingerprint",
+    "normalize_rules_version",
+    "error_rules_version",
+    "preamble_sha256",
+    "wrap_version",
+    "split_rule_version",
+    "split_digest",
+    "render_dpi",
+)
 METRICS = ("exact", "render_identical", "render_tolerant")
 METRIC_LABELS = {
     "exact": "normalized exact match",
@@ -50,8 +60,7 @@ def render_report(results: dict) -> str:
         out.append(f"- {k}: {results.get(k)}")
     b = results["bootstrap"]
     out += [
-        f"- split_digest: {results.get('split_digest')}",
-        f"- render_dpi: {results.get('render_dpi')}",
+        f"- render image: {(results.get('render') or {}).get('image')}",
         f"- bootstrap: seed {b['seed']}, B {b['B']}, CI {b['ci']} (paper-level cluster bootstrap)",
         f"- predictions_sha256: {results.get('predictions_sha256')}",
         f"- records: {results['n_records']}, ground truth not compilable (excluded from render tiers): {results.get('n_gt_uncompilable', 0)}",
@@ -109,8 +118,16 @@ def compare_runs(a_path: Path, b_path: Path, *, B: int = 10000, seed: int = 0) -
     diffs = [f"{k}: {ra.get(k)!r} vs {rb.get(k)!r}" for k in VERSION_KEYS if ra.get(k) != rb.get(k)]
     if diffs:
         raise VersionMismatchError("results are not comparable, differing versions: " + "; ".join(diffs))
+    ren_a, ren_b = ra.get("render") or {}, rb.get("render") or {}
+    if bool(ren_a.get("enabled")) != bool(ren_b.get("enabled")):
+        raise VersionMismatchError("results are not comparable: only one run has the render tiers (--no-render on one side)")
+    if ren_a.get("image") != ren_b.get("image"):
+        raise VersionMismatchError(f"results are not comparable, render image: {ren_a.get('image')!r} vs {ren_b.get('image')!r}")
     if set(recs_a) != set(recs_b):
         raise ValueError("record id sets differ between the two runs")
+    gt_diff = sorted(i for i in recs_a if recs_a[i].get("gt_latex") != recs_b[i].get("gt_latex"))
+    if gt_diff:
+        raise ValueError(f"ground truth differs between the two runs for {len(gt_diff)} id(s), e.g. {gt_diff[:5]}")
     out: dict = {"n": len(recs_a), "metrics": {}, "per_class": {}}
     for key in METRICS:
         if key not in ra["metrics"] or key not in rb["metrics"]:
@@ -129,7 +146,10 @@ def compare_runs(a_path: Path, b_path: Path, *, B: int = 10000, seed: int = 0) -
         )
         out["metrics"][key] = {"flips": flips, "delta": delta, "excluded": excluded}
     for c in CLASSES:
-        out["per_class"][c] = {"a": ra["per_class"][c]["errors"], "b": rb["per_class"][c]["errors"], "denom": rb["per_class"][c]["denom"]}
+        da, db = ra["per_class"][c]["denom"], rb["per_class"][c]["denom"]
+        if da != db:
+            raise ValueError(f"per-class denominators differ for {c}: {da} vs {db}; the runs are not comparable")
+        out["per_class"][c] = {"a": ra["per_class"][c]["errors"], "b": rb["per_class"][c]["errors"], "denom": db}
     return out
 
 
