@@ -38,6 +38,7 @@ from lightonocr_math.render import RenderInfrastructureError
 SCORER_VERSION = "1.1.0"
 RESULT_SCHEMA_VERSION = "1"
 SCORER_FINGERPRINT = "8e462d68b3ee89eb2a2429ca6b1ddd1a9c04ac3d3e340fb68188b139394274e8"
+# scorer_fingerprint() needs the repository test fixture, so it is a development/test check only; score_file stores the constant
 GOLDEN_PATH = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "scorer_golden.jsonl"
 
 
@@ -167,7 +168,7 @@ def score_file(
     results = {
         "result_schema_version": RESULT_SCHEMA_VERSION,
         "scorer_version": SCORER_VERSION,
-        "scorer_fingerprint": scorer_fingerprint(),
+        "scorer_fingerprint": SCORER_FINGERPRINT,  # verified against the golden file by tests, which are not shipped
         "normalize_rules_version": NORMALIZE_RULES_VERSION,
         "error_rules_version": ERROR_RULES_VERSION,
         "split_rule_version": info["split_rule_version"],
