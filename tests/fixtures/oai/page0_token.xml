@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/">
+  <responseDate>2025-01-11T00:00:00Z</responseDate>
+  <request verb="ListRecords">http://oaipmh.arxiv.org/oai</request>
+  <ListRecords>
+    <record>
+      <header><identifier>oai:arXiv.org:9912.00001</identifier><datestamp>2025-01-10</datestamp><setSpec>math:math:CA</setSpec></header>
+      <metadata>
+        <arXiv xmlns="http://arxiv.org/OAI/arXiv/">
+          <id>9912.00001</id>
+          <created>2025-01-09</created>
+          <updated>2025-01-10</updated>
+          <authors><author><keyname>Doe</keyname><forenames>Jane</forenames></author></authors>
+          <title>Fictitious paper one</title>
+          <categories>math.CA math.PR</categories>
+          <license>http://creativecommons.org/licenses/by/4.0/</license>
+        </arXiv>
+      </metadata>
+    </record>
+    <record>
+      <header><identifier>oai:arXiv.org:9912.00002</identifier><datestamp>2025-01-10</datestamp><setSpec>math:math:CA</setSpec></header>
+      <metadata>
+        <arXiv xmlns="http://arxiv.org/OAI/arXiv/">
+          <id>9912.00002</id>
+          <created>2025-01-09</created>
+          <updated>2025-01-10</updated>
+          <authors><author><keyname>Doe</keyname><forenames>Jane</forenames></author></authors>
+          <title>Fictitious paper two</title>
+          <categories>math.CA math.PR</categories>
+          <license>http://creativecommons.org/licenses/by-nc-sa/4.0/</license>
+        </arXiv>
+      </metadata>
+    </record>
+    <resumptionToken cursor="0" completeListSize="3">tok-1</resumptionToken>
+  </ListRecords>
+</OAI-PMH>
