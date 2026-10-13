@@ -1,0 +1,15 @@
+# Training env (.venv-lighton). Edit this, then recompile the lock with the command in train.lock.txt.
+# torchvision is installed separately with --no-deps by scripts/setup_train_env.sh.
+torch==2.14.1+rocm7.2
+transformers==5.19.0
+peft==0.21.2
+accelerate==1.15.0
+flash-linear-attention[rocm]==0.5.2
+bitsandbytes==0.50.2
+safetensors
+pillow
+pytest
+rapidfuzz>=3.14,<4
+pypdfium2>=5.14,<6
+numpy>=2.5,<3
+scipy>=1.18,<2

@@ -5,3 +5,4 @@ __pycache__/
 experiments/*/out/
 experiments/*/out-*/*/
 *.bak
+data/spikes/
