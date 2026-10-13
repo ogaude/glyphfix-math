@@ -4,6 +4,13 @@ Usage (from repo root, training venv):
   .venv-lighton/bin/python -m scripts.spikes.hf_infer --split dev --out data/spikes/hf/HF.pred.jsonl \
     --sidecar data/spikes/hf/HF.sidecar.jsonl --teacher-force data/spikes/ollama/S1.sidecar.jsonl
 
+Shared GPU: prefer launching under the resource guard, for example
+  uv run python -m lightonocr_math.guard --vram-gb 10 --ram-gb 8 --timeout 1800 --vram-floor-gb 0.1 -- \
+    .venv-lighton/bin/python -m scripts.spikes.hf_infer ...
+The script also runs a guard preflight (free VRAM and RAM floor) before loading the model. The default
+--max-px is the processor's stock cap (up to about 16k image tokens), kept so the run mirrors stock HF
+behaviour; pass a smaller --max-px on a busy card (the value is recorded in the sidecar).
+
 Batch size is 1 on purpose: padding changes the linear-attention state. The pixel caps default to the
 processor's shipped values, which is the stock HF behaviour. Without a GPU the run aborts with exit 2.
 first_divergence is a pure function and imports without torch.
@@ -88,7 +95,14 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     from PIL import Image
 
+    from lightonocr_math import guard
     from lightonocr_math.train import infer
+
+    try:
+        guard.preflight(vram_gb=10, ram_gb=4, timeout_s=900)
+    except guard.GuardError as e:
+        print(str(e), file=sys.stderr)
+        return e.exit_code
 
     rows, stats = common.load_legacy(a.split, limit=a.limit)
     gpu_before = common.gpu_state()
