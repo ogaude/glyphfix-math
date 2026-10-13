@@ -16,6 +16,9 @@ def test_strip_fences():
     assert common.strip_fences("x+1") == "x+1"
     assert common.strip_fences(F + "latex\na\nb\n" + F) == "a\nb"
     assert common.strip_fences(F + "latex\n  a \t b\n" + F) == "  a \t b"
+    assert common.strip_fences(F + "latex x^2" + F) == "x^2"
+    assert common.strip_fences(F + "x^2" + F) == "x^2"
+    assert common.strip_fences(F + "latex x^2") == "x^2"
 
 
 def _write_rows(root: Path, split: str, papers: list[str]) -> None:

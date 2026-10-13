@@ -13,7 +13,9 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import json
+import re
 import os
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -66,6 +68,14 @@ def strip_fences(text: str) -> str:
     if not text.strip().startswith(_FENCE):
         return text
     lines = text.strip().split("\n")
+    if len(lines) == 1:
+        # one-line answer: fence, optional language token, content, optional closing fence on the same line
+        body = lines[0][len(_FENCE):]
+        body = re.sub(r"^[A-Za-z0-9_+-]+(?=\s)", "", body)
+        body = body.rstrip()
+        if body.endswith(_FENCE):
+            body = body[: -len(_FENCE)]
+        return body.strip()
     lines = lines[1:]
     if lines and lines[-1].rstrip() == _FENCE:
         lines = lines[:-1]
