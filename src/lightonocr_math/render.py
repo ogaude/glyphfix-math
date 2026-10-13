@@ -393,33 +393,42 @@ def _run_batch(latexes: Sequence[str], work_root: Path, timeout_s: int) -> tuple
     Only outcomes attributable to LaTeX are returned; infrastructure failures raise RenderInfrastructureError.
     """
     guard.preflight(ram_gb=guard.DOCKER_MEMORY_GB, timeout_s=600)
-    work_root.mkdir(parents=True, exist_ok=True)
-    workdir = Path(tempfile.mkdtemp(prefix="batch-", dir=work_root))
-    (workdir / "batch.tex").write_text(_batch_source(latexes), encoding="utf-8")
-    name = f"lom-render-{uuid.uuid4().hex}"
+    keep = False
+    workdir: Path | None = None
     try:
-        proc = subprocess.run(
-            _docker_cmd(name, workdir.resolve()), capture_output=True, text=True, timeout=timeout_s, check=False
-        )
-    except subprocess.TimeoutExpired:
-        # equivalent of `docker kill <name>`: the host timeout is the only limit, so stop the container explicitly
-        subprocess.run(["docker", "kill", name], capture_output=True, check=False)
-        shutil.rmtree(workdir, ignore_errors=True)
-        return None, "timeout", True
-    if proc.returncode in INFRA_EXIT_CODES:
-        raise _infra_error(workdir, "docker or container failure", proc)
-    log_path = workdir / "batch.log"
-    if not log_path.exists():
-        raise _infra_error(workdir, "no pdflatex log produced", proc)
-    err = _first_error(log_path.read_text(encoding="utf-8", errors="replace"))
-    if err:
-        shutil.rmtree(workdir, ignore_errors=True)
-        return None, err, False
-    if proc.returncode != 0:
-        raise _infra_error(workdir, "non-zero exit without a LaTeX error", proc)
-    if not (workdir / "batch.pdf").exists():
-        raise _infra_error(workdir, "no pdf produced", proc)
-    return workdir, "", False
+        work_root.mkdir(parents=True, exist_ok=True)
+        workdir = Path(tempfile.mkdtemp(prefix="batch-", dir=work_root))
+        (workdir / "batch.tex").write_text(_batch_source(latexes), encoding="utf-8")
+        name = f"lom-render-{uuid.uuid4().hex}"
+        try:
+            proc = subprocess.run(
+                _docker_cmd(name, workdir.resolve()), capture_output=True, text=True, timeout=timeout_s, check=False
+            )
+        except subprocess.TimeoutExpired:
+            # equivalent of `docker kill <name>`: the host timeout is the only limit, so stop the container explicitly
+            subprocess.run(["docker", "kill", name], capture_output=True, check=False)
+            return None, "timeout", True
+        if proc.returncode in INFRA_EXIT_CODES:
+            raise _infra_error(workdir, "docker or container failure", proc)
+        log_path = workdir / "batch.log"
+        if not log_path.exists():
+            raise _infra_error(workdir, "no pdflatex log produced", proc)
+        err = _first_error(log_path.read_text(encoding="utf-8", errors="replace"))
+        if err:
+            return None, err, False
+        if proc.returncode != 0:
+            raise _infra_error(workdir, "non-zero exit without a LaTeX error", proc)
+        if not (workdir / "batch.pdf").exists():
+            raise _infra_error(workdir, "no pdf produced", proc)
+        keep = True
+        return workdir, "", False
+    except OSError as e:
+        # PermissionError, disk full, docker binary vanished: the sandbox could not give a verdict
+        raise RenderInfrastructureError(f"{type(e).__name__} while running a render batch: {e}") from e
+    finally:
+        # the workdir is only handed to the caller on success; every other path (including raw exceptions) removes it
+        if workdir is not None and not keep:
+            shutil.rmtree(workdir, ignore_errors=True)
 
 
 def _rasterize(workdir: Path, expected: int) -> list[np.ndarray] | None:
@@ -451,6 +460,13 @@ def _bitmap_hash(arr: np.ndarray) -> str:
     return h.hexdigest()
 
 
+class _AbortedError(RenderInfrastructureError):
+    """A sibling batch already failed; never the root cause, so it must not mask the real error."""
+
+
+_ERR_LOCK = threading.Lock()
+
+
 def _render_group(
     items: list[tuple[str, str]],
     work_root: Path,
@@ -458,19 +474,40 @@ def _render_group(
     cache: Path | None,
     *,
     abort: threading.Event | None = None,
+    errors: list[BaseException] | None = None,
+) -> dict[str, RenderResult]:
+    """Render a group; any failure (not only RenderInfrastructureError) stops sibling threads.
+
+    The first real exception is kept in ``errors`` so render_many can raise it instead of an "aborted" one.
+    """
+    try:
+        return _render_group_inner(items, work_root, timeout_s, cache, abort=abort, errors=errors)
+    except Exception as e:
+        if abort is not None:
+            abort.set()
+        if errors is not None and not isinstance(e, _AbortedError):
+            with _ERR_LOCK:
+                if not errors:
+                    errors.append(e)
+        raise
+
+
+def _render_group_inner(
+    items: list[tuple[str, str]],
+    work_root: Path,
+    timeout_s: int,
+    cache: Path | None,
+    *,
+    abort: threading.Event | None = None,
+    errors: list[BaseException] | None = None,
 ) -> dict[str, RenderResult]:
     """Render (key, latex) items; write cache entries. A failing group is bisected down to singletons.
 
     Returns the uncached (transient) results. Raises RenderInfrastructureError, never bisecting on it.
     """
     if abort is not None and abort.is_set():
-        raise RenderInfrastructureError("aborted: an earlier batch hit an infrastructure failure")
-    try:
-        workdir, err, timed_out = _run_batch([latex for _, latex in items], work_root, timeout_s)
-    except RenderInfrastructureError:
-        if abort is not None:
-            abort.set()
-        raise
+        raise _AbortedError("aborted: an earlier batch hit an infrastructure failure")
+    workdir, err, timed_out = _run_batch([latex for _, latex in items], work_root, timeout_s)
     pages = None
     if workdir is not None:
         try:
@@ -501,8 +538,8 @@ def _render_group(
             return {}
         return {key: res}
     mid = len(items) // 2
-    out = _render_group(items[:mid], work_root, timeout_s, cache, abort=abort)
-    out.update(_render_group(items[mid:], work_root, timeout_s, cache, abort=abort))
+    out = _render_group_inner(items[:mid], work_root, timeout_s, cache, abort=abort, errors=errors)
+    out.update(_render_group_inner(items[mid:], work_root, timeout_s, cache, abort=abort, errors=errors))
     return out
 
 
@@ -547,13 +584,17 @@ def render_many(
             parallel = 1
         work_root = (Path(cache) if cache is not None else cache_dir()) / "work"
         abort = threading.Event()
+        errors: list[BaseException] = []
         with ThreadPoolExecutor(max_workers=max(1, min(parallel, len(groups)))) as ex:
-            futs = [ex.submit(_render_group, g, work_root, timeout_s, cache, abort=abort) for g in groups]
+            futs = [ex.submit(_render_group, g, work_root, timeout_s, cache, abort=abort, errors=errors) for g in groups]
             for fut in futs:
                 try:
                     transient.update(fut.result())
-                except BaseException:
+                except BaseException as exc:
                     ex.shutdown(wait=True, cancel_futures=True)
+                    # prefer the first real failure over an "aborted" one raised by a sibling that started later
+                    if errors and errors[0] is not exc:
+                        raise errors[0] from exc
                     raise
     out = []
     for key in keys:

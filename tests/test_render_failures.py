@@ -226,3 +226,33 @@ def test_docker_diagnosis_distinguishes_daemon_from_image(monkeypatch):
     assert "unreachable" in render.docker_diagnosis()
     monkeypatch.setattr(render.subprocess, "run", lambda argv, **k: subprocess.CompletedProcess(argv, 0, b"", b""))
     assert "docker pull" in render.docker_diagnosis()
+
+
+def test_oserror_becomes_infra_error_sets_abort_and_leaks_no_workdir(tmp_path, monkeypatch):
+    def run(argv, *a, **k):
+        raise PermissionError("denied")
+
+    monkeypatch.setattr(render.subprocess, "run", run)
+    ev = threading.Event()
+    with pytest.raises(render.RenderInfrastructureError, match="PermissionError"):
+        render._render_group([(render.cache_key("a"), "a")], tmp_path / "work", 30, tmp_path, abort=ev)
+    assert ev.is_set()
+    assert list((tmp_path / "work").glob("batch-*")) == []
+
+
+def test_real_error_not_masked_by_aborted_sibling(tmp_path, monkeypatch):
+    # first group hits the abort flag (raised as "aborted"), a later group holds the real failure
+    _install(monkeypatch, outage)
+    real = render.RenderInfrastructureError("real docker failure (exit 125)")
+    second_started = threading.Event()
+
+    def fake_inner(items, *a, abort=None, errors=None, **k):
+        if items[0][1] == "a":
+            second_started.wait(5)
+            raise render._AbortedError("aborted: x")
+        second_started.set()
+        raise real
+
+    monkeypatch.setattr(render, "_render_group_inner", fake_inner)
+    with pytest.raises(render.RenderInfrastructureError, match="real docker failure"):
+        render.render_many(["a", "b"], batch_size=1, cache=tmp_path, max_parallel=2)
