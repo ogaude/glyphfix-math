@@ -110,3 +110,23 @@ def test_score_file_with_render(tmp_path):
     assert rows[err]["render_identical"] is False
     md = (tmp_path / "report.md").read_text()
     assert "render tolerant (separate tier)" in md and "bug flag" in md
+
+
+def test_cli_reports_guard_and_render_errors_without_traceback(tmp_path, monkeypatch, capsys):
+    from lightonocr_math import guard, render
+
+    pred = tmp_path / "p.jsonl"
+    pred.write_text(json.dumps({"id": "a", "paper_id": "p", "gt_latex": "x", "pred_latex": "x"}) + "\n", encoding="utf-8")
+
+    def boom_guard(*a, **k):
+        raise guard.GuardTimeout("short of RAM")
+
+    monkeypatch.setattr(S, "score_file", boom_guard)
+    assert S.main([str(pred), "--out", str(tmp_path / "o")]) == guard.EXIT_PREFLIGHT_TIMEOUT
+
+    def boom_render(*a, **k):
+        raise render.RenderInfrastructureError("docker down")
+
+    monkeypatch.setattr(S, "score_file", boom_render)
+    assert S.main([str(pred), "--out", str(tmp_path / "o")]) == 3
+    assert "docker down" in capsys.readouterr().err

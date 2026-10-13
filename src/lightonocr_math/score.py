@@ -31,7 +31,9 @@ from pathlib import Path
 
 from lightonocr_math import paths, stats
 from lightonocr_math.errors import CLASSES, ERROR_RULES_VERSION, classify, notation_present
+from lightonocr_math.guard import GuardError
 from lightonocr_math.normalize import NORMALIZE_RULES_VERSION, canonical, equivalent
+from lightonocr_math.render import RenderInfrastructureError
 
 SCORER_VERSION = "1.1.0"
 RESULT_SCHEMA_VERSION = "1"
@@ -75,14 +77,14 @@ def score_records(records: list[dict], *, render: bool = True, cache: Path | Non
         rows.append(row)
     if not render or not rows:
         return rows
-    from lightonocr_math.guard import docker_parallel_cap, guard
     from lightonocr_math.render import render_equivalence
 
     cache = cache or paths.cache_dir()
     gts = [r["gt_latex"] for r in rows]
     preds = [r["pred_latex"] for r in rows]
-    with guard(ram_gb=4, workers=max(docker_parallel_cap(), 1)):
-        pairs = render_equivalence(gts, preds, cache=cache)
+    # No Guard watchdog here: it would register no child and could only fail a finished run. render checks
+    # MemAvailable (guard.preflight) before every container start, which is where the RAM floor matters.
+    pairs = render_equivalence(gts, preds, cache=cache)
     for row, pr in zip(rows, pairs, strict=True):
         row["gt_render_status"] = pr.gt_status
         row["pred_render_status"] = pr.pred_status
@@ -229,6 +231,12 @@ def main(argv=None) -> int:
     except ValueError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
+    except GuardError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return e.exit_code
+    except RenderInfrastructureError as e:
+        print(f"error: render infrastructure failure: {e}", file=sys.stderr)
+        return 3
     results = json.loads(rp.read_text(encoding="utf-8"))
     print(summary_table(results))
     print(f"\nwrote {rp}")
