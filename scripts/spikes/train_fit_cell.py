@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import statistics
 import sys
 import time
@@ -175,7 +176,13 @@ def main(argv: list[str] | None = None) -> int:
     except Exception:  # noqa: BLE001 - the outcome is data
         tb = traceback.format_exc()
         low = tb.lower()
-        row.update(outcome="fla-error" if ("fla" in low or "triton" in low) else "error", error_tail=_tail(tb))
+        if "out of memory" in low:
+            kind = "oom"
+        elif re.search(r"\bfla[./]|/fla/|triton", low):
+            kind = "fla-error"
+        else:
+            kind = "error"
+        row.update(outcome=kind, error_tail=_tail(tb))
 
     row["peak_allocated_gib"] = round(torch.cuda.max_memory_allocated() / GIB, 3)
     row["peak_reserved_gib"] = round(torch.cuda.max_memory_reserved() / GIB, 3)

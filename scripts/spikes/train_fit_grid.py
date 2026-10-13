@@ -138,8 +138,7 @@ def launch_cell(spec: dict, *, cell_timeout: float = 1800, workdir: Path | None 
             u = _used_gib()
             if u is not None:
                 peak["sampled"] = True
-                if u > peak["used"]:
-                    peak["used"] = u
+                peak["used"] = max(peak["used"], u)
 
     th = threading.Thread(target=sampler, daemon=True)
     was_paused = False
