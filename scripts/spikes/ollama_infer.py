@@ -126,45 +126,46 @@ def main(argv: list[str] | None = None) -> int:
     sidecar: list[dict] = []
     n_ok = n_err = 0
     code = 0
-    for row in rows:
-        if guard.mem_available_bytes() < RAM_FLOOR:
-            print("MemAvailable below 1.5 GiB, stopping", file=sys.stderr)
-            code = EXIT_LOW_RAM
-            break
-        png = Path(row["image_path"]).read_bytes()
-        base = {"id": row["id"], "paper_id": row["arxiv_id"], "gt_latex": row["latex"]}
-        try:
-            out = infer_one(a.host, a.model, png, options, "10m", a.timeout)
-        except (OllamaError, urllib.error.URLError, OSError) as e:
-            preds.append({**base, "pred_error": str(e)})
-            n_err += 1
-            continue
-        raw = out["message"]["content"]
-        preds.append({**base, "pred_latex": common.strip_fences(raw)})
-        sidecar.append(
-            {
-                "id": row["id"],
-                "model": a.model,
-                "raw_text": raw,
-                "done_reason": out.get("done_reason"),
-                "prompt_eval_count": out.get("prompt_eval_count"),
-                "eval_count": out.get("eval_count"),
-                "total_duration": out.get("total_duration"),
-                "image_sha256": hashlib.sha256(png).hexdigest(),
-                "width": row.get("width"),
-                "height": row.get("height"),
-            }
-        )
-        n_ok += 1
+    try:
+        for row in rows:
+            if guard.mem_available_bytes() < RAM_FLOOR:
+                print("MemAvailable below 1.5 GiB, stopping", file=sys.stderr)
+                code = EXIT_LOW_RAM
+                break
+            png = Path(row["image_path"]).read_bytes()
+            base = {"id": row["id"], "paper_id": row["arxiv_id"], "gt_latex": row["latex"]}
+            try:
+                out = infer_one(a.host, a.model, png, options, "10m", a.timeout)
+            except (OllamaError, urllib.error.URLError, OSError) as e:
+                preds.append({**base, "pred_error": str(e)})
+                n_err += 1
+                continue
+            raw = out["message"]["content"]
+            preds.append({**base, "pred_latex": common.strip_fences(raw)})
+            sidecar.append(
+                {
+                    "id": row["id"],
+                    "model": a.model,
+                    "raw_text": raw,
+                    "done_reason": out.get("done_reason"),
+                    "prompt_eval_count": out.get("prompt_eval_count"),
+                    "eval_count": out.get("eval_count"),
+                    "total_duration": out.get("total_duration"),
+                    "image_sha256": hashlib.sha256(png).hexdigest(),
+                    "width": row.get("width"),
+                    "height": row.get("height"),
+                }
+            )
+            n_ok += 1
+    finally:
+        if not was_loaded:
+            try:
+                _post(a.host, "/api/chat", {"model": a.model, "messages": [], "keep_alive": 0}, 60)
+            except (OllamaError, urllib.error.URLError, OSError) as e:
+                print(f"unload failed: {e}", file=sys.stderr)
 
-    if not was_loaded:
-        try:
-            _post(a.host, "/api/chat", {"model": a.model, "messages": [], "keep_alive": 0}, 60)
-        except (OllamaError, urllib.error.URLError, OSError) as e:
-            print(f"unload failed: {e}", file=sys.stderr)
-
-    common.write_jsonl(a.out, preds)
-    common.write_jsonl(a.sidecar, sidecar)
+        common.write_jsonl(a.out, preds)
+        common.write_jsonl(a.sidecar, sidecar)
     try:
         version = _get(a.host, "/api/version").get("version")
     except (urllib.error.URLError, OSError, ValueError):
