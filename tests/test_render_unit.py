@@ -141,3 +141,11 @@ def test_render_many_rejects_without_docker(tmp_path, monkeypatch):
     monkeypatch.setattr(render.subprocess, "run", boom)
     res = render.render_many([r"\input{/etc/passwd}", ""], cache=tmp_path)
     assert [r.status for r in res] == ["rejected", "empty"]
+
+
+def test_image_is_digest_pinned_and_in_cache_key(monkeypatch):
+    assert "@sha256:" in render.IMAGE and ":latest" not in render.IMAGE
+    assert render.IMAGE.endswith(render.IMAGE_DIGEST)
+    before = render.cache_key("x")
+    monkeypatch.setattr(render, "IMAGE_DIGEST", "sha256:" + "0" * 64)
+    assert render.cache_key("x") != before

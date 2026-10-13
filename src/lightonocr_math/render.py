@@ -29,7 +29,7 @@ Security model:
   Equations are untrusted. They are only ever written into batch.tex, never into a shell
   string or argv. Inputs containing file-I/O, catcode, definition or page-control
   primitives are rejected before rendering (check_safe). pdflatex runs in
-  texlive/texlive:latest with no network, a memory cap, a pid cap, dropped capabilities,
+  the pinned texlive/texlive image (by digest) with no network, a memory cap, a pid cap, dropped capabilities,
   a read-only root file system, a non-root user, -no-shell-escape and a timeout.
 
 Known limit: paper-specific macros are not available. A ground truth that uses them does not
@@ -58,7 +58,10 @@ import numpy as np
 from lightonocr_math import guard
 from lightonocr_math.paths import cache_dir
 
-IMAGE = "texlive/texlive:latest"
+# Pinned by digest, not the floating :latest tag: a silent image update would change rendering mid-project and
+# make cached bitmaps incomparable to new ones. The digest is part of cache_key(), so bumping it re-renders.
+IMAGE_DIGEST = "sha256:0f4884ca7d287f47ab466d2dd405d4c901c576585363f628863a7ca7eea21301"
+IMAGE = f"texlive/texlive@{IMAGE_DIGEST}"
 RENDER_DPI = 300
 INK_THRESHOLD = 250
 WRAP_VERSION = "1"
@@ -256,7 +259,7 @@ class RenderResult:
 
 
 def cache_key(latex: str) -> str:
-    payload = PREAMBLE_SHA256 + "\n" + WRAP_VERSION + "\n" + str(RENDER_DPI) + "\n" + latex
+    payload = IMAGE_DIGEST + "\n" + PREAMBLE_SHA256 + "\n" + WRAP_VERSION + "\n" + str(RENDER_DPI) + "\n" + latex
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 

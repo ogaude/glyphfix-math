@@ -2,11 +2,13 @@ import subprocess
 
 import pytest
 
+from lightonocr_math.render import IMAGE
+
 
 @pytest.fixture(scope="session")
 def docker_available() -> bool:
     try:
-        r = subprocess.run(["docker", "image", "inspect", "texlive/texlive:latest"], check=False, capture_output=True, timeout=30)
+        r = subprocess.run(["docker", "image", "inspect", IMAGE], check=False, capture_output=True, timeout=30)
     except (OSError, subprocess.TimeoutExpired):
         return False
     return r.returncode == 0
@@ -17,7 +19,7 @@ def pytest_collection_modifyitems(config, items):
     if not docker_items:
         return
     try:
-        ok = subprocess.run(["docker", "image", "inspect", "texlive/texlive:latest"], check=False, capture_output=True, timeout=30).returncode == 0
+        ok = subprocess.run(["docker", "image", "inspect", IMAGE], check=False, capture_output=True, timeout=30).returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         ok = False
     if not ok:
