@@ -108,7 +108,13 @@ def render_config() -> dict:
 
 # --------------------------------------------------------------------------- safety filter
 
-_FORBIDDEN_WORDS = ["input", "include", "openin", "openout", "read", "readline", "write", "immediate", "catcode", "lccode", "uccode", "def", "edef", "gdef", "xdef", "let", "futurelet", "global", "outer", "newcommand", "renewcommand", "providecommand", "DeclareMathOperator", "DeclareRobustCommand", "newenvironment", "renewenvironment", "usepackage", "RequirePackage", "documentclass", "newpage", "clearpage", "cleardoublepage", "pagebreak", "shipout", "special", "csname", "endcsname", "makeatletter", "makeatother", "jobname", "endinput", "vspace", "vskip", "pdfprimitive", "directlua", "scantokens", "everymath", "everydisplay", "afterassignment", "expandafter"]
+_FORBIDDEN_WORDS = ["input", "include", "openin", "openout", "read", "readline", "write", "immediate", "catcode", "lccode", "uccode", "def", "edef", "gdef", "xdef", "let", "futurelet", "global", "outer", "newcommand", "renewcommand", "providecommand", "DeclareMathOperator", "DeclareRobustCommand", "newenvironment", "renewenvironment", "usepackage", "RequirePackage", "documentclass", "newpage", "clearpage", "cleardoublepage", "pagebreak", "shipout", "special", "csname", "endcsname", "makeatletter", "makeatother", "jobname", "endinput", "vspace", "vskip", "pdfprimitive", "directlua", "scantokens", "everymath", "everydisplay", "afterassignment", "expandafter",
+    # global-state, file and counter primitives: one prediction must not change how later items in the batch render
+    "NewDocumentCommand", "RenewDocumentCommand", "ProvideDocumentCommand", "DeclareDocumentCommand", "NewDocumentEnvironment", "RenewDocumentEnvironment", "NewCommandCopy", "RenewCommandCopy", "DeclareCommandCopy",
+    "ExplSyntaxOn", "ExplSyntaxOff", "newcount", "newdimen", "newskip", "newtoks", "newbox", "newif", "newlength", "newcounter", "newtheorem", "newlinechar",
+    "setcounter", "addtocounter", "stepcounter", "refstepcounter", "setlength", "addtolength", "setbox", "loop", "repeat",
+    "mathchardef", "chardef", "mathcode", "delcode", "sfcode", "DeclareMathSymbol", "DeclareSymbolFont", "DeclareMathAlphabet", "SetMathAlphabet", "DeclareMathAccent", "DeclareMathDelimiter", "DeclareMathRadical", "DeclareFontFamily", "DeclareFontShape",
+    "AtEndDocument", "AtBeginDocument", "InputIfFileExists", "IfFileExists", "includegraphics", "includepdf", "pdfximage", "pdfliteral", "pdfobj", "pdfannot", "pdfstartlink", "pdfinfo"]
 _FORBIDDEN_RE = re.compile(r"\\(?:" + "|".join(_FORBIDDEN_WORDS) + r")(?![A-Za-z])")
 _DOCUMENT_RE = re.compile(r"\\(?:begin|end)\s*\{\s*document\s*\}")
 _CONTROL_SYMBOL_RE = re.compile(r"\\[^A-Za-z]")
@@ -491,12 +497,17 @@ def render_many(
     keys = [cache_key(x) for x in latex_list]
     todo: dict[str, str] = {}
     for key, latex in zip(keys, latex_list, strict=True):
-        if key in todo or _cache_get(cache, key) is not None:
+        if key in todo:
             continue
+        # check_safe runs before the cache lookup, so entries written under an older, laxer filter are not served
         reason = check_safe(latex)
+        cached = _cache_get(cache, key)
         if reason is not None:
             status = "empty" if reason == "empty" else "rejected"
-            _cache_put(cache, RenderResult(key, status, None, None, reason))
+            if cached is None or cached.status != status:
+                _cache_put(cache, RenderResult(key, status, None, None, reason))
+            continue
+        if cached is not None:
             continue
         todo[key] = latex
     transient: dict[str, RenderResult] = {}
