@@ -106,6 +106,7 @@ def build(a: argparse.Namespace) -> tuple[dict, list[dict]]:
     ids = sorted(set(hf_pred) & set(ol_pred) & set(hf_side) & set(ol_side))
     if not ids:
         raise ValueError("no crop is present in all four inputs")
+    missing_ids = sorted((set(hf_pred) | set(ol_pred) | set(hf_side) | set(ol_side)) - set(ids))
     overrides = json.loads(a.overrides.read_text(encoding="utf-8")) if a.overrides and a.overrides.exists() else {}
     hs = {i: hf_side[i] | ({"pred_error": hf_pred[i]["pred_error"]} if hf_pred[i].get("pred_error") else {}) for i in ids}
     os_ = {i: ol_side[i] | ({"pred_error": ol_pred[i]["pred_error"]} if ol_pred[i].get("pred_error") else {}) for i in ids}
@@ -144,6 +145,8 @@ def build(a: argparse.Namespace) -> tuple[dict, list[dict]]:
     n_raw_equal = sum(1 for r in rows if r["auto_category"] is None and hs[r["id"]]["raw_text"] == os_[r["id"]]["raw_text"])
     summary = {
         "n": len(ids),
+        "n_missing": len(missing_ids),
+        "missing_ids": missing_ids,
         "n_raw_equal": n_raw_equal,
         "n_stripped_equal": sum(1 for i in ids if hf_pred[i]["pred_latex"] == ol_pred[i]["pred_latex"]),
         "normalized_agreement": _rate(arm, "exact"),
@@ -165,13 +168,15 @@ def build(a: argparse.Namespace) -> tuple[dict, list[dict]]:
         "mismatch_ids": {c: [r["id"] for r in rows if r["category"] == c] for c in CATEGORIES if any(r["category"] == c for r in rows)},
     }
     summary |= summarize_categories(rows, n_overridden=n_overridden)
+    # crops absent from any input (for example an Ollama error row has no sidecar) shrink n silently otherwise
+    summary["blocking"] = bool(summary["blocking"] or missing_ids)
     return summary, [r for r in rows if r["auto_category"] is not None]
 
 
 def markdown(s: dict) -> str:
     L = ["# HF bf16 vs Ollama Q8_0 parity (legacy dev crops)", ""]
     L += ["| item | value |", "|---|---|"]
-    for k in ("n", "n_raw_equal", "n_stripped_equal", "n_prompt_match", "template_offset", "n_overridden", "blocking", "scorer_version"):
+    for k in ("n", "n_missing", "n_raw_equal", "n_stripped_equal", "n_prompt_match", "template_offset", "n_overridden", "blocking", "scorer_version"):
         L.append(f"| {k} | {s[k]} |")
     for k in ("normalized_agreement", "render_agreement_identical", "render_agreement_tolerant"):
         L.append(f"| {k} | {json.dumps(s[k])} |")
