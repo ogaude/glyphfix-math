@@ -134,10 +134,7 @@ def score_file(
     pred_path: Path, out_dir: Path, *, render: bool = True, B: int = 10000, seed: int = 0, cache: Path | None = None
 ) -> Path:
     from lightonocr_math import splits
-    try:
-        from lightonocr_math.report import render_report
-    except ImportError:  # report module lands separately
-        render_report = None
+    from lightonocr_math.report import render_report
 
     pred_path, out_dir = Path(pred_path), Path(out_dir)
     records = read_predictions(pred_path)
@@ -191,8 +188,7 @@ def score_file(
     (out_dir / "records.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n" for r in rows), encoding="utf-8")
     rp = out_dir / "results.json"
     rp.write_text(json.dumps(results, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if render_report is not None:
-        (out_dir / "report.md").write_text(render_report(results), encoding="utf-8")
+    (out_dir / "report.md").write_text(render_report(results), encoding="utf-8")
     return rp
 
 

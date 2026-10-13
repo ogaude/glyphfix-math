@@ -108,3 +108,5 @@ def test_score_file_with_render(tmp_path):
     assert bm in res["disagreements"]["string_diff_render_identical"]
     err = next(i for i, f in fx.items() if f.get("pred_error"))
     assert rows[err]["render_identical"] is False
+    md = (tmp_path / "report.md").read_text()
+    assert "render tolerant (separate tier)" in md and "bug flag" in md
