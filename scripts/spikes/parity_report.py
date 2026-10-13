@@ -32,7 +32,11 @@ TOP_K = 5
 
 def modal_template_offset(hf_rows: dict[str, dict], ol_rows: dict[str, dict]) -> int:
     """Most common value of ollama prompt_eval_count minus HF n_prompt_tokens over the shared crops."""
-    offs = [ol_rows[i]["prompt_eval_count"] - hf_rows[i]["n_prompt_tokens"] for i in hf_rows if i in ol_rows]
+    offs = [
+        ol_rows[i]["prompt_eval_count"] - hf_rows[i]["n_prompt_tokens"]
+        for i in hf_rows
+        if i in ol_rows and ol_rows[i].get("prompt_eval_count") is not None and hf_rows[i].get("n_prompt_tokens") is not None
+    ]
     return collections.Counter(offs).most_common(1)[0][0] if offs else 0
 
 
@@ -44,6 +48,8 @@ def categorize(hf_row: dict, ol_row: dict, *, template_offset: int) -> str | Non
         return "bug"
     if hf_row.get("finish") == "length" or ol_row.get("done_reason") == "length":
         return "truncation"
+    if ol_row.get("prompt_eval_count") is None or hf_row.get("n_prompt_tokens") is None:
+        return "bug"  # prompt token count unmeasured (Ollama omits it on a cached prompt): cannot attribute, needs a human
     offset = ol_row["prompt_eval_count"] - hf_row["n_prompt_tokens"]
     if offset != 0:
         return "template" if offset == template_offset else "preprocessing"
@@ -119,7 +125,7 @@ def build(a: argparse.Namespace) -> tuple[dict, list[dict]]:
                 "ollama_text": os_[i]["raw_text"],
                 "hf_prompt_tokens": hs[i]["n_prompt_tokens"],
                 "hf_image_tokens": hs[i]["image_tokens"],
-                "ollama_prompt_tokens": os_[i]["prompt_eval_count"],
+                "ollama_prompt_tokens": os_[i].get("prompt_eval_count"),
                 "margin": hs[i].get("margin"),
                 "ollama_token_rank": hs[i].get("ollama_token_rank"),
                 "divergence_index": hs[i].get("divergence_index"),
@@ -145,11 +151,11 @@ def build(a: argparse.Namespace) -> tuple[dict, list[dict]]:
         "render_agreement_tolerant": _rate(arm, "render_tolerant") if render else "missing: --no-render",
         "hf_vs_gt": {"exact": _rate(vs_gt_hf, "exact")} | ({"render_identical": _rate(vs_gt_hf, "render_identical")} if render else {}),
         "ollama_vs_gt": {"exact": _rate(vs_gt_ol, "exact")} | ({"render_identical": _rate(vs_gt_ol, "render_identical")} if render else {}),
-        "n_prompt_match": sum(1 for i in ids if hs[i]["n_prompt_tokens"] == os_[i]["prompt_eval_count"]),
+        "n_prompt_match": sum(1 for i in ids if hs[i]["n_prompt_tokens"] == os_[i].get("prompt_eval_count")),
         "template_offset": offset,
         "image_tokens_hf": _stats([hs[i]["image_tokens"] for i in ids]),
         "prompt_tokens_hf": _stats([hs[i]["n_prompt_tokens"] for i in ids]),
-        "prompt_tokens_ollama": _stats([os_[i]["prompt_eval_count"] for i in ids]),
+        "prompt_tokens_ollama": _stats([os_[i]["prompt_eval_count"] for i in ids if os_[i].get("prompt_eval_count") is not None]),
         "pixel_budget": {
             "hf": {"min_px": hs[ids[0]].get("min_px"), "max_px": hs[ids[0]].get("max_px")},
             "ollama": json.loads(a.ol_budget.read_text(encoding="utf-8")) if a.ol_budget else "not recorded",

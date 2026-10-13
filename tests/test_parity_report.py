@@ -90,3 +90,13 @@ def test_first_divergence_token_space():
     assert first_divergence(tok("abc"), tok("abd")) == 2
     assert first_divergence(tok("ab"), tok("abc")) == 2
     assert first_divergence(tok("abc"), tok("abc")) is None
+
+
+def test_missing_prompt_eval_count_is_bug_not_crash():
+    assert pr.categorize(hf("x"), ol("y", n_prompt=None), template_offset=0) == "bug"
+
+
+def test_modal_offset_ignores_unmeasured_counts():
+    hf_rows = {"a": hf(n_prompt=80), "b": hf(n_prompt=80)}
+    ol_rows = {"a": ol(n_prompt=84), "b": ol(n_prompt=None)}
+    assert pr.modal_template_offset(hf_rows, ol_rows) == 4
