@@ -1,0 +1,94 @@
+{
+  "candidates_unique": 14180,
+  "counts": {
+    "benchmark": 2159,
+    "dev": 672,
+    "train": 11349
+  },
+  "invalid_ids": 0,
+  "quarantine_count": 2137,
+  "quarantine_fraction_of_train_dev": 0.17777223192746028,
+  "skipped_large_author_papers": 86,
+  "top_quarantine_authors": [
+    {
+      "name": "yang liu",
+      "quarantined_papers": 26
+    },
+    {
+      "name": "hao wang",
+      "quarantined_papers": 15
+    },
+    {
+      "name": "sandi klavzar",
+      "quarantined_papers": 15
+    },
+    {
+      "name": "hao chen",
+      "quarantined_papers": 14
+    },
+    {
+      "name": "wei zhang",
+      "quarantined_papers": 13
+    },
+    {
+      "name": "hao li",
+      "quarantined_papers": 12
+    },
+    {
+      "name": "wei wang",
+      "quarantined_papers": 12
+    },
+    {
+      "name": "xin zhang",
+      "quarantined_papers": 12
+    },
+    {
+      "name": "cms collaboration",
+      "quarantined_papers": 11
+    },
+    {
+      "name": "xin wang",
+      "quarantined_papers": 11
+    },
+    {
+      "name": "yang zhang",
+      "quarantined_papers": 11
+    },
+    {
+      "name": "atlas collaboration",
+      "quarantined_papers": 10
+    },
+    {
+      "name": "jian wang",
+      "quarantined_papers": 10
+    },
+    {
+      "name": "xin li",
+      "quarantined_papers": 10
+    },
+    {
+      "name": "yang li",
+      "quarantined_papers": 10
+    },
+    {
+      "name": "yue zhang",
+      "quarantined_papers": 10
+    },
+    {
+      "name": "francesco mauri",
+      "quarantined_papers": 9
+    },
+    {
+      "name": "kenji watanabe",
+      "quarantined_papers": 9
+    },
+    {
+      "name": "takashi taniguchi",
+      "quarantined_papers": 9
+    },
+    {
+      "name": "yan wang",
+      "quarantined_papers": 9
+    }
+  ]
+}

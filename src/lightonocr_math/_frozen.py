@@ -6,4 +6,4 @@ committed split file against it. Changing the pinned value means the held-out be
 changed, which requires a new SPLIT_RULE_VERSION.
 """
 
-FROZEN_SPLIT_DIGEST: str | None = None
+FROZEN_SPLIT_DIGEST: str | None = "b0afe4144600ba3e7d19a6d37d85344a080fae84364aeff562c11e475ac3ab5e"

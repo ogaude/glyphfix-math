@@ -152,14 +152,15 @@ def test_load_train_and_dev(fs):
     assert set(dev) == {t for t in groups["dev"] if t not in fs.quarantine}
 
 
-def test_not_frozen():
-    assert _frozen.FROZEN_SPLIT_DIGEST is None
+def test_not_frozen(monkeypatch):
+    monkeypatch.setattr(_frozen, "FROZEN_SPLIT_DIGEST", None)
     with pytest.raises(SplitNotFrozenError):
         splits.frozen()
     assert rule_info() == {"split_rule_version": "1", "split_digest": None}
 
 
-def test_cli_verify_and_info(tmp_path, capsys):
+def test_cli_verify_and_info(tmp_path, capsys, monkeypatch):
+    monkeypatch.setattr(_frozen, "FROZEN_SPLIT_DIGEST", None)
     cand = _write_candidates(tmp_path / "cand.jsonl")
     out = tmp_path / "s"
     assert splits.main(["freeze", "--candidates", str(cand), "--out", str(out), "--salt", SALT]) == 0

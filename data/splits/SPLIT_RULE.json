@@ -1,0 +1,36 @@
+{
+  "author_rule": {
+    "case": "lower",
+    "fold": "NFKD ascii",
+    "initial_only": "dropped",
+    "max_authors_per_paper": 50,
+    "min_tokens": 2,
+    "punctuation": "removed, hyphen->space",
+    "version": "1"
+  },
+  "candidates_count": 14180,
+  "candidates_sha256": "929111c0fd4f59745c02cfce45a4bdc55ace55627b98dd9c5ad7189bb19efdc0",
+  "created": "2026-10-13",
+  "fractions": {
+    "benchmark": 0.15,
+    "dev": 0.05,
+    "train": 0.8
+  },
+  "hash": "sha256(salt + base_arxiv_id) -> first 8 bytes big-endian / 2**64",
+  "ranges": {
+    "benchmark": [
+      0.0,
+      0.15
+    ],
+    "dev": [
+      0.15,
+      0.2
+    ],
+    "train": [
+      0.2,
+      1.0
+    ]
+  },
+  "rule_version": "1",
+  "salt": "463c3bc544acda17"
+}
