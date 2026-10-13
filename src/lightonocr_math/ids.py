@@ -16,12 +16,12 @@ from __future__ import annotations
 
 import re
 
-ARXIV_ID_RE = re.compile(r"^(\d{4}\.\d{4,5}|[a-z][a-z\-]*(\.[A-Z]{2})?/\d{7})(v\d+)?$")
-_VERSION_RE = re.compile(r"v\d+$")
+ARXIV_ID_RE = re.compile(r"(\d{4}\.\d{4,5}|[a-z][a-z\-]*(\.[A-Z]{2})?/\d{7})(v\d+)?", re.ASCII)
+_VERSION_RE = re.compile(r"v\d+$", re.ASCII)
 
 
 def is_arxiv_id(s: str) -> bool:
-    m = ARXIV_ID_RE.match(s)
+    m = ARXIV_ID_RE.fullmatch(s)
     if not m:
         return False
     head = m.group(1)
@@ -47,6 +47,6 @@ def safe_id(arxiv_id: str) -> str:
 
 
 def from_safe_id(s: str) -> str:
-    if s and not s[0].isdigit():
+    if s and s[0] not in "0123456789":
         return s.replace("_", "/", 1)
     return s
