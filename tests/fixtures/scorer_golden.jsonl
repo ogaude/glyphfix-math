@@ -61,3 +61,7 @@
 {"gt": "x+1,", "pred": "x+1"}
 {"gt": "x+1 \\qquad (12a)", "pred": "x+1"}
 {"gt": "a &= b", "pred": "a = b"}
+{"gt": "\\left. x \\right.", "pred": "x \\right"}
+{"gt": "\\left\\{ a \\right.", "pred": "\\left\\{ a \\right"}
+{"gt": "= \\ln (2)", "pred": "= \\ln"}
+{"gt": "y = f (3)", "pred": "y = f"}

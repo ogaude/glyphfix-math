@@ -3,12 +3,14 @@
 It merges only strings that render to the same glyphs, so that prime/l, dropped
 primes, Greek/Latin, bold/bar/underline and I/1 errors are never hidden.
 
-Rules (NORMALIZE_RULES_VERSION 1), applied in this fixed order:
+Rules (NORMALIZE_RULES_VERSION 2), applied in this fixed order:
 
 1. ``strip_layout`` on the string: outer ``$$..$$``, ``$..$``, ``\\[..\\]``,
    ``\\(..\\)`` and outer ``\\begin{X}..\\end{X}`` for equation/align-like
    environments; remove ``\\label{}``, ``\\tag{}``, ``\\tag*{}``, ``\\nonumber``,
-   ``\\notag``; trailing equation number ``(12a)``; trailing ``, . ;``.
+   ``\\notag``; trailing equation number ``(12a)`` after a long gap (``\\quad``,
+   ``\\qquad``, ``\\hfill``, ``\\;\\;``, two control spaces or ``~~``); trailing
+   ``, . ;`` unless the dot closes ``\\left.`` or ``\\right.``.
 2. Tokenize; drop ``&`` (alignment only). ``\\\\`` and inner environments stay.
 3. Drop spacing tokens (SPACING_TOKENS) and the invisible ``\\left.`` /
    ``\\right.`` pairs.
@@ -24,6 +26,10 @@ Rules (NORMALIZE_RULES_VERSION 1), applied in this fixed order:
 8. Script order: ``^A _B`` becomes ``_B ^A``. Primes are not reordered.
 
 Unbalanced braces never raise; unmatched groups are left as they are.
+
+Changes in 2: a bare trailing ``\\right`` no longer equals ``\\right.``, and a real
+trailing argument such as ``\\ln (2)`` or ``f (3)`` is no longer stripped as an
+equation number.
 """
 
 from __future__ import annotations
@@ -32,7 +38,7 @@ import re
 
 from lightonocr_math.latex_tokens import detokenize, tokenize
 
-NORMALIZE_RULES_VERSION = "1"
+NORMALIZE_RULES_VERSION = "2"
 
 SPACING_TOKENS = frozenset(
     {"\\,", "\\;", "\\:", "\\!", "\\ ", "\\quad", "\\qquad", "~", "\\enspace", "\\thinspace", "\\medspace", "\\thickspace"}
@@ -73,8 +79,20 @@ _ENV_RE = re.compile(r"^\\begin\{(" + "|".join(re.escape(e) for e in _ENVS) + r"
 _LABEL_RE = re.compile(r"\\label\s*\{[^{}]*\}")
 _TAG_RE = re.compile(r"\\tag\*?\s*\{[^{}]*\}")
 _NONUM_RE = re.compile(r"\\(?:nonumber|notag)(?![A-Za-z])")
-_TRAIL_NUM_RE = re.compile(r"(?:(?<=\s)|(?<=quad))\(\s*\d+[a-z]?\s*\)\s*$")
-_TRAIL_PUNCT_RE = re.compile(r"(?<!\\)[,.;]\s*$")
+_LONG_GAP = r"(?:\\(?:q?quad|hfill)(?![A-Za-z])|(?:\\;\s*){2,}|(?:\\ \s*){2,}|(?:~\s*){2,})"
+_TRAIL_NUM_RE = re.compile(_LONG_GAP + r"\s*\(\s*\d+[a-z]?\s*\)\s*$")
+_TRAIL_PUNCT_RE = re.compile(r"[,.;]\s*$")
+_DELIM_END_RE = re.compile(r"\\(?:right|left)$")
+
+
+def _strip_trailing_punct(s: str) -> str:
+    m = _TRAIL_PUNCT_RE.search(s)
+    if m is None:
+        return s
+    head = s[: m.start()].rstrip()
+    if s[: m.start()].endswith("\\") or _DELIM_END_RE.search(head):
+        return s
+    return s[: m.start()]
 
 
 def _strip_outer(s: str) -> str:
@@ -105,7 +123,7 @@ def strip_layout(latex: str) -> str:
     while prev != s:
         prev = s
         s = _TRAIL_NUM_RE.sub("", s).strip()
-        s = _TRAIL_PUNCT_RE.sub("", s).strip()
+        s = _strip_trailing_punct(s).strip()
     return s
 
 

@@ -33,9 +33,9 @@ from lightonocr_math import paths, stats
 from lightonocr_math.errors import CLASSES, ERROR_RULES_VERSION, classify, notation_present
 from lightonocr_math.normalize import NORMALIZE_RULES_VERSION, canonical, equivalent
 
-SCORER_VERSION = "1.0.0"
+SCORER_VERSION = "1.1.0"
 RESULT_SCHEMA_VERSION = "1"
-SCORER_FINGERPRINT = "b714fef07a0c54a251402581a948e11fbf840509fc5aaa1eeaf081e73417d2b2"
+SCORER_FINGERPRINT = "8e462d68b3ee89eb2a2429ca6b1ddd1a9c04ac3d3e340fb68188b139394274e8"
 GOLDEN_PATH = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "scorer_golden.jsonl"
 
 

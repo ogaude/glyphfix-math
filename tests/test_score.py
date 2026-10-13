@@ -52,7 +52,7 @@ def test_score_file_no_render(tmp_path):
         "split_rule_version", "split_digest", "bootstrap", "metrics", "per_class", "predictions_sha256", "n_records",
     ):
         assert key in res, key
-    assert res["scorer_version"] == "1.0.0"
+    assert res["scorer_version"] == "1.1.0"
     assert res["render"] == {"enabled": False}
     assert res["bootstrap"] == {"B": 200, "seed": 0, "ci": 0.95}
     m = res["metrics"]["exact"]
@@ -92,7 +92,7 @@ def test_cli_prints_summary(tmp_path, capsys):
 def test_score_file_with_render(tmp_path):
     rp = S.score_file(FIX, tmp_path, render=True, B=200, cache=tmp_path / "cache")
     res = json.loads(rp.read_text())
-    assert res["scorer_version"] == "1.0.0"
+    assert res["scorer_version"] == "1.1.0"
     assert res["preamble_sha256"] and res["wrap_version"] and res["render_dpi"]
     assert "render_identical" in res["metrics"] and "render_tolerant" in res["metrics"]
     rows = {json.loads(line)["id"]: json.loads(line) for line in (tmp_path / "records.jsonl").read_text().splitlines()}

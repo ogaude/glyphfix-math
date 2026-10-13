@@ -57,6 +57,11 @@ MUST_DIFFER = [
     ("\\frac{a}{b}c", "\\frac{a}{bc}", "other"),
     ("e^{x+1}", "e^x+1", "other"),
     ("\\sqrt{ab}", "\\sqrt{a}b", "other"),
+    # dropped content must not pass as layout
+    (r"\left. x \right.", r"x \right", "other"),
+    (r"\left\{ a \right.", r"\left\{ a \right", "other"),
+    (r"= \ln (2)", r"= \ln", "other"),
+    (r"y = f (3)", r"y = f", "other"),
 ]
 
 MUST_EQUAL = [
@@ -90,6 +95,10 @@ MUST_EQUAL = [
     ("x+1,", "x+1"),
     ("x+1 \\qquad (12a)", "x+1"),
     ("a &= b", "a = b"),
+    (r"\left. x \right.", "x"),
+    (r"\left\{ a \right. ,", r"\left\{ a \right."),
+    (r"x+1 \quad (3)", "x+1"),
+    (r"x+1 \hfill (3)", "x+1"),
 ]
 
 
@@ -105,8 +114,8 @@ def test_must_equal(a, b):
 
 
 def test_row_counts():
-    assert len(MUST_DIFFER) >= 30
-    assert len(MUST_EQUAL) >= 20
+    assert len(MUST_DIFFER) >= 37
+    assert len(MUST_EQUAL) >= 34
 
 
 def test_alias_table_is_glyph_identical_only():
@@ -119,7 +128,7 @@ def test_alias_table_is_glyph_identical_only():
 
 
 def test_rules_version():
-    assert N.NORMALIZE_RULES_VERSION == "1"
+    assert N.NORMALIZE_RULES_VERSION == "2"
 
 
 def test_old_normalizer_holes_are_closed():
