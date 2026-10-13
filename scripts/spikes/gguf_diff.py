@@ -2,6 +2,8 @@
 
 Usage (in .venv-convert, which has the checkout's gguf package):
   .venv-convert/bin/python -m scripts.spikes.gguf_diff --a A.gguf --b B.gguf --out diff.json
+Memory: tensors are hashed in 64 MiB slices; on the shared machine launch it under the guard, for example
+  uv run python -m lightonocr_math.guard --ram-gb 4 -- .venv-convert/bin/python -m scripts.spikes.gguf_diff ...
 """
 
 from __future__ import annotations
@@ -28,6 +30,17 @@ def _field_value(field):
     return val.item() if hasattr(val, "item") else val
 
 
+def _hash_tensor(data, chunk: int = 64 * 2**20) -> str:
+    """sha256 of the tensor bytes, fed in 64 MiB slices of the memmap (no full copy of the tensor)."""
+    import numpy as np
+
+    flat = np.ascontiguousarray(data).reshape(-1).view(np.uint8)
+    h = hashlib.sha256()
+    for i in range(0, flat.size, chunk):
+        h.update(memoryview(flat[i : i + chunk]))
+    return h.hexdigest()
+
+
 def summarize(path: str | Path) -> dict:
     from gguf import GGUFReader
 
@@ -38,7 +51,7 @@ def summarize(path: str | Path) -> dict:
         tensors[t.name] = {
             "type": t.tensor_type.name,
             "shape": [int(x) for x in t.shape],
-            "sha256": hashlib.sha256(t.data.tobytes() if hasattr(t.data, "tobytes") else bytes(t.data)).hexdigest(),
+            "sha256": _hash_tensor(t.data),
         }
     return {"kv": kv, "tensors": tensors}
 
