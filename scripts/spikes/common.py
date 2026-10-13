@@ -71,10 +71,7 @@ def strip_fences(text: str) -> str:
         # one-line answer: fence, optional language token, content, optional closing fence on the same line
         body = lines[0][len(_FENCE):]
         body = re.sub(r"^[A-Za-z0-9_+-]+(?=\s)", "", body)
-        body = body.rstrip()
-        if body.endswith(_FENCE):
-            body = body[: -len(_FENCE)]
-        return body.strip()
+        return body.rstrip().removesuffix(_FENCE).strip()
     lines = lines[1:]
     if lines and lines[-1].rstrip() == _FENCE:
         lines = lines[:-1]
