@@ -361,13 +361,15 @@ def main(argv: list[str] | None = None) -> int:
         fs = frozen()
         info["benchmark_count"] = len(fs.benchmark)
         info["quarantine_count"] = len(fs.quarantine)
-    except SplitNotFrozenError:
-        pass
+    except (SplitNotFrozenError, SplitIntegrityError) as e:
+        info["frozen_error"] = str(e)
     print(json.dumps(info, indent=2, sort_keys=True))
     return 0
 
 
-if _frozen.FROZEN_SPLIT_DIGEST is not None:
+# Fail loudly at import, except when run as ``python -m lightonocr_math.splits`` where main()
+# reports an integrity failure cleanly instead of dying with a traceback.
+if _frozen.FROZEN_SPLIT_DIGEST is not None and __name__ != "__main__":
     frozen()
 
 if __name__ == "__main__":
