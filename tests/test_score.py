@@ -103,6 +103,7 @@ def test_score_file_with_render(tmp_path):
     macro = next(i for i, f in fx.items() if f["gt_latex"] == "\\R^n")
     assert rows[macro]["render_identical"] is None
     assert res["n_gt_uncompilable"] >= 1
+    assert sum(res["gt_render_status_counts"].values()) == res["n_records"]
     assert res["metrics"]["render_identical"]["den"] == res["n_records"] - res["n_gt_uncompilable"]
     bm = next(i for i, f in fx.items() if f["pred_latex"] == "\\bm{x}" and f["gt_latex"] == "\\boldsymbol{x}")
     assert bm in res["disagreements"]["string_diff_render_identical"]
@@ -130,3 +131,27 @@ def test_cli_reports_guard_and_render_errors_without_traceback(tmp_path, monkeyp
     monkeypatch.setattr(S, "score_file", boom_render)
     assert S.main([str(pred), "--out", str(tmp_path / "o")]) == 3
     assert "docker down" in capsys.readouterr().err
+
+
+def test_gt_status_breakdown_separates_rejected_from_compile_failed(tmp_path, monkeypatch):
+    from lightonocr_math import render
+
+    recs = [
+        {"id": f"i{n}", "paper_id": f"p{n}", "gt_latex": "x", "pred_latex": "x"} for n in range(4)
+    ]
+    pred = tmp_path / "p.jsonl"
+    pred.write_text("".join(json.dumps(r) + "\n" for r in recs), encoding="utf-8")
+    statuses = ["rendered", "rejected", "compile-failed", "timeout"]
+
+    def fake(gts, preds, **k):
+        return [
+            render.PairResult(st, "rendered", True if st == "rendered" else None, True if st == "rendered" else None)
+            for st in statuses
+        ]
+
+    monkeypatch.setattr(render, "render_equivalence", fake)
+    rp = S.score_file(pred, tmp_path / "o", render=True, B=50)
+    res = json.loads(rp.read_text())
+    assert res["n_gt_uncompilable"] == 3
+    assert res["gt_render_status_counts"] == {"compile-failed": 1, "rejected": 1, "rendered": 1, "timeout": 1}
+    assert "rejected 1" in (tmp_path / "o" / "report.md").read_text()

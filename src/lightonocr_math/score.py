@@ -146,6 +146,7 @@ def score_file(
     metrics = {"exact": _metric(rows, "exact", B, seed)}
     disagreements = {"string_diff_render_identical": [], "string_equal_render_diff": []}
     n_gt_uncompilable = 0
+    gt_status_counts: dict[str, int] = {}
     render_cfg: dict = {"enabled": False}
     if render:
         from lightonocr_math.render import render_config
@@ -155,6 +156,9 @@ def score_file(
         metrics["render_identical"] = _metric(rows, "render_identical", B, seed)
         metrics["render_tolerant"] = _metric(rows, "render_tolerant", B, seed)
         n_gt_uncompilable = sum(1 for r in rows if r.get("render_identical") is None)
+        for r in rows:
+            st = r.get("gt_render_status", "unknown")
+            gt_status_counts[st] = gt_status_counts.get(st, 0) + 1
         for r in rows:
             if r.get("render_identical") is None:
                 continue
@@ -183,6 +187,9 @@ def score_file(
         "created": dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "n_records": len(rows),
         "n_gt_uncompilable": n_gt_uncompilable,
+        # per ground-truth render status (rendered, rejected, compile-failed, overflow, blank-page, timeout, empty), so
+        # denylist rejections and transient timeouts are not hidden inside n_gt_uncompilable
+        "gt_render_status_counts": dict(sorted(gt_status_counts.items())),
         "metrics": metrics,
         "per_class": per_class,
         "disagreements": {k: sorted(v) for k, v in disagreements.items()},

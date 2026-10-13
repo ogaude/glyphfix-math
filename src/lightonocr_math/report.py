@@ -55,6 +55,11 @@ def render_report(results: dict) -> str:
         f"- bootstrap: seed {b['seed']}, B {b['B']}, CI {b['ci']} (paper-level cluster bootstrap)",
         f"- predictions_sha256: {results.get('predictions_sha256')}",
         f"- records: {results['n_records']}, ground truth not compilable (excluded from render tiers): {results.get('n_gt_uncompilable', 0)}",
+    ]
+    counts = results.get("gt_render_status_counts")
+    if counts:
+        out.append("- ground truth render status: " + ", ".join(f"{k} {v}" for k, v in counts.items()))
+    out += [
         "",
         "## Metrics",
         "",
