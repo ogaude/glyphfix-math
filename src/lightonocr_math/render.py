@@ -498,6 +498,10 @@ def render_many(
         todo[key] = latex
     transient: dict[str, RenderResult] = {}
     if todo:
+        # Only when something must be rendered: fully cached runs work without Docker. A missing image or a
+        # hung daemon would otherwise surface as per-item timeouts and a silently bogus result file.
+        if not docker_available():
+            raise RenderInfrastructureError(f"Docker daemon or image {IMAGE} is not available")
         size = batch_size if batch_size < 50 else min(max(batch_size, 50), 200)
         size = max(size, 1)
         items = list(todo.items())

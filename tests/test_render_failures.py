@@ -12,6 +12,8 @@ from lightonocr_math import guard, render
 @pytest.fixture(autouse=True)
 def _no_preflight(monkeypatch):
     monkeypatch.setattr(guard, "preflight", lambda *a, **k: None)
+    # Scenario fakes only understand `docker run`; the Docker preflight has its own tests below.
+    monkeypatch.setattr(render, "docker_available", lambda: True)
 
 
 def _workdir(argv):
@@ -186,3 +188,32 @@ def test_parallel_abort_bounds_container_calls(tmp_path, monkeypatch):
         render.render_many([f"e{i}" for i in range(8)], batch_size=2, cache=tmp_path, max_parallel=2)
     assert f.calls <= 2
     assert _jsons(tmp_path) == []
+
+
+def test_unavailable_docker_raises_before_any_container(tmp_path, monkeypatch):
+    f = _install(monkeypatch, healthy)
+    monkeypatch.setattr(render, "docker_available", lambda: False)
+    with pytest.raises(render.RenderInfrastructureError, match="not available"):
+        render.render_many(["a", "b"], cache=tmp_path, max_parallel=1)
+    assert f.calls == 0
+    assert _jsons(tmp_path) == []
+
+
+def test_fully_cached_run_needs_no_docker(tmp_path, monkeypatch):
+    _pages(monkeypatch)
+    _install(monkeypatch, healthy)
+    first = render.render_many(["a", "b"], cache=tmp_path, max_parallel=1)
+    monkeypatch.setattr(render, "docker_available", lambda: False)
+    f = _install(monkeypatch, outage)
+    second = render.render_many(["a", "b"], cache=tmp_path, max_parallel=1)
+    assert [r.key for r in second] == [r.key for r in first]
+    assert f.calls == 0
+
+
+def test_docker_available_false_on_hung_daemon(monkeypatch):
+    def hang(*a, **k):
+        raise subprocess.TimeoutExpired("docker", 20)
+
+    monkeypatch.undo()
+    monkeypatch.setattr(render.subprocess, "run", hang)
+    assert render.docker_available() is False
