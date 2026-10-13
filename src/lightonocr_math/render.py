@@ -340,6 +340,17 @@ def docker_available() -> bool:
     return r.returncode == 0
 
 
+def docker_diagnosis() -> str:
+    """Why docker_available() failed: daemon unreachable, or image not pulled yet. Never raises."""
+    try:
+        r = subprocess.run(["docker", "info"], check=False, capture_output=True, timeout=20)
+        if r.returncode != 0:
+            return "docker daemon unreachable (`docker info` failed): start Docker"
+        return f"image not present locally: run `docker pull {IMAGE}`"
+    except Exception:  # noqa: BLE001 - diagnosis only
+        return f"docker unreachable or slow; if the daemon is up, run `docker pull {IMAGE}`"
+
+
 def _batch_source(latexes: Sequence[str]) -> str:
     parts = [PREAMBLE, "\\begin{document}\n"]
     for latex in latexes:
@@ -525,7 +536,7 @@ def render_many(
         # Only when something must be rendered: fully cached runs work without Docker. A missing image or a
         # hung daemon would otherwise surface as per-item timeouts and a silently bogus result file.
         if not docker_available():
-            raise RenderInfrastructureError(f"Docker daemon or image {IMAGE} is not available")
+            raise RenderInfrastructureError(f"Docker daemon or image {IMAGE} is not available: {docker_diagnosis()}")
         size = batch_size if batch_size < 50 else min(max(batch_size, 50), 200)
         size = max(size, 1)
         items = list(todo.items())

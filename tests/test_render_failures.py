@@ -193,7 +193,8 @@ def test_parallel_abort_bounds_container_calls(tmp_path, monkeypatch):
 def test_unavailable_docker_raises_before_any_container(tmp_path, monkeypatch):
     f = _install(monkeypatch, healthy)
     monkeypatch.setattr(render, "docker_available", lambda: False)
-    with pytest.raises(render.RenderInfrastructureError, match="not available"):
+    monkeypatch.setattr(render, "docker_diagnosis", lambda: "docker daemon unreachable")
+    with pytest.raises(render.RenderInfrastructureError, match="not available.*unreachable"):
         render.render_many(["a", "b"], cache=tmp_path, max_parallel=1)
     assert f.calls == 0
     assert _jsons(tmp_path) == []
@@ -217,3 +218,11 @@ def test_docker_available_false_on_hung_daemon(monkeypatch):
     monkeypatch.undo()
     monkeypatch.setattr(render.subprocess, "run", hang)
     assert render.docker_available() is False
+
+
+def test_docker_diagnosis_distinguishes_daemon_from_image(monkeypatch):
+    monkeypatch.undo()
+    monkeypatch.setattr(render.subprocess, "run", lambda argv, **k: subprocess.CompletedProcess(argv, 1, b"", b""))
+    assert "unreachable" in render.docker_diagnosis()
+    monkeypatch.setattr(render.subprocess, "run", lambda argv, **k: subprocess.CompletedProcess(argv, 0, b"", b""))
+    assert "docker pull" in render.docker_diagnosis()
