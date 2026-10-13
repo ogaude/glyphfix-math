@@ -283,12 +283,18 @@ def _cache_get(cache: Path | None, key: str) -> RenderResult | None:
         d = json.loads(p.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
-    status = d.get("status")
-    # entries poisoned by pre-fix code (infrastructure failures cached as LaTeX failures) are re-rendered
-    if status == "timeout" or (status == "compile-failed" and not str(d.get("note", "")).startswith("!")):
+    try:
+        status = d.get("status")
+        # entries poisoned by pre-fix code (infrastructure failures cached as LaTeX failures) are re-rendered
+        if status == "timeout" or (status == "compile-failed" and not str(d.get("note", "")).startswith("!")):
+            return None
+        # a "rendered" entry whose bitmap was lost is a miss (re-render), not a silent non-match
+        if status == "rendered" and not _entry(cache, key, ".npy").is_file():
+            return None
+        shape = tuple(d["shape"]) if d.get("shape") else None
+        return RenderResult(key, d["status"], shape, d.get("bitmap_sha256"), d.get("note", ""))
+    except (KeyError, AttributeError, TypeError, ValueError):
         return None
-    shape = tuple(d["shape"]) if d.get("shape") else None
-    return RenderResult(key, d["status"], shape, d.get("bitmap_sha256"), d.get("note", ""))
 
 
 def _cache_put(cache: Path | None, res: RenderResult, bitmap: np.ndarray | None = None) -> None:
@@ -310,14 +316,18 @@ def load_bitmap(result: RenderResult, cache: Path | None = None) -> np.ndarray |
         return None
     try:
         return np.load(_entry(cache, result.key, ".npy"))
-    except (OSError, ValueError):
+    except (OSError, ValueError, EOFError):
         return None
 
 
 def compare(a: RenderResult, b: RenderResult, cache: Path | None = None) -> tuple[bool, bool]:
     if a.status != "rendered" or b.status != "rendered":
         return False, False
-    return compare_arrays(load_bitmap(a, cache), load_bitmap(b, cache))
+    ba, bb = load_bitmap(a, cache), load_bitmap(b, cache)
+    if ba is None or bb is None:
+        # a rendered entry whose bitmap is unreadable must not score as "not identical"
+        raise RenderInfrastructureError("cached bitmap missing or unreadable for a rendered entry; delete the render cache entry and rerun")
+    return compare_arrays(ba, bb)
 
 
 # --------------------------------------------------------------------------- Docker rendering
