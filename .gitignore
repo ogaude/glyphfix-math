@@ -1,0 +1,7 @@
+data/external/
+data/manifest.jsonl
+__pycache__/
+.venv*/
+experiments/*/out/
+experiments/*/out-*/*/
+*.bak
