@@ -113,6 +113,7 @@ def test_config_and_hash():
     assert render.PREAMBLE_SHA256 == hashlib.sha256(raw).hexdigest()
     c = render.render_config()
     assert c["preamble_sha256"] == render.PREAMBLE_SHA256
+    assert c["filter_version"] == render.FILTER_VERSION == "2"
     assert c["wrap_version"] == "1" and c["dpi"] == 300 and c["image"] == render.IMAGE
     tol = c["tolerance"]
     assert tol == {
@@ -131,6 +132,9 @@ def test_cache_key_stability(monkeypatch):
     assert render.cache_key("x+1") != k
     monkeypatch.undo()
     monkeypatch.setattr(render, "PREAMBLE_SHA256", "0" * 64)
+    assert render.cache_key("x+1") != k
+    monkeypatch.undo()
+    monkeypatch.setattr(render, "FILTER_VERSION", "3")
     assert render.cache_key("x+1") != k
 
 

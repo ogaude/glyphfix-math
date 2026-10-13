@@ -19,7 +19,7 @@ Behaviour:
   scores identical=False and tolerant=False.
 
 Cache policy:
-  Results are cached by sha256(preamble sha256, wrap version, dpi, latex). Rendered, blank-page,
+  Results are cached by sha256(image digest, preamble sha256, wrap version, filter version, dpi, latex). Rendered, blank-page,
   overflow, rejected, empty and pdflatex "!" compile failures are cached. Timeouts and failures
   not attributable to a LaTeX error are returned for the current call but never cached.
   Infrastructure failures (Docker unreachable, container killed, no pdflatex log) raise
@@ -66,6 +66,9 @@ IMAGE = f"texlive/texlive@{IMAGE_DIGEST}"
 RENDER_DPI = 300
 INK_THRESHOLD = 250
 WRAP_VERSION = "1"
+# Bump whenever check_safe, _FORBIDDEN_WORDS, _DOCUMENT_RE or _CONTROL_SYMBOL_RE change. It is part of
+# cache_key(), so a bump invalidates every cached render once.
+FILTER_VERSION = "2"
 TOL_SHAPE_PX = 2
 TOL_PIXEL_DELTA = 64
 TOLERANCE_VERSION = "2"
@@ -101,6 +104,7 @@ def render_config() -> dict:
         "image": IMAGE,
         "preamble_sha256": PREAMBLE_SHA256,
         "wrap_version": WRAP_VERSION,
+        "filter_version": FILTER_VERSION,
         "dpi": RENDER_DPI,
         "ink_threshold": INK_THRESHOLD,
         "tolerance": {
@@ -272,7 +276,7 @@ class RenderResult:
 
 
 def cache_key(latex: str) -> str:
-    payload = IMAGE_DIGEST + "\n" + PREAMBLE_SHA256 + "\n" + WRAP_VERSION + "\n" + str(RENDER_DPI) + "\n" + latex
+    payload = IMAGE_DIGEST + "\n" + PREAMBLE_SHA256 + "\n" + WRAP_VERSION + "\n" + FILTER_VERSION + "\n" + str(RENDER_DPI) + "\n" + latex
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
