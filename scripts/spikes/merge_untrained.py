@@ -130,6 +130,9 @@ def main(argv: list[str] | None = None) -> int:
     snap = snapshot_dir()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
+    # stale shards from an earlier run would be indexed by compare_safetensors and corrupt the comparison
+    for stale in [*out.glob("*.safetensors"), *out.glob("*.safetensors.index.json")]:
+        stale.unlink()
 
     model = AutoModelForImageTextToText.from_pretrained(snap, dtype=torch.bfloat16, device_map="cpu")
     pm = peft.get_peft_model(model, lora.lora_config(args.rank, args.alpha))
@@ -139,7 +142,7 @@ def main(argv: list[str] | None = None) -> int:
     if not b_all_zero or n_b == 0:
         raise SystemExit("lora_B is not all zeros: the adapter is not untrained")
 
-    adapter_dir = EXPORT_DIR / "untrained-adapter"
+    adapter_dir = out.parent / "untrained-adapter"
     pm.save_pretrained(str(adapter_dir))
     adapter_file = adapter_dir / "adapter_model.safetensors"
     adapter_sha = sha256_file(adapter_file)
