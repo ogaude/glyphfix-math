@@ -74,6 +74,12 @@ OVERFLOW_MARGIN_PX = 5
 
 # docker run errors, command not executable / not found, SIGKILL (OOM), SIGSEGV
 INFRA_EXIT_CODES = frozenset({125, 126, 127, 137, 139})
+# SIGKILL (OOM at the 4 GB cap) and SIGSEGV can also be caused by one pathological equation (a degenerate repetition loop
+# in a prediction). They are not raised at once: the batch is bisected, and only a singleton that is killed while a trivial
+# control equation is killed too counts as an infrastructure failure.
+KILL_EXIT_CODES = frozenset({137, 139})
+CONTROL_LATEX = "x"
+KILLED_NOTE = "container killed (oom/segv)"
 
 STATUSES = ("rendered", "compile-failed", "blank-page", "rejected", "overflow", "timeout", "empty")
 
@@ -424,6 +430,8 @@ def _run_batch_reserved(latexes: Sequence[str], work_root: Path, timeout_s: int)
             # equivalent of `docker kill <name>`: the host timeout is the only limit, so stop the container explicitly
             subprocess.run(["docker", "kill", name], capture_output=True, check=False)
             return None, "timeout", True
+        if proc.returncode in KILL_EXIT_CODES:
+            return None, f"{KILLED_NOTE}, exit {proc.returncode}", False
         if proc.returncode in INFRA_EXIT_CODES:
             raise _infra_error(workdir, "docker or container failure", proc)
         log_path = workdir / "batch.log"
@@ -552,6 +560,16 @@ def _render_group_inner(
         key = items[0][0]
         if timed_out:
             return {key: RenderResult(key, "timeout", None, None, f"timeout after {timeout_s}s")}
+        if err.startswith(KILLED_NOTE):
+            # Pathological equation or broken sandbox? A trivial control tells them apart.
+            control = _run_batch([CONTROL_LATEX], work_root, timeout_s)
+            if control[0] is not None:
+                shutil.rmtree(control[0], ignore_errors=True)
+                # transient and never cached: it is a property of this run's resources, not of the LaTeX
+                return {key: RenderResult(key, "compile-failed", None, None, err)}
+            raise RenderInfrastructureError(
+                f"{err} on a single equation and the control equation also failed ({control[1]}): sandbox problem, not the input"
+            )
         res = RenderResult(key, "compile-failed", None, None, err)
         if err.startswith("!"):
             _cache_put(cache, res)

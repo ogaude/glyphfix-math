@@ -289,3 +289,20 @@ def test_timeout_on_both_halves_is_infrastructure(tmp_path, monkeypatch):
         render.render_many([f"e{i}" for i in range(16)], batch_size=16, cache=tmp_path, max_parallel=1)
     assert len(calls) == 3  # whole batch plus its two halves, no deeper bisection
     assert list((tmp_path / "work").glob("batch-*")) == []
+
+
+@pytest.mark.parametrize("code", sorted(render.KILL_EXIT_CODES))
+def test_pathological_equation_killed_is_isolated_and_not_cached(tmp_path, monkeypatch, code):
+    def scenario(argv, wd):
+        if "BOOM" in (wd / "batch.tex").read_text():
+            (wd / "batch.log").write_text("killed\n")
+            return subprocess.CompletedProcess(argv, code, "", "")
+        return healthy(argv, wd)
+
+    _install(monkeypatch, scenario)
+    _pages(monkeypatch)
+    res = render.render_many(["a", "BOOM", "c", "d"], batch_size=8, cache=tmp_path, max_parallel=1)
+    assert [r.status for r in res] == ["rendered", "compile-failed", "rendered", "rendered"]
+    assert res[1].note.startswith(render.KILLED_NOTE)
+    assert not render._entry(tmp_path, render.cache_key("BOOM"), ".json").exists()
+    assert render._cache_get(tmp_path, render.cache_key("a")) is not None
