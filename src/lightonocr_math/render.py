@@ -10,11 +10,20 @@ Behaviour:
   Ground truth and prediction go through one fixed preamble (preamble.tex) and one wrap()
   function, are compiled with pdflatex in batches inside a Docker sandbox, rasterized at
   300 DPI with pypdfium2 and cropped to the ink bounding box. "identical" means exact bitmap
-  equality after the crop. A separate "tolerant" flag allows a few pixels of shape and
-  intensity noise; it is reported on its own and never merged into the identical rate.
+  equality after the crop. A separate "tolerant" flag allows only isolated anti-alias noise
+  (no differing region above TOL_MAX_COMPONENT_PX pixels, at most TOL_MAX_DIFF_PX differing
+  pixels in total, best alignment within TOL_SHAPE_PX). It is a diagnostic tier reported on
+  its own, never merged into the identical rate, and it must never be used as an acceptance
+  gate; render identical is the co-primary metric.
   A prediction that does not compile (or is rejected, empty, blank or overflows the page)
-  scores identical=False and tolerant=False. Results are cached by
-  sha256(preamble sha256, wrap version, dpi, latex).
+  scores identical=False and tolerant=False.
+
+Cache policy:
+  Results are cached by sha256(preamble sha256, wrap version, dpi, latex). Rendered, blank-page,
+  overflow, rejected, empty and pdflatex "!" compile failures are cached. Timeouts and failures
+  not attributable to a LaTeX error are returned for the current call but never cached.
+  Infrastructure failures (Docker unreachable, container killed, no pdflatex log) raise
+  RenderInfrastructureError and leave the cache untouched.
 
 Security model:
   Equations are untrusted. They are only ever written into batch.tex, never into a shell
@@ -37,6 +46,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import threading
 import uuid
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
@@ -54,14 +64,26 @@ INK_THRESHOLD = 250
 WRAP_VERSION = "1"
 TOL_SHAPE_PX = 2
 TOL_PIXEL_DELTA = 64
-TOL_MAX_FRACTION = 0.002
+TOLERANCE_VERSION = "2"
+TOL_MAX_COMPONENT_PX = 4
+TOL_MAX_DIFF_PX = 24
 OVERFLOW_MARGIN_PX = 5
+
+# docker run errors, command not executable / not found, SIGKILL (OOM), SIGSEGV
+INFRA_EXIT_CODES = frozenset({125, 126, 127, 137, 139})
 
 STATUSES = ("rendered", "compile-failed", "blank-page", "rejected", "overflow", "timeout", "empty")
 
 _PREAMBLE_BYTES = (importlib.resources.files("lightonocr_math") / "preamble.tex").read_bytes()
 PREAMBLE = _PREAMBLE_BYTES.decode("utf-8")
 PREAMBLE_SHA256 = hashlib.sha256(_PREAMBLE_BYTES).hexdigest()
+
+
+class RenderInfrastructureError(RuntimeError):
+    """Docker or the container could not produce a pdflatex verdict.
+
+    Never cached: the caller must fix the infrastructure and rerun.
+    """
 
 
 def render_config() -> dict:
@@ -72,9 +94,11 @@ def render_config() -> dict:
         "dpi": RENDER_DPI,
         "ink_threshold": INK_THRESHOLD,
         "tolerance": {
+            "version": TOLERANCE_VERSION,
             "shape_px": TOL_SHAPE_PX,
             "pixel_delta": TOL_PIXEL_DELTA,
-            "max_fraction": TOL_MAX_FRACTION,
+            "max_component_px": TOL_MAX_COMPONENT_PX,
+            "max_diff_px": TOL_MAX_DIFF_PX,
         },
     }
 
@@ -195,13 +219,29 @@ def compare_arrays(a: np.ndarray | None, b: np.ndarray | None) -> tuple[bool, bo
         return True, True
     if abs(a.shape[0] - b.shape[0]) > TOL_SHAPE_PX or abs(a.shape[1] - b.shape[1]) > TOL_SHAPE_PX:
         return False, False
-    h, w = max(a.shape[0], b.shape[0]), max(a.shape[1], b.shape[1])
+    from scipy import ndimage
+
+    pad = TOL_SHAPE_PX
+    h, w = max(a.shape[0], b.shape[0]) + 2 * pad, max(a.shape[1], b.shape[1]) + 2 * pad
     pa = np.full((h, w), 255, dtype=np.uint8)
-    pb = np.full((h, w), 255, dtype=np.uint8)
-    pa[: a.shape[0], : a.shape[1]] = a
-    pb[: b.shape[0], : b.shape[1]] = b
-    diff = np.abs(pa.astype(np.int16) - pb.astype(np.int16)) > TOL_PIXEL_DELTA
-    return False, bool(diff.mean() <= TOL_MAX_FRACTION)
+    pa[pad : pad + a.shape[0], pad : pad + a.shape[1]] = a
+    pa16 = pa.astype(np.int16)
+    best: np.ndarray | None = None
+    best_count = -1
+    for dy in range(-pad, pad + 1):
+        for dx in range(-pad, pad + 1):
+            pb = np.full((h, w), 255, dtype=np.uint8)
+            pb[pad + dy : pad + dy + b.shape[0], pad + dx : pad + dx + b.shape[1]] = b
+            mask = np.abs(pa16 - pb.astype(np.int16)) > TOL_PIXEL_DELTA
+            count = int(mask.sum())
+            if best is None or count < best_count:
+                best, best_count = mask, count
+    assert best is not None
+    if best_count > TOL_MAX_DIFF_PX:
+        return False, False
+    labels, n = ndimage.label(best, structure=np.ones((3, 3), dtype=bool))
+    largest = int(np.bincount(labels.ravel())[1:].max()) if n else 0
+    return False, largest <= TOL_MAX_COMPONENT_PX
 
 
 # --------------------------------------------------------------------------- cache
@@ -233,6 +273,10 @@ def _cache_get(cache: Path | None, key: str) -> RenderResult | None:
     try:
         d = json.loads(p.read_text(encoding="utf-8"))
     except (OSError, ValueError):
+        return None
+    status = d.get("status")
+    # entries poisoned by pre-fix code (infrastructure failures cached as LaTeX failures) are re-rendered
+    if status == "timeout" or (status == "compile-failed" and not str(d.get("note", "")).startswith("!")):
         return None
     shape = tuple(d["shape"]) if d.get("shape") else None
     return RenderResult(key, d["status"], shape, d.get("bitmap_sha256"), d.get("note", ""))
@@ -308,8 +352,16 @@ def _first_error(log: str) -> str:
     return ""
 
 
+def _infra_error(workdir: Path, what: str, proc: subprocess.CompletedProcess) -> RenderInfrastructureError:
+    shutil.rmtree(workdir, ignore_errors=True)
+    return RenderInfrastructureError(f"{what} (exit {proc.returncode}): {(proc.stderr or '')[:300]}")
+
+
 def _run_batch(latexes: Sequence[str], work_root: Path, timeout_s: int) -> tuple[Path | None, str, bool]:
-    """Compile one batch. Returns (workdir with batch.pdf or None, first error line, timed_out)."""
+    """Compile one batch. Returns (workdir with batch.pdf or None, first error line, timed_out).
+
+    Only outcomes attributable to LaTeX are returned; infrastructure failures raise RenderInfrastructureError.
+    """
     guard.preflight(ram_gb=guard.DOCKER_MEMORY_GB, timeout_s=600)
     work_root.mkdir(parents=True, exist_ok=True)
     workdir = Path(tempfile.mkdtemp(prefix="batch-", dir=work_root))
@@ -324,13 +376,19 @@ def _run_batch(latexes: Sequence[str], work_root: Path, timeout_s: int) -> tuple
         subprocess.run(["docker", "kill", name], capture_output=True, check=False)
         shutil.rmtree(workdir, ignore_errors=True)
         return None, "timeout", True
+    if proc.returncode in INFRA_EXIT_CODES:
+        raise _infra_error(workdir, "docker or container failure", proc)
     log_path = workdir / "batch.log"
-    log = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else proc.stdout + proc.stderr
-    err = _first_error(log)
-    pdf = workdir / "batch.pdf"
-    if proc.returncode != 0 or err or not pdf.exists():
+    if not log_path.exists():
+        raise _infra_error(workdir, "no pdflatex log produced", proc)
+    err = _first_error(log_path.read_text(encoding="utf-8", errors="replace"))
+    if err:
         shutil.rmtree(workdir, ignore_errors=True)
-        return None, err or f"pdflatex exit {proc.returncode}", False
+        return None, err, False
+    if proc.returncode != 0:
+        raise _infra_error(workdir, "non-zero exit without a LaTeX error", proc)
+    if not (workdir / "batch.pdf").exists():
+        raise _infra_error(workdir, "no pdf produced", proc)
     return workdir, "", False
 
 
@@ -363,9 +421,26 @@ def _bitmap_hash(arr: np.ndarray) -> str:
     return h.hexdigest()
 
 
-def _render_group(items: list[tuple[str, str]], work_root: Path, timeout_s: int, cache: Path | None) -> None:
-    """Render (key, latex) items; write cache entries. A failing group is bisected down to singletons."""
-    workdir, err, timed_out = _run_batch([latex for _, latex in items], work_root, timeout_s)
+def _render_group(
+    items: list[tuple[str, str]],
+    work_root: Path,
+    timeout_s: int,
+    cache: Path | None,
+    *,
+    abort: threading.Event | None = None,
+) -> dict[str, RenderResult]:
+    """Render (key, latex) items; write cache entries. A failing group is bisected down to singletons.
+
+    Returns the uncached (transient) results. Raises RenderInfrastructureError, never bisecting on it.
+    """
+    if abort is not None and abort.is_set():
+        raise RenderInfrastructureError("aborted: an earlier batch hit an infrastructure failure")
+    try:
+        workdir, err, timed_out = _run_batch([latex for _, latex in items], work_root, timeout_s)
+    except RenderInfrastructureError:
+        if abort is not None:
+            abort.set()
+        raise
     pages = None
     if workdir is not None:
         try:
@@ -385,14 +460,20 @@ def _render_group(items: list[tuple[str, str]], work_root: Path, timeout_s: int,
                 _cache_put(
                     cache, RenderResult(key, "rendered", (int(crop.shape[0]), int(crop.shape[1])), _bitmap_hash(crop)), crop
                 )
-        return
+        return {}
     if len(items) == 1:
         key = items[0][0]
-        _cache_put(cache, RenderResult(key, "timeout" if timed_out else "compile-failed", None, None, err))
-        return
+        if timed_out:
+            return {key: RenderResult(key, "timeout", None, None, f"timeout after {timeout_s}s")}
+        res = RenderResult(key, "compile-failed", None, None, err)
+        if err.startswith("!"):
+            _cache_put(cache, res)
+            return {}
+        return {key: res}
     mid = len(items) // 2
-    _render_group(items[:mid], work_root, timeout_s, cache)
-    _render_group(items[mid:], work_root, timeout_s, cache)
+    out = _render_group(items[:mid], work_root, timeout_s, cache, abort=abort)
+    out.update(_render_group(items[mid:], work_root, timeout_s, cache, abort=abort))
+    return out
 
 
 def render_many(
@@ -415,6 +496,7 @@ def render_many(
             _cache_put(cache, RenderResult(key, status, None, None, reason))
             continue
         todo[key] = latex
+    transient: dict[str, RenderResult] = {}
     if todo:
         size = batch_size if batch_size < 50 else min(max(batch_size, 50), 200)
         size = max(size, 1)
@@ -425,12 +507,18 @@ def render_many(
             guard.preflight(ram_gb=guard.DOCKER_MEMORY_GB, timeout_s=600)
             parallel = 1
         work_root = (Path(cache) if cache is not None else cache_dir()) / "work"
+        abort = threading.Event()
         with ThreadPoolExecutor(max_workers=max(1, min(parallel, len(groups)))) as ex:
-            for fut in [ex.submit(_render_group, g, work_root, timeout_s, cache) for g in groups]:
-                fut.result()
+            futs = [ex.submit(_render_group, g, work_root, timeout_s, cache, abort=abort) for g in groups]
+            for fut in futs:
+                try:
+                    transient.update(fut.result())
+                except BaseException:
+                    ex.shutdown(wait=True, cancel_futures=True)
+                    raise
     out = []
     for key in keys:
-        res = _cache_get(cache, key)
+        res = _cache_get(cache, key) or transient.get(key)
         if res is None:
             raise RuntimeError(f"render produced no result for key {key}")
         out.append(res)

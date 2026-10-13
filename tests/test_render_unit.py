@@ -63,18 +63,43 @@ def test_overflow_margin():
     assert not render.ink_overflows(b)
 
 
+def _page():
+    a = np.full((120, 800), 255, dtype=np.uint8)
+    for x in range(20, 780, 60):
+        a[30:80, x : x + 14] = 0
+    return a
+
+
 def test_compare_arrays():
     a = np.full((100, 100), 255, dtype=np.uint8)
     assert render.compare_arrays(a, a.copy()) == (True, True)
     b = a.copy()
     b[5, 5] = 55
     assert render.compare_arrays(a, b) == (False, True)
-    c = np.full((100, 103), 255, dtype=np.uint8)
-    assert render.compare_arrays(a, c)[0] is False
     d = np.full((100, 104), 255, dtype=np.uint8)
     assert render.compare_arrays(a, d) == (False, False)
     assert render.compare_arrays(a, None) == (False, False)
     assert render.compare_arrays(None, a) == (False, False)
+
+
+def test_compare_arrays_long_equation():
+    a = _page()
+    one = a.copy()
+    one[5, 5] = 55
+    assert render.compare_arrays(a, one) == (False, True)
+    block = a.copy()
+    block[100:112, 400:408] = 0
+    assert render.compare_arrays(a, block) == (False, False)
+    s1 = np.full((60, 60), 255, dtype=np.uint8)
+    s1[10:40, 20:22] = 0
+    s2 = s1.copy()
+    s2[10:40, 22] = 0
+    assert render.compare_arrays(s1, s2) == (False, False)
+    wider = np.concatenate([a, np.full((120, 1), 255, dtype=np.uint8)], axis=1)
+    assert render.compare_arrays(a, wider) == (False, True)
+    shifted = np.full((121, 801), 255, dtype=np.uint8)
+    shifted[1:, 1:] = a
+    assert render.compare_arrays(a, shifted) == (False, True)
 
 
 def test_compare_requires_rendered(tmp_path):
@@ -89,6 +114,12 @@ def test_config_and_hash():
     c = render.render_config()
     assert c["preamble_sha256"] == render.PREAMBLE_SHA256
     assert c["wrap_version"] == "1" and c["dpi"] == 300 and c["image"] == render.IMAGE
+    tol = c["tolerance"]
+    assert tol == {
+        "version": "2", "shape_px": 2, "pixel_delta": 64,
+        "max_component_px": render.TOL_MAX_COMPONENT_PX, "max_diff_px": render.TOL_MAX_DIFF_PX,
+    }
+    assert "max_fraction" not in tol
     assert "upgreek" in raw.decode() and r"\begin{document}" not in raw.decode()
 
 
