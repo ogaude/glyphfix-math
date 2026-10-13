@@ -44,6 +44,8 @@ def test_classify_outcome():
     assert c["inconclusive"] is False and c["verdict"] == "does-not-fit"
     assert g.classify_outcome(outcome="ok", was_paused=True, free_at_start_gib=15.0)["inconclusive"] is True
     assert g.classify_outcome(outcome="ok", free_at_start_gib=15.0)["inconclusive"] is False
+    for oc in ("timeout", "crash"):
+        assert g.classify_outcome(outcome=oc, free_at_start_gib=15.0)["inconclusive"] is True
 
 
 def test_best_cell():

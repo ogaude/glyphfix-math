@@ -69,6 +69,8 @@ def classify_outcome(*, guard_exit: int | None = None, outcome: str | None = Non
         if free_at_start_gib is None or free_at_start_gib < GATE_GIB:
             return {"outcome": outcome, "inconclusive": True, "verdict": "inconclusive"}
         return {"outcome": outcome, "inconclusive": False, "verdict": "does-not-fit"}
+    if outcome in ("timeout", "crash"):
+        return {"outcome": outcome, "inconclusive": True, "verdict": "inconclusive"}
     return {"outcome": outcome, "inconclusive": False, "verdict": "measured"}
 
 
@@ -128,14 +130,16 @@ def launch_cell(spec: dict, *, cell_timeout: float = 1800, workdir: Path | None 
     result = workdir / f"{spec['cell_id']}.json"
     result.unlink(missing_ok=True)
 
-    peak = {"used": used_before or 0.0}
+    peak = {"used": used_before or 0.0, "sampled": False}
     stop = threading.Event()
 
     def sampler():
         while not stop.wait(1.0):
             u = _used_gib()
-            if u is not None and u > peak["used"]:
-                peak["used"] = u
+            if u is not None:
+                peak["sampled"] = True
+                if u > peak["used"]:
+                    peak["used"] = u
 
     th = threading.Thread(target=sampler, daemon=True)
     was_paused = False
@@ -180,12 +184,13 @@ def launch_cell(spec: dict, *, cell_timeout: float = 1800, workdir: Path | None 
         row["outcome"] = "timeout"
     if guard_exit is not None and not result.exists():
         row["outcome"] = "guard-abort"
+    measured_card = used_before is not None and peak["sampled"]
     cls = classify_outcome(guard_exit=guard_exit, outcome=row.get("outcome"), was_paused=was_paused, free_at_start_gib=free_start)
     row.update(
         used_before_gib=round(used_before, 3) if used_before is not None else None,
         free_at_start_gib=round(free_start, 3),
         card_peak_used_gib=round(peak["used"], 3),
-        own_card_peak_gib=round(peak["used"] - (used_before or 0.0), 3),
+        own_card_peak_gib=round(peak["used"] - used_before, 3) if measured_card else None,
         was_paused=was_paused, returncode=returncode, guard_exit=guard_exit,
         holders_at_start=holders, ollama_loaded=ollama_loaded, inconclusive=cls["inconclusive"],
         verdict=cls["verdict"],
