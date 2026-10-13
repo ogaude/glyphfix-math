@@ -387,12 +387,28 @@ def _infra_error(workdir: Path, what: str, proc: subprocess.CompletedProcess) ->
     return RenderInfrastructureError(f"{what} (exit {proc.returncode}): {(proc.stderr or '')[:300]}")
 
 
+_START_LOCK = threading.Lock()
+_inflight = [0]  # containers started by this process and not yet finished (guarded by _START_LOCK)
+
+
 def _run_batch(latexes: Sequence[str], work_root: Path, timeout_s: int) -> tuple[Path | None, str, bool]:
     """Compile one batch. Returns (workdir with batch.pdf or None, first error line, timed_out).
 
     Only outcomes attributable to LaTeX are returned; infrastructure failures raise RenderInfrastructureError.
     """
-    guard.preflight(ram_gb=guard.DOCKER_MEMORY_GB, timeout_s=600)
+    with _START_LOCK:
+        # Serialized: the check and the reservation are one step, and containers already running are counted at their
+        # full cap (conservative), so N workers cannot all pass the MemAvailable check at the same moment.
+        guard.preflight(ram_gb=guard.DOCKER_MEMORY_GB, workers=_inflight[0] + 1, timeout_s=600)
+        _inflight[0] += 1
+    try:
+        return _run_batch_reserved(latexes, work_root, timeout_s)
+    finally:
+        with _START_LOCK:
+            _inflight[0] -= 1
+
+
+def _run_batch_reserved(latexes: Sequence[str], work_root: Path, timeout_s: int) -> tuple[Path | None, str, bool]:
     keep = False
     workdir: Path | None = None
     try:

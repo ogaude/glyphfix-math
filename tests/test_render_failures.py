@@ -256,3 +256,20 @@ def test_real_error_not_masked_by_aborted_sibling(tmp_path, monkeypatch):
     monkeypatch.setattr(render, "_render_group_inner", fake_inner)
     with pytest.raises(render.RenderInfrastructureError, match="real docker failure"):
         render.render_many(["a", "b"], batch_size=1, cache=tmp_path, max_parallel=2)
+
+
+def test_preflight_counts_inflight_containers(tmp_path, monkeypatch):
+    seen = []
+    monkeypatch.setattr(guard, "preflight", lambda *a, **k: seen.append(k.get("workers", 1)))
+    _install(monkeypatch, healthy)
+    _pages(monkeypatch)
+    render.render_many(["a", "b", "c"], batch_size=1, cache=tmp_path, max_parallel=1)
+    assert seen and all(w == 1 for w in seen)  # sequential: nothing in flight at each check
+    assert render._inflight[0] == 0
+
+
+def test_inflight_released_on_failure(tmp_path, monkeypatch):
+    _install(monkeypatch, outage)
+    with pytest.raises(render.RenderInfrastructureError):
+        render.render_many(["a"], cache=tmp_path, max_parallel=1)
+    assert render._inflight[0] == 0
