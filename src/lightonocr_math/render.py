@@ -34,11 +34,18 @@ import importlib.resources
 import json
 import os
 import re
+import shutil
+import subprocess
+import tempfile
+import uuid
+from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 
+from lightonocr_math import guard
 from lightonocr_math.paths import cache_dir
 
 IMAGE = "texlive/texlive:latest"
@@ -258,3 +265,198 @@ def compare(a: RenderResult, b: RenderResult, cache: Path | None = None) -> tupl
     if a.status != "rendered" or b.status != "rendered":
         return False, False
     return compare_arrays(load_bitmap(a, cache), load_bitmap(b, cache))
+
+
+# --------------------------------------------------------------------------- Docker rendering
+
+def docker_available() -> bool:
+    try:
+        r = subprocess.run(["docker", "image", "inspect", IMAGE], check=False, capture_output=True, timeout=20)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return r.returncode == 0
+
+
+def _batch_source(latexes: Sequence[str]) -> str:
+    parts = [PREAMBLE, "\\begin{document}\n"]
+    for latex in latexes:
+        parts.append(wrap(latex) + "\n\\newpage\n")
+    parts.append("\\end{document}\n")
+    return "".join(parts)
+
+
+def _docker_cmd(name: str, workdir: Path) -> list[str]:
+    return [
+        "docker", "run", "--rm", "--name", name,
+        "--network", "none",
+        "--memory", guard.DOCKER_MEMORY, "--memory-swap", guard.DOCKER_MEMORY,
+        "--cpus", "2", "--pids-limit", "512",
+        "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
+        "--read-only", "--tmpfs", "/tmp:rw,size=256m",
+        "--user", f"{os.getuid()}:{os.getgid()}",
+        "-e", "HOME=/tmp", "-e", "TEXMFVAR=/tmp/texmf-var",
+        "-v", f"{workdir}:/work", "-w", "/work",
+        IMAGE,
+        "pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-no-shell-escape", "batch.tex",
+    ]
+
+
+def _first_error(log: str) -> str:
+    for line in log.splitlines():
+        if line.startswith("!"):
+            return line[:120]
+    return ""
+
+
+def _run_batch(latexes: Sequence[str], work_root: Path, timeout_s: int) -> tuple[Path | None, str, bool]:
+    """Compile one batch. Returns (workdir with batch.pdf or None, first error line, timed_out)."""
+    guard.preflight(ram_gb=guard.DOCKER_MEMORY_GB, timeout_s=600)
+    work_root.mkdir(parents=True, exist_ok=True)
+    workdir = Path(tempfile.mkdtemp(prefix="batch-", dir=work_root))
+    (workdir / "batch.tex").write_text(_batch_source(latexes), encoding="utf-8")
+    name = f"lom-render-{uuid.uuid4().hex}"
+    try:
+        proc = subprocess.run(
+            _docker_cmd(name, workdir.resolve()), capture_output=True, text=True, timeout=timeout_s, check=False
+        )
+    except subprocess.TimeoutExpired:
+        # equivalent of `docker kill <name>`: the host timeout is the only limit, so stop the container explicitly
+        subprocess.run(["docker", "kill", name], capture_output=True, check=False)
+        shutil.rmtree(workdir, ignore_errors=True)
+        return None, "timeout", True
+    log_path = workdir / "batch.log"
+    log = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else proc.stdout + proc.stderr
+    err = _first_error(log)
+    pdf = workdir / "batch.pdf"
+    if proc.returncode != 0 or err or not pdf.exists():
+        shutil.rmtree(workdir, ignore_errors=True)
+        return None, err or f"pdflatex exit {proc.returncode}", False
+    return workdir, "", False
+
+
+def _rasterize(workdir: Path, expected: int) -> list[np.ndarray] | None:
+    import pypdfium2 as pdfium
+
+    doc = pdfium.PdfDocument(str(workdir / "batch.pdf"))
+    try:
+        if len(doc) != expected:
+            return None
+        pages = []
+        for i in range(expected):
+            page = doc[i]
+            try:
+                arr = np.asarray(page.render(scale=RENDER_DPI / 72, grayscale=True).to_numpy())
+            finally:
+                page.close()
+            if arr.ndim == 3:
+                arr = arr[:, :, 0]
+            pages.append(np.ascontiguousarray(arr, dtype=np.uint8))
+        return pages
+    finally:
+        doc.close()
+
+
+def _bitmap_hash(arr: np.ndarray) -> str:
+    h = hashlib.sha256()
+    h.update(f"{arr.shape[0]}x{arr.shape[1]}:".encode())
+    h.update(arr.tobytes())
+    return h.hexdigest()
+
+
+def _render_group(items: list[tuple[str, str]], work_root: Path, timeout_s: int, cache: Path | None) -> None:
+    """Render (key, latex) items; write cache entries. A failing group is bisected down to singletons."""
+    workdir, err, timed_out = _run_batch([latex for _, latex in items], work_root, timeout_s)
+    pages = None
+    if workdir is not None:
+        try:
+            pages = _rasterize(workdir, len(items))
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+        if pages is None:
+            err = "page count mismatch"
+    if pages is not None:
+        for (key, _), arr in zip(items, pages, strict=True):
+            crop = ink_crop(arr)
+            if crop is None:
+                _cache_put(cache, RenderResult(key, "blank-page", None, None))
+            elif ink_overflows(arr):
+                _cache_put(cache, RenderResult(key, "overflow", None, None, "ink touches the page edge"))
+            else:
+                _cache_put(
+                    cache, RenderResult(key, "rendered", (int(crop.shape[0]), int(crop.shape[1])), _bitmap_hash(crop)), crop
+                )
+        return
+    if len(items) == 1:
+        key = items[0][0]
+        _cache_put(cache, RenderResult(key, "timeout" if timed_out else "compile-failed", None, None, err))
+        return
+    mid = len(items) // 2
+    _render_group(items[:mid], work_root, timeout_s, cache)
+    _render_group(items[mid:], work_root, timeout_s, cache)
+
+
+def render_many(
+    latex_list: Sequence[str],
+    *,
+    batch_size: int = 100,
+    cache: Path | None = None,
+    timeout_s: int = 300,
+    max_parallel: int | None = None,
+) -> list[RenderResult]:
+    """Render every input (aligned with the input order); cached, batched, sandboxed, failures bisected."""
+    keys = [cache_key(x) for x in latex_list]
+    todo: dict[str, str] = {}
+    for key, latex in zip(keys, latex_list, strict=True):
+        if key in todo or _cache_get(cache, key) is not None:
+            continue
+        reason = check_safe(latex)
+        if reason is not None:
+            status = "empty" if reason == "empty" else "rejected"
+            _cache_put(cache, RenderResult(key, status, None, None, reason))
+            continue
+        todo[key] = latex
+    if todo:
+        size = batch_size if batch_size < 50 else min(max(batch_size, 50), 200)
+        size = max(size, 1)
+        items = list(todo.items())
+        groups = [items[i : i + size] for i in range(0, len(items), size)]
+        parallel = max_parallel if max_parallel is not None else guard.docker_parallel_cap()
+        if parallel <= 0:
+            guard.preflight(ram_gb=guard.DOCKER_MEMORY_GB, timeout_s=600)
+            parallel = 1
+        work_root = (Path(cache) if cache is not None else cache_dir()) / "work"
+        with ThreadPoolExecutor(max_workers=max(1, min(parallel, len(groups)))) as ex:
+            for fut in [ex.submit(_render_group, g, work_root, timeout_s, cache) for g in groups]:
+                fut.result()
+    out = []
+    for key in keys:
+        res = _cache_get(cache, key)
+        if res is None:
+            raise RuntimeError(f"render produced no result for key {key}")
+        out.append(res)
+    return out
+
+
+@dataclass
+class PairResult:
+    gt_status: str
+    pred_status: str
+    identical: bool | None
+    tolerant: bool | None
+
+
+def render_equivalence(gt: Sequence[str], pred: Sequence[str], **render_kwargs) -> list[PairResult]:
+    """Per-pair render comparison. identical/tolerant are None when the ground truth does not render."""
+    if len(gt) != len(pred):
+        raise ValueError("gt and pred must have the same length")
+    cache = render_kwargs.get("cache")
+    res = render_many([*gt, *pred], **render_kwargs)
+    g_res, p_res = res[: len(gt)], res[len(gt) :]
+    out = []
+    for g, p in zip(g_res, p_res, strict=True):
+        if g.status != "rendered":
+            out.append(PairResult(g.status, p.status, None, None))
+            continue
+        identical, tolerant = compare(g, p, cache)
+        out.append(PairResult(g.status, p.status, identical, tolerant))
+    return out
