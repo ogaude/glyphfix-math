@@ -516,14 +516,18 @@ def _render_group_inner(
     *,
     abort: threading.Event | None = None,
     errors: list[BaseException] | None = None,
+    first: tuple[Path | None, str, bool] | None = None,
 ) -> dict[str, RenderResult]:
     """Render (key, latex) items; write cache entries. A failing group is bisected down to singletons.
 
     Returns the uncached (transient) results. Raises RenderInfrastructureError, never bisecting on it.
+    ``first`` is an already computed _run_batch outcome for these items (used when probing both halves of a timeout).
     """
     if abort is not None and abort.is_set():
+        if first is not None and first[0] is not None:
+            shutil.rmtree(first[0], ignore_errors=True)
         raise _AbortedError("aborted: an earlier batch hit an infrastructure failure")
-    workdir, err, timed_out = _run_batch([latex for _, latex in items], work_root, timeout_s)
+    workdir, err, timed_out = first if first is not None else _run_batch([latex for _, latex in items], work_root, timeout_s)
     pages = None
     if workdir is not None:
         try:
@@ -554,8 +558,24 @@ def _render_group_inner(
             return {}
         return {key: res}
     mid = len(items) // 2
-    out = _render_group_inner(items[:mid], work_root, timeout_s, cache, abort=abort, errors=errors)
-    out.update(_render_group_inner(items[mid:], work_root, timeout_s, cache, abort=abort, errors=errors))
+    left_first = right_first = None
+    if timed_out:
+        # If both halves also time out at their first attempt the host is too slow (swap, saturated CPU): bisecting
+        # further would burn ~N timeouts and report every item as failed. Stop and call it infrastructure.
+        left_first = _run_batch([latex for _, latex in items[:mid]], work_root, timeout_s)
+        try:
+            right_first = _run_batch([latex for _, latex in items[mid:]], work_root, timeout_s)
+        except BaseException:
+            if left_first[0] is not None:
+                shutil.rmtree(left_first[0], ignore_errors=True)
+            raise
+        if left_first[2] and right_first[2]:
+            raise RenderInfrastructureError(
+                f"both halves of a timed-out batch of {len(items)} also timed out after {timeout_s}s: host too slow "
+                "or overloaded (check swap and CPU load), refusing to score every item as a timeout"
+            )
+    out = _render_group_inner(items[:mid], work_root, timeout_s, cache, abort=abort, errors=errors, first=left_first)
+    out.update(_render_group_inner(items[mid:], work_root, timeout_s, cache, abort=abort, errors=errors, first=right_first))
     return out
 
 

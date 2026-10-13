@@ -273,3 +273,19 @@ def test_inflight_released_on_failure(tmp_path, monkeypatch):
     with pytest.raises(render.RenderInfrastructureError):
         render.render_many(["a"], cache=tmp_path, max_parallel=1)
     assert render._inflight[0] == 0
+
+
+def test_timeout_on_both_halves_is_infrastructure(tmp_path, monkeypatch):
+    calls = []
+
+    def run(argv, *a, **k):
+        if argv[:2] == ["docker", "kill"]:
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        calls.append(argv)
+        raise subprocess.TimeoutExpired(argv, 1)
+
+    monkeypatch.setattr(render.subprocess, "run", run)
+    with pytest.raises(render.RenderInfrastructureError, match="too slow"):
+        render.render_many([f"e{i}" for i in range(16)], batch_size=16, cache=tmp_path, max_parallel=1)
+    assert len(calls) == 3  # whole batch plus its two halves, no deeper bisection
+    assert list((tmp_path / "work").glob("batch-*")) == []
