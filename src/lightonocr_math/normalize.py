@@ -14,7 +14,7 @@ Rules (NORMALIZE_RULES_VERSION 2), applied in this fixed order:
 2. Tokenize; drop ``&`` (alignment only). ``\\\\`` and inner environments stay.
 3. Drop spacing tokens (SPACING_TOKENS) and the invisible ``\\left.`` /
    ``\\right.`` pairs.
-4. Drop ``\\big``-family sizing commands (SIZING_TOKENS). ``\\left``/``\\right``
+4. Drop ``\\big``-family sizing commands (_SIZING_RE). ``\\left``/``\\right``
    are kept: they render at a different size.
 5. Glyph-identical aliases (ALIASES), for example ``\\le`` -> ``\\leq``,
    ``\\prime`` -> ``'``. Nothing that changes a glyph is aliased.
@@ -45,7 +45,6 @@ SPACING_TOKENS = frozenset(
 )
 
 _SIZING_RE = re.compile(r"\\(?:big|Big|bigg|Bigg)[lrm]?")
-SIZING_TOKENS = frozenset(f"\\{b}{s}" for b in ("big", "Big", "bigg", "Bigg") for s in ("", "l", "r", "m"))
 
 ALIASES = {
     "\\le": "\\leq",
