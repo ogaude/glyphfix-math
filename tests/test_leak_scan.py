@@ -107,3 +107,40 @@ def test_repo_has_no_benchmark_leaks():
     if _frozen.FROZEN_SPLIT_DIGEST is None:
         pytest.skip("split not frozen yet (plan 05)")
     assert scan_repo(repo_root(), frozen()) == []
+
+
+def test_exact_file_allowlist_does_not_exempt_backups(env):
+    repo, fs, new, _ = env
+    _write(repo, "data/candidates.jsonl", json.dumps({"arxiv_id": new}) + "\n")
+    assert scan_repo(repo, fs) == []
+    _write(repo, "data/candidates.jsonl.bak.jsonl", json.dumps({"arxiv_id": new}) + "\n")
+    _write(repo, "data/candidates.jsonl2.json", json.dumps({"arxiv_id": new}))
+    leaks = scan_repo(repo, fs)
+    assert {lk.path for lk in leaks} >= {"data/candidates.jsonl.bak.jsonl", "data/candidates.jsonl2.json"}
+
+
+def test_parquet_ids_are_detected(env, tmp_path):
+    pa = pytest.importorskip("pyarrow")
+    pq = pytest.importorskip("pyarrow.parquet")
+    repo, fs, new, _ = env
+    (repo / "ds").mkdir()
+    pq.write_table(pa.table({"arxiv_id": ["fixture-a", new], "latex": ["x", "y"]}), repo / "ds" / "train.parquet")
+    leaks = scan_repo(repo, fs)
+    assert any(lk.path == "ds/train.parquet" and lk.arxiv_id == new for lk in leaks)
+
+
+def test_parquet_without_pyarrow_fails_closed(env, monkeypatch):
+    import builtins
+
+    real = builtins.__import__
+
+    def no_pyarrow(name, *a, **k):
+        if name.startswith("pyarrow"):
+            raise ImportError(name)
+        return real(name, *a, **k)
+
+    monkeypatch.setattr(builtins, "__import__", no_pyarrow)
+    repo, fs, _, _ = env
+    _write(repo, "ds/train.parquet", "not really parquet")
+    with pytest.raises(RuntimeError, match="pyarrow"):
+        scan_repo(repo, fs)
