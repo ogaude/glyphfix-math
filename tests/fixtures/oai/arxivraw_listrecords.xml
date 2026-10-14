@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/">
+  <responseDate>2025-01-11T00:00:00Z</responseDate>
+  <request verb="ListRecords">http://oaipmh.arxiv.org/oai</request>
+  <ListRecords>
+    <record>
+      <header><identifier>oai:arXiv.org:9912.00001</identifier><datestamp>2025-01-10</datestamp><setSpec>math:math:CA</setSpec></header>
+      <metadata>
+        <arXivRaw xmlns="http://arxiv.org/OAI/arXivRaw/">
+          <id>9912.00001</id>
+          <submitter>Jane Doe</submitter>
+          <version version="v1"><date>Mon, 1 Jan 2024 10:00:00 GMT</date><size>10kb</size></version>
+          <version version="v2"><date>Tue, 2 Jan 2024 10:00:00 GMT</date><size>11kb</size></version>
+          <version version="v3"><date>Wed, 3 Jan 2024 10:00:00 GMT</date><size>12kb</size></version>
+          <title>Fictitious   paper one</title>
+          <authors>Jane Doe, John Roe and Max Poe</authors>
+          <categories>math.CA math.PR</categories>
+          <license>http://creativecommons.org/licenses/by/4.0/</license>
+        </arXivRaw>
+      </metadata>
+    </record>
+    <record>
+      <header><identifier>oai:arXiv.org:9912.00002</identifier><datestamp>2025-01-10</datestamp><setSpec>math:math:CA</setSpec></header>
+      <metadata>
+        <arXivRaw xmlns="http://arxiv.org/OAI/arXivRaw/">
+          <id>9912.00002</id>
+          <version version="v1"><date>Mon, 1 Jan 2024 10:00:00 GMT</date><size>10kb</size></version>
+          <title>Fictitious paper two</title>
+          <authors>Jane Doe</authors>
+          <categories>math.CA</categories>
+          <license>http://creativecommons.org/licenses/by-nc-sa/4.0/</license>
+        </arXivRaw>
+      </metadata>
+    </record>
+    <record status="deleted">
+      <header status="deleted"><identifier>oai:arXiv.org:9912.00003</identifier><datestamp>2025-01-10</datestamp></header>
+    </record>
+  </ListRecords>
+</OAI-PMH>
