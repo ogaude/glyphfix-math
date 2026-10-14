@@ -134,3 +134,11 @@ def test_select_refuses_benchmark_paper(tmp_path):
 def test_assert_disjoint_is_the_gate():
     with pytest.raises(splits.LeakageError):
         cr._assert_train_dev([BENCH_ID], "t")
+
+
+def test_pool_rows_flag_subset_gives_i1_records_that_also_carry_decoration():
+    recs = [
+        {"id": f"{i:016x}", "arxiv_id": f"2301.{i:05d}", "latex": "a", "image": "i.png", "flags": ["decoration", "i_1"]} for i in range(10)
+    ]
+    rows = cr.pool_rows(recs, per_flag=4, plain=0, seed=0, flags=("prime", "greek", "i_1"))
+    assert [r["pool_flag"] for r in rows] == ["i_1"] * 4

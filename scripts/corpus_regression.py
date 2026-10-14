@@ -37,12 +37,20 @@ KNOWN_CLASSES = tuple(c for c in CLASSES if c != "other")
 MAX_CONTROLS_PER_PAPER = 2
 
 
-def pool_rows(records: list[dict], *, per_flag: int, plain: int, seed: int, exclude: set[str] | None = None) -> list[dict]:
-    """Seeded draw of pool rows; no record twice, none from `exclude`."""
+def pool_rows(
+    records: list[dict],
+    *,
+    per_flag: int,
+    plain: int,
+    seed: int,
+    exclude: set[str] | None = None,
+    flags: tuple[str, ...] = FLAG_ORDER,
+) -> list[dict]:
+    """Seeded draw of pool rows; no record twice, none from `exclude`; only the given flags (and plain)."""
     rng = random.Random(seed)
     taken = set(exclude or ())
     out: list[dict] = []
-    for flag in (*FLAG_ORDER, "plain"):
+    for flag in (*flags, "plain"):
         limit = plain if flag == "plain" else per_flag
         if flag == "plain":
             cands = [r for r in records if set(r["flags"]) <= {"plain"} and r["id"] not in taken]
@@ -70,7 +78,8 @@ def cmd_pool(a: argparse.Namespace) -> int:
     exclude: set[str] = set()
     if a.exclude:
         exclude = {r["id"] for r in read_jsonl(a.exclude)}
-    rows = pool_rows(records, per_flag=a.per_flag, plain=a.plain, seed=a.seed, exclude=exclude)
+    flags = tuple(f for f in FLAG_ORDER if f in set(a.flags.split(",")))
+    rows = pool_rows(records, per_flag=a.per_flag, plain=a.plain, seed=a.seed, exclude=exclude, flags=flags)
     _assert_train_dev([r["paper_id"] for r in rows], "corpus_regression pool output")
     write_jsonl(a.out, rows)
     by_flag = Counter(r["pool_flag"] for r in rows)
@@ -215,6 +224,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--plain", type=int, default=300)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--exclude")
+    p.add_argument("--flags", default=",".join(FLAG_ORDER), help="comma list of flags to draw (default all)")
     p.add_argument("--out", required=True)
     p.set_defaults(fn=cmd_pool)
     s = sub.add_parser("select", help="pick the regression items from scored stock predictions")
