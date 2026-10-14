@@ -10,7 +10,8 @@ Usage (from repo root):
 pool draws, with a fixed seed, up to --per-flag records for each flag (prime, greek, decoration, i_1) and --plain
 records with only the plain flag. A record is pooled once, under the first flag in that order that it carries.
 select takes scored pool rows (stock predictions scored by lightonocr_math.score), assigns each failing row
-(exact False and render_identical not True) to the first known class of errors.CLASSES present in its classes,
+(exact False and render_identical not True) to its rarest known class of errors.CLASSES present in its classes
+(rarity = failing rows carrying the class in the scored pool, ties by errors.CLASSES order),
 keeps up to --per-class per class with at most --max-per-paper per paper, adds clean control rows spread across
 flags (at most 2 per paper) and writes the set plus a manifest marked exclude_from_training.
 Exit codes: 0 ok, 2 refused (benchmark or quarantined paper) or missing input.
@@ -83,9 +84,22 @@ def cmd_pool(a: argparse.Namespace) -> int:
     return 0
 
 
-def assign_class(row: dict) -> str | None:
+def assign_class(row: dict, rarity: dict[str, int] | None = None) -> str | None:
+    """Rarest eligible known class first; ties (and no rarity table) fall back to KNOWN_CLASSES order."""
     cls = set(row.get("classes") or [])
-    return next((c for c in KNOWN_CLASSES if c in cls), None)
+    eligible = [c for c in KNOWN_CLASSES if c in cls]
+    if not eligible:
+        return None
+    rarity = rarity or {}
+    return min(eligible, key=lambda c: (rarity.get(c, 0), KNOWN_CLASSES.index(c)))
+
+
+def class_rarity(failing: list[dict]) -> dict[str, int]:
+    """Failing candidates per known class across the whole scored pool."""
+    counts: Counter = Counter()
+    for r in failing:
+        counts.update(c for c in KNOWN_CLASSES if c in set(r.get("classes") or []))
+    return {c: counts.get(c, 0) for c in KNOWN_CLASSES}
 
 
 def is_failure(row: dict) -> bool:
@@ -107,13 +121,15 @@ def select_rows(
     counts: dict[str, int] = {}
     shortfalls: dict[str, int] = {}
     failing = [r for r in rows if is_failure(r)]
+    rarity = class_rarity(failing)
+    assigned = {r["id"]: assign_class(r, rarity) for r in failing}
     for cls in KNOWN_CLASSES:
         per_paper: Counter = Counter()
         n = 0
         for r in failing:
             if n >= per_class:
                 break
-            if assign_class(r) != cls or per_paper[r["paper_id"]] >= max_per_paper:
+            if assigned[r["id"]] != cls or per_paper[r["paper_id"]] >= max_per_paper:
                 continue
             per_paper[r["paper_id"]] += 1
             n += 1

@@ -23,6 +23,24 @@ def test_class_assignment_uses_class_order():
     assert cr.assign_class({"classes": []}) is None
 
 
+def test_rarest_class_first_for_i1_with_decoration():
+    rows = [_score_row(i, f"2301.{i:05d}", ["decoration"]) for i in range(10)]
+    rows += [_score_row(10 + i, f"2301.{10 + i:05d}", ["i_1", "decoration"]) for i in range(3)]
+    rarity = cr.class_rarity(rows)
+    assert rarity["i_1"] == 3 and rarity["decoration"] == 13
+    assert cr.assign_class(rows[-1], rarity) == "i_1"
+    assert cr.assign_class(rows[0], rarity) == "decoration"
+    _, meta = cr.select_rows(rows, _pool_for(rows), per_class=30, controls=0, max_per_paper=3, seed=0)
+    assert meta["counts"]["i_1"] == 3 and meta["counts"]["decoration"] == 10
+
+
+def test_select_is_deterministic_for_same_seed():
+    rows = [_score_row(i, f"2301.{i % 7:05d}", ["i_1", "decoration"] if i % 3 else ["decoration"]) for i in range(40)]
+    a = cr.select_rows(rows, _pool_for(rows), per_class=10, controls=0, max_per_paper=3, seed=0)
+    b = cr.select_rows(list(reversed(rows)), _pool_for(rows), per_class=10, controls=0, max_per_paper=3, seed=0)
+    assert a == b
+
+
 def test_failure_and_clean_predicates():
     assert cr.is_failure({"exact": False, "render_identical": None})
     assert cr.is_failure({"exact": False, "render_identical": False})
