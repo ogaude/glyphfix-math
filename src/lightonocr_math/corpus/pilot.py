@@ -213,6 +213,7 @@ def automated_audit(
             "structural_excluded": sum(1 for r in excluded if r.get("reason") == "canon_mismatch" and r["detail"].get("cause") == "structural"),
         },
         "systematic_causes": systematic,
+        "systematic": bool(systematic),
         "determinism": {"sampled": len(picked), "identical": same, "seed": seed},
         "structural_failures": {"count": len(structural), "examples": structural[:5]},
         "layout_only_diff_failures": {"count": len(layout), "examples": layout[:5]},
