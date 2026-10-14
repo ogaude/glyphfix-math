@@ -437,7 +437,7 @@ def _run_batch_reserved(latexes: Sequence[str], work_root: Path, timeout_s: int,
         name = f"lom-render-{uuid.uuid4().hex}"
         try:
             proc = subprocess.run(
-                _docker_cmd(name, workdir.resolve()), capture_output=True, text=True, timeout=timeout_s, check=False
+                _docker_cmd(name, workdir.resolve()), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout_s, check=False
             )
         except subprocess.TimeoutExpired:
             # equivalent of `docker kill <name>`: the host timeout is the only limit, so stop the container explicitly
