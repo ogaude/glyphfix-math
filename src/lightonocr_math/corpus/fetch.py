@@ -8,9 +8,9 @@ Usage:
 
 Rules:
   * one process, one request in flight; the limiter runs before every request, retries included
-  * the interval is clamped to MIN_INTERVAL_S (3.1 s); the default of 15 s honors the robots.txt
-    Crawl-delay. robots.txt also disallows /e-print and /src, so a caller must pass an explicit
-    policy_ack naming the decision to proceed; it is stored in every fetch.json
+  * the interval is clamped to MIN_INTERVAL_S (3.1 s); the default is the 3.1 s minimum (user decision
+    2026-10-14: export.arxiv.org per info.arxiv.org/help/bulk_data.html). robots.txt disallows crawlers
+    there, so a caller must pass an explicit policy_ack naming the decision to proceed; it is stored in every fetch.json
   * each bundle is requested as /e-print/<id>vN with the catalog-pinned version
   * 403 stops the stage (FetchForbidden); 429/503 honor Retry-After (capped 600 s), up to 3 retries
   * a bundle is stored as src.bin (sha256 recorded in fetch.json); an intact pair is never refetched
@@ -36,13 +36,13 @@ from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json
 from lightonocr_math.ids import base_id, safe_id
 
 MIN_INTERVAL_S = 3.1
-DEFAULT_INTERVAL_S = 15.0
+DEFAULT_INTERVAL_S = 3.1
 MAX_BUNDLE_BYTES = 200 * 1024 * 1024
 MAX_RETRIES = 3
 MAX_CONSECUTIVE_FAILURES = 5
 MAX_RETRY_AFTER_S = 600.0
 FETCH_VERSION = "1"
-EPRINT_BASE = "https://arxiv.org/e-print/"
+EPRINT_BASE = "https://export.arxiv.org/e-print/"
 _CHUNK = 1 << 16
 
 

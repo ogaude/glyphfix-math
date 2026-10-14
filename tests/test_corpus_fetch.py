@@ -94,12 +94,12 @@ def test_limiter_pacing():
 
 
 def test_constants():
-    assert F.DEFAULT_INTERVAL_S == 15.0 and F.MIN_INTERVAL_S == 3.1
+    assert F.DEFAULT_INTERVAL_S == 3.1 and F.MIN_INTERVAL_S == 3.1
 
 
 def test_eprint_url():
-    assert F.eprint_url("2301.01234", "v2") == "https://arxiv.org/e-print/2301.01234v2"
-    assert F.eprint_url("math/0508005v1", "v1") == "https://arxiv.org/e-print/math/0508005v1"
+    assert F.eprint_url("2301.01234", "v2") == "https://export.arxiv.org/e-print/2301.01234v2"
+    assert F.eprint_url("math/0508005v1", "v1") == "https://export.arxiv.org/e-print/math/0508005v1"
 
 
 def test_sniff_kind():

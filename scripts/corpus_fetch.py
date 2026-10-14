@@ -4,7 +4,7 @@ Usage (from repo root):
   python scripts/corpus_fetch.py order --catalog data/catalog/train_dev.jsonl --out data/corpus/fetch_order.json --seed 0
   python scripts/corpus_fetch.py order --catalog data/benchmark/catalog.jsonl --out data/benchmark/fetch_order.json --seed 0
   python scripts/corpus_fetch.py fetch --order data/corpus/fetch_order.json --catalog data/catalog/train_dev.jsonl \
-      --start 0 --count 100 --sources data/sources --interval 15 --policy-ack "<decision text>"
+      --start 0 --count 100 --sources data/sources --interval 3.1 --policy-ack "<decision text>"
 
 The order file is written before anything is fetched. The pilot is the first 100 ids of the corpus-side order.
 fetch requires --policy-ack (robots.txt disallows /e-print and /src) and refuses --interval below 3.1 s.
