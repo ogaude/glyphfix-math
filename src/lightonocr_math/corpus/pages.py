@@ -109,7 +109,7 @@ def compile_paper(workdir: Path, main_rel: str, *, timeout_s: int = COMPILE_TIME
     t0 = time.monotonic()
     try:
         proc = subprocess.run(
-            latexmk_docker_cmd(name, workdir, main_rel), capture_output=True, text=True, timeout=timeout_s, check=False
+            latexmk_docker_cmd(name, workdir, main_rel), capture_output=True, text=True, errors="replace", timeout=timeout_s, check=False
         )
     except subprocess.TimeoutExpired:
         subprocess.run(["docker", "kill", name], capture_output=True, check=False)
@@ -144,7 +144,7 @@ def run_synctex(workdir: Path, queries: list[tuple[str, int, str]], pdf_rel: str
     name = f"lom-synctex-{uuid.uuid4().hex}"
     cmd = [*_hardened_prefix(name, workdir), "sh", "_synctex_q.sh"]
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=SYNCTEX_TIMEOUT_S, check=False)
+        proc = subprocess.run(cmd, capture_output=True, text=True, errors="replace", timeout=SYNCTEX_TIMEOUT_S, check=False)
     except subprocess.TimeoutExpired:
         subprocess.run(["docker", "kill", name], capture_output=True, check=False)
         return ""
