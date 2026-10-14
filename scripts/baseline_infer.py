@@ -64,6 +64,10 @@ CHECKPOINT_EVERY = 25
 _FROM_RE = re.compile(r"^FROM\s+(\S+)", re.MULTILINE)
 
 
+def _paper(row: dict) -> str:
+    return row["arxiv_id"] if "arxiv_id" in row else row["paper_id"]
+
+
 def _row_id(suite: str, row: dict) -> str:
     return row["page_id"] if SUITES[suite]["kind"] == "page" else row["id"]
 
@@ -72,7 +76,7 @@ def load_suite(suite: str, rows: list[dict]) -> list[dict]:
     """Rows of `suite`, after checking that their papers belong on the suite's side of the split."""
     if suite not in SUITES:
         raise ValueError(f"unknown suite {suite!r}")
-    papers = [r["arxiv_id"] for r in rows]
+    papers = [_paper(r) for r in rows]
     if SUITES[suite]["side"] == "benchmark":
         bad = sorted({p for p in papers if not splits.is_benchmark(p)})
         if bad:
@@ -220,9 +224,9 @@ def main(argv: list[str] | None = None) -> int:
                 break
             img_path = repo_root() / row["image"]
             if kind == "crop":
-                base = {"id": rid, "paper_id": row["arxiv_id"], "gt_latex": row["latex"]}
+                base = {"id": rid, "paper_id": _paper(row), "gt_latex": row["latex"] if "latex" in row else row["gt_latex"]}
             else:
-                base = {"id": rid, "paper_id": row["arxiv_id"]}
+                base = {"id": rid, "paper_id": _paper(row)}
             try:
                 if kind == "crop":
                     png, (sw, sh) = crop_png(img_path)
