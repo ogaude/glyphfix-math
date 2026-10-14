@@ -1,0 +1,45 @@
+{
+  "cap": 30,
+  "evidence": {
+    "benchmark_i_1_floor_note": "pool holds 300 i_1 records in 59 papers; 274 reachable at cap 30; floor lowered from 150 to 274 by user decision (reselect-floors)",
+    "benchmark_rate_note": "no benchmark papers in the pilot; pooled rate 85/94 of built papers used",
+    "dev_rate_note": "3/4 usable, n=4, noisy; fetch count capped by the 107-paper dev pool",
+    "floors_note": "pilot kept equations per usable paper: prime 2.7, i_1 2.1; at 800 train papers the corpus floors of 800 are reachable before the cap",
+    "min_papers_per_flag_note": "pilot shows papers with i_1 in 27 of 85 usable papers (32%), about 48 of 150 benchmark papers, so 40 is reachable but tight; prime 36 papers, greek 78, decoration 64",
+    "source": "pilot of 100 train/dev papers, canon rules version 2"
+  },
+  "fetch_counts": {
+    "benchmark": 183,
+    "dev": 74,
+    "train": 966
+  },
+  "floors": {
+    "benchmark": {
+      "decoration": 150,
+      "greek": 150,
+      "i_1": 274,
+      "prime": 150
+    },
+    "corpus": {
+      "decoration": 800,
+      "greek": 800,
+      "i_1": 800,
+      "prime": 800
+    }
+  },
+  "min_papers_per_flag": {
+    "benchmark": 40,
+    "corpus": 0
+  },
+  "quotas": {
+    "benchmark": 150,
+    "dev": 50,
+    "train": 800
+  },
+  "seed": 0,
+  "usable_rate": {
+    "benchmark": 0.9043,
+    "dev": 0.75,
+    "train": 0.9111
+  }
+}
