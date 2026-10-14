@@ -1,0 +1,55 @@
+{
+  "created": "2026-10-14T08:07:30Z",
+  "excluded_train_dev": [],
+  "missing_train_dev": [],
+  "n_catalog_benchmark": 414,
+  "n_catalog_train_dev": 2278,
+  "n_found_getrecord": 7,
+  "n_found_listrecords": 2685,
+  "n_license_excluded": 0,
+  "n_math_candidates": 2692,
+  "n_missing": 0,
+  "n_versions_histogram": {
+    "1": 1501,
+    "11": 1,
+    "12": 1,
+    "13": 1,
+    "2": 755,
+    "3": 305,
+    "4": 75,
+    "5": 30,
+    "6": 13,
+    "7": 7,
+    "8": 2,
+    "9": 1
+  },
+  "per_license_spdx": {
+    "CC-BY-4.0": 2582,
+    "CC0-1.0": 110
+  },
+  "per_split": {
+    "benchmark": 414,
+    "dev": 119,
+    "train": 2159
+  },
+  "primary_category_share": {
+    "astro-ph": 0.0004,
+    "cond-mat": 0.0078,
+    "cs": 0.0951,
+    "econ": 0.0026,
+    "eess": 0.0111,
+    "gr-qc": 0.0048,
+    "hep-lat": 0.0004,
+    "hep-ph": 0.0004,
+    "hep-th": 0.0115,
+    "math": 0.7734,
+    "math-ph": 0.0234,
+    "nlin": 0.0048,
+    "physics": 0.0137,
+    "q-bio": 0.0022,
+    "q-fin": 0.0033,
+    "quant-ph": 0.0227,
+    "stat": 0.0223
+  },
+  "scope_note": "D-04: catalog restricted to the OAI math set (primary-category mix in primary_category_share); no field-mix broadening"
+}
