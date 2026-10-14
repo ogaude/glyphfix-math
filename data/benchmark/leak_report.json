@@ -1,0 +1,109 @@
+{
+  "checks": {
+    "exact": {
+      "count": 1,
+      "offenders": [
+        {
+          "bench_id": "1ccc198f62265170",
+          "bench_paper": "2607.03234",
+          "corpus_id": "d28314f433a17537"
+        }
+      ]
+    },
+    "near": {
+      "count": 1,
+      "offenders": [
+        {
+          "bench_id": "1ccc198f62265170",
+          "corpus_id": "d28314f433a17537",
+          "score": 1.0
+        }
+      ]
+    },
+    "paper_shared_eq": {
+      "count": 0,
+      "offenders": []
+    },
+    "paper_title": {
+      "count": 0,
+      "offenders": []
+    },
+    "same_author": {
+      "count": 12,
+      "offenders": [
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "85c55c4de2ae7936"
+        },
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "6fd5144a2948d196"
+        },
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "26b71c7decaf9b2f"
+        },
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "2e5e75292b9359f7"
+        },
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "20b3498261f9df07"
+        },
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "df9faaaca2935ace"
+        },
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "1c4b61fb4186f36f"
+        },
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "e801f29d75ab310b"
+        },
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "1fdb4fa227eb4cd9"
+        },
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "fe9d4357cb8a021c"
+        },
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "deb1e2a874f9d430"
+        },
+        {
+          "author_key": "aamir farooq",
+          "bench_paper": "2602.08248",
+          "corpus_id": "14a809a7a7263827"
+        }
+      ]
+    }
+  },
+  "gate_version": "1",
+  "n_dropped": 13,
+  "n_kept": 14884,
+  "near_pairs_compared": 3052673,
+  "short_collisions": [],
+  "thresholds": {
+    "exact_min_tokens": 8,
+    "near_min_tokens": 12,
+    "near_threshold": 0.9,
+    "shared_eq_paper": 5,
+    "title_threshold": 90
+  }
+}
