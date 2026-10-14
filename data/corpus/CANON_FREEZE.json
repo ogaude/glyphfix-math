@@ -1,0 +1,49 @@
+{
+  "canon_fingerprint": "1d7d79739aef5d0534f51bf13d0372c5f095f51bac23b0244ea92729e55e7ba4",
+  "canon_rules_version": "2",
+  "decision": "fix-then-go, tail of 42 accepted by user",
+  "evidence": "PILOT_REPORT.md Go/no-go section",
+  "frozen_at": "2026-10-14",
+  "pilot_report_sha256": "83fb86dea479de77d69d7e7eacfeb0283f84ac94dd65fdf3559c055025a693fa",
+  "rules": [
+    [
+      "C1",
+      "strip comments (unescaped % to end of line, the newline and the next line's leading blanks)"
+    ],
+    [
+      "C2",
+      "remove \\label{..}, \\tag{..}, \\tag*{..}, \\nonumber, \\notag"
+    ],
+    [
+      "C3",
+      "drop trailing \\\\ at the end of the body"
+    ],
+    [
+      "C4",
+      "collapse whitespace runs to one space, strip the ends"
+    ],
+    [
+      "C5",
+      "remove whitespace between \\left or \\right and the following delimiter"
+    ],
+    [
+      "C6",
+      "outer env removed; gather bodies with a top-level \\\\ wrapped in gathered"
+    ]
+  ],
+  "validation": {
+    "pilot": {
+      "glyph_equal": 827,
+      "identical": 1654,
+      "mismatch_papers": 17,
+      "mismatched": 42,
+      "passed": 2481,
+      "structural_excluded": 3,
+      "validated": 2523
+    },
+    "tiers": [
+      "bitmap-identical",
+      "glyph-equal (same ink components, positions snapped by at most 2 px; accepted by the user, commit d2bdb46)"
+    ]
+  }
+}
