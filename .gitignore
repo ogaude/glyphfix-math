@@ -6,3 +6,4 @@ experiments/*/out/
 experiments/*/out-*/*/
 *.bak
 data/spikes/
+data/candidates_cache/
