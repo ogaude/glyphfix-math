@@ -1,0 +1,75 @@
+{
+  "created": "2026-10-14T18:56:48Z",
+  "endpoint": "/api/chat",
+  "gguf_blobs": {
+    "projector": "fd5acde1a7a7439b3f9a720d3cead67378beeaabbecc57fe4b30a7f9b301b102",
+    "text": "103d473ee394028b772371a3b98428c384494703d3589b2e2afb5f8491b2146c"
+  },
+  "git_commit": "c2e98783d59ec0be7c3029980b767f6fbff9ae04",
+  "gpu_after": {
+    "holders": "rocm-smi pids:\n============================ ROCm System Management Interface ============================\n===================================== KFD Processes ======================================\nKFD process information:\nPID    \tPROCESS NAME          \tGPU(s)\tVRAM USED \tSDMA USED\tCU OCCUPANCY\t\n3001122\tllama-server <defunct>\t0     \t5965111296\t0        \tUNKNOWN     \t\n==========================================================================================\n================================== End of ROCm SMI Log ===================================\nollama ps:\nNAME    ID    SIZE    PROCESSOR    CONTEXT    RUNNER    UNTIL",
+    "mem_available_bytes": 23445635072,
+    "timestamp": "2026-10-14T18:56:47.948208+00:00",
+    "vram_free_bytes": 11048628224,
+    "vram_total_bytes": 17095983104,
+    "vram_used_bytes": 6047354880
+  },
+  "gpu_before": {
+    "holders": "rocm-smi pids:\n============================ ROCm System Management Interface ============================\n===================================== KFD Processes ======================================\nNo KFD PIDs currently running\n==========================================================================================\n================================== End of ROCm SMI Log ===================================\nollama ps:\nNAME    ID    SIZE    PROCESSOR    CONTEXT    RUNNER    UNTIL",
+    "mem_available_bytes": 23145209856,
+    "timestamp": "2026-10-14T18:53:26.531971+00:00",
+    "vram_free_bytes": 17027596288,
+    "vram_total_bytes": 17095983104,
+    "vram_used_bytes": 68386816
+  },
+  "ids_file_sha256": "91b587f7c4952d91cae3ed7c6c16f7d4d6f17b8afc2e371772b549b6cb801f7d",
+  "model": "lighton-ocr3-q8-16k",
+  "model_digest": "9b84c5ce75a08d0ee9d76896801cce0d1480208c60db584e29c2fde3d93cfaa0",
+  "model_loaded_before": false,
+  "n_error": 0,
+  "n_ok": 100,
+  "n_skipped_resume": 0,
+  "ollama_version": "0.40.1",
+  "options": {
+    "num_ctx": 8192,
+    "num_predict": 1024,
+    "seed": 0,
+    "temperature": 0
+  },
+  "pixel_policy": {
+    "factor": 32,
+    "max_px": 602112,
+    "min_px": 65536,
+    "resample": "bicubic",
+    "version": "1"
+  },
+  "prompt": "",
+  "prompt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "records_path": "data/benchmark/records.jsonl",
+  "records_sha256": "95710217ca31a301e14998e6480da1e40263d1c0a15fdb146d35a29baebfeba2",
+  "render_config": {
+    "dpi": 300,
+    "filter_version": "2",
+    "image": "texlive/texlive@sha256:0f4884ca7d287f47ab466d2dd405d4c901c576585363f628863a7ca7eea21301",
+    "ink_threshold": 250,
+    "preamble_sha256": "65f94732462b53dee104e2f8d1828eea267d3e9abfbbdd082f4796426bb00717",
+    "tolerance": {
+      "max_component_px": 4,
+      "max_diff_px": 24,
+      "pixel_delta": 64,
+      "shape_px": 2,
+      "version": "2"
+    },
+    "wrap_version": "1"
+  },
+  "scorer_fingerprint": "6616416ed4841f410166a1daf0e6a0fb403689c98b9fc4884dbf7d7f49c4b7c2",
+  "scorer_version": "1.2.0",
+  "split_rule": {
+    "split_digest": "b0afe4144600ba3e7d19a6d37d85344a080fae84364aeff562c11e475ac3ab5e",
+    "split_rule_version": "1"
+  },
+  "suite": "benchmark",
+  "template_sha256": "d5ddb788d5f3df12e32244954037eb535409d24eeb48c2429d7588af4e7b69a7",
+  "think": false,
+  "wall_seconds": 201.4
+}
