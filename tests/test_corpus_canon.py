@@ -81,6 +81,8 @@ def test_layout_only_diff_treats_control_newline_as_control_space():
 def test_layout_only_diff_keeps_the_papers_own_gathered_wrapper():
     body = "\n\\begin{gathered}\n a = b \\\\\n c = d\n\\end{gathered}\n"
     assert layout_only_diff(body, canonicalize(body, "equation")) == []
+    labelled = "\\label{p q}\n  \\begin{gathered}\n x \n  \\end{gathered}\n"
+    assert layout_only_diff(labelled, canonicalize(labelled, "equation")) == []
     assert layout_only_diff("a = b \\\\ c = d", canonicalize("a = b \\\\ c = d", "gather")) == []
 
 

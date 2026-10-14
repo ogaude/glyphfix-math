@@ -142,7 +142,7 @@ def layout_only_diff(raw_body: str, canonical: str) -> list[str]:
     Entries are "-tok" (in the raw body only) and "+tok" (in the label only). Token order is not compared:
     canonicalization never reorders, and a multiset check keeps the diff readable.
     """
-    own_wrapper = _WS_RE.sub(" ", _strip_comments(raw_body)).strip().startswith(_GATHERED_OPEN.strip())
+    own_wrapper = _WS_RE.sub(" ", _strip_layout_commands(_strip_comments(raw_body))).strip().startswith(_GATHERED_OPEN.strip())
     if not own_wrapper and canonical.startswith(_GATHERED_OPEN) and canonical.endswith(_GATHERED_CLOSE):
         canonical = canonical[len(_GATHERED_OPEN) : len(canonical) - len(_GATHERED_CLOSE)]
     raw, can = Counter(_layout_tokens(raw_body)), Counter(tokenize(_control_space(canonical)))
