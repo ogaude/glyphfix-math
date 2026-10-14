@@ -1,0 +1,68 @@
+{"arxiv_id": "2604.22670", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2604.07832", "n_gt": 10, "page_id": "2604.07832_p6", "status": "built"}
+{"arxiv_id": "2512.18837", "n_gt": 11, "page_id": "2512.18837_p1", "status": "built"}
+{"arxiv_id": "2604.07998", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2603.07247", "n_gt": 4, "page_id": "2603.07247_p6", "status": "built"}
+{"arxiv_id": "2604.08437", "reason": "compile_failed", "status": "skipped"}
+{"arxiv_id": "2603.07467", "n_gt": 4, "page_id": "2603.07467_p30", "status": "built"}
+{"arxiv_id": "2311.18127", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2605.04746", "n_gt": 7, "page_id": "2605.04746_p41", "status": "built"}
+{"arxiv_id": "2507.06846", "n_gt": 4, "page_id": "2507.06846_p2", "status": "built"}
+{"arxiv_id": "2510.20320", "n_gt": 8, "page_id": "2510.20320_p41", "status": "built"}
+{"arxiv_id": "2212.05366", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2411.11556", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2512.08771", "n_gt": 6, "page_id": "2512.08771_p4", "status": "built"}
+{"arxiv_id": "2601.05869", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2510.10033", "reason": "compile_failed", "status": "skipped"}
+{"arxiv_id": "2512.07835", "n_gt": 3, "page_id": "2512.07835_p52", "status": "built"}
+{"arxiv_id": "2103.05478", "n_gt": 7, "page_id": "2103.05478_p12", "status": "built"}
+{"arxiv_id": "2410.06937", "n_gt": 3, "page_id": "2410.06937_p2", "status": "built"}
+{"arxiv_id": "2509.07659", "n_gt": 5, "page_id": "2509.07659_p8", "status": "built"}
+{"arxiv_id": "2502.15927", "n_gt": 10, "page_id": "2502.15927_p10", "status": "built"}
+{"arxiv_id": "2505.05904", "n_gt": 5, "page_id": "2505.05904_p11", "status": "built"}
+{"arxiv_id": "2301.13334", "n_gt": 4, "page_id": "2301.13334_p21", "status": "built"}
+{"arxiv_id": "2603.07870", "n_gt": 5, "page_id": "2603.07870_p1", "status": "built"}
+{"arxiv_id": "2605.08079", "n_gt": 14, "page_id": "2605.08079_p16", "status": "built"}
+{"arxiv_id": "2609.06197", "n_gt": 4, "page_id": "2609.06197_p4", "status": "built"}
+{"arxiv_id": "2508.06197", "reason": "compile_failed", "status": "skipped"}
+{"arxiv_id": "2511.05322", "n_gt": 4, "page_id": "2511.05322_p22", "status": "built"}
+{"arxiv_id": "2603.08527", "n_gt": 5, "page_id": "2603.08527_p5", "status": "built"}
+{"arxiv_id": "2512.08019", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2411.05250", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2601.20152", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2411.15803", "n_gt": 9, "page_id": "2411.15803_p4", "status": "built"}
+{"arxiv_id": "2604.07708", "n_gt": 6, "page_id": "2604.07708_p48", "status": "built"}
+{"arxiv_id": "2609.10460", "n_gt": 4, "page_id": "2609.10460_p2", "status": "built"}
+{"arxiv_id": "2607.03234", "n_gt": 6, "page_id": "2607.03234_p32", "status": "built"}
+{"arxiv_id": "2308.13685", "n_gt": 5, "page_id": "2308.13685_p9", "status": "built"}
+{"arxiv_id": "2503.23520", "n_gt": 5, "page_id": "2503.23520_p23", "status": "built"}
+{"arxiv_id": "2609.06281", "n_gt": 3, "page_id": "2609.06281_p4", "status": "built"}
+{"arxiv_id": "2503.05633", "n_gt": 5, "page_id": "2503.05633_p15", "status": "built"}
+{"arxiv_id": "2609.10446", "n_gt": 4, "page_id": "2609.10446_p16", "status": "built"}
+{"arxiv_id": "2506.06723", "n_gt": 7, "page_id": "2506.06723_p16", "status": "built"}
+{"arxiv_id": "2501.04010", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2501.12944", "n_gt": 3, "page_id": "2501.12944_p3", "status": "built"}
+{"arxiv_id": "2312.10330", "n_gt": 5, "page_id": "2312.10330_p18", "status": "built"}
+{"arxiv_id": "2311.08918", "n_gt": 4, "page_id": "2311.08918_p22", "status": "built"}
+{"arxiv_id": "2407.13428", "n_gt": 13, "page_id": "2407.13428_p5", "status": "built"}
+{"arxiv_id": "2604.25873", "n_gt": 9, "page_id": "2604.25873_p5", "status": "built"}
+{"arxiv_id": "2402.16471", "n_gt": 4, "page_id": "2402.16471_p1", "status": "built"}
+{"arxiv_id": "2412.11880", "n_gt": 6, "page_id": "2412.11880_p16", "status": "built"}
+{"arxiv_id": "2608.06639", "n_gt": 6, "page_id": "2608.06639_p4", "status": "built"}
+{"arxiv_id": "2406.19886", "n_gt": 8, "page_id": "2406.19886_p3", "status": "built"}
+{"arxiv_id": "2204.00093", "n_gt": 3, "page_id": "2204.00093_p2", "status": "built"}
+{"arxiv_id": "2310.07616", "n_gt": 3, "page_id": "2310.07616_p18", "status": "built"}
+{"arxiv_id": "2604.10289", "n_gt": 15, "page_id": "2604.10289_p2", "status": "built"}
+{"arxiv_id": "2512.07982", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2505.18277", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2603.06807", "n_gt": 6, "page_id": "2603.06807_p13", "status": "built"}
+{"arxiv_id": "2607.08632", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2604.08289", "n_gt": 5, "page_id": "2604.08289_p2", "status": "built"}
+{"arxiv_id": "2604.08265", "reason": "few_eqs", "status": "skipped"}
+{"arxiv_id": "2601.05550", "n_gt": 9, "page_id": "2601.05550_p10", "status": "built"}
+{"arxiv_id": "2405.00176", "reason": "compile_failed", "status": "skipped"}
+{"arxiv_id": "2501.00937", "n_gt": 4, "page_id": "2501.00937_p2", "status": "built"}
+{"arxiv_id": "2508.15511", "n_gt": 5, "page_id": "2508.15511_p2", "status": "built"}
+{"arxiv_id": "2207.12695", "n_gt": 5, "page_id": "2207.12695_p5", "status": "built"}
+{"arxiv_id": "2207.06956", "n_gt": 4, "page_id": "2207.06956_p14", "status": "built"}
+{"arxiv_id": "2602.07743", "n_gt": 3, "page_id": "2602.07743_p1", "status": "built"}

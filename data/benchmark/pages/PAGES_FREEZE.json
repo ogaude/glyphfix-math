@@ -1,0 +1,14 @@
+{
+  "benchmark_freeze_sha256": "b5c62fc248d36f1a26eea9563c0a000589777b71bac2c1d0ec792f4020b1e2b8",
+  "frozen_at": "2026-10-14",
+  "images_sha256": "1d09a306a7663492381037083c86a224f42f6d351474f79a53090d948c39d7e3",
+  "match_threshold": 0.5,
+  "n_gt_equations": 297,
+  "n_pages": 50,
+  "n_papers": 50,
+  "page_dpi": 400,
+  "page_longest_px": 2048,
+  "page_match_version": "2",
+  "pages_sha256": "b00a72987d7edcd7f19ac7fb52ca4113d9aae3c69988ec5b25f153d1caf82aa9",
+  "pages_version": "1"
+}

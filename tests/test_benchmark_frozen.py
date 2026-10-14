@@ -62,3 +62,50 @@ def test_image_files_match_records_when_present():
         if p.exists() and sha256_file(p) != r["image_sha256"]:
             bad.append(r["id"])
     assert not bad, bad[:5]
+
+
+PAGES = BENCH / "pages"
+PAGES_FREEZE = PAGES / "PAGES_FREEZE.json"
+PAGES_ROWS = PAGES / "pages.jsonl"
+
+
+def _pages_freeze() -> dict:
+    return json.loads(PAGES_FREEZE.read_text(encoding="utf-8"))
+
+
+def test_pages_freeze_matches_pinned_digest():
+    assert _benchmark_frozen.PAGES_FREEZE_SHA256 == hashlib.sha256(PAGES_FREEZE.read_bytes()).hexdigest()
+
+
+def test_pages_match_freeze():
+    from lightonocr_math.corpus import pages as pages_mod
+
+    f = _pages_freeze()
+    rows = read_jsonl(PAGES_ROWS)
+    assert f["pages_sha256"] == sha256_file(PAGES_ROWS)
+    assert f["n_pages"] == len(rows)
+    assert f["n_papers"] == len({r["arxiv_id"] for r in rows})
+    assert f["n_gt_equations"] == sum(len(r["gt_ids"]) for r in rows)
+    assert f["match_threshold"] == pages_mod.MATCH_THRESHOLD
+    assert f["page_match_version"] == pages_mod.PAGE_MATCH_VERSION
+    assert f["benchmark_freeze_sha256"] == _benchmark_frozen.BENCHMARK_FREEZE_SHA256
+    lines = "".join(f"{r['page_id']} {r['image_sha256']}\n" for r in sorted(rows, key=lambda r: r["page_id"]))
+    assert f["images_sha256"] == hashlib.sha256(lines.encode()).hexdigest()
+
+
+def test_pages_are_benchmark_papers_one_page_each():
+    rows = read_jsonl(PAGES_ROWS)
+    bench_papers = {r["arxiv_id"] for r in read_jsonl(RECORDS)}
+    assert {r["arxiv_id"] for r in rows} <= bench_papers
+    assert len({r["page_id"] for r in rows}) == len(rows)
+    assert len({r["arxiv_id"] for r in rows}) == len(rows)
+    assert all(len(r["gt_ids"]) >= 3 and r["license_spdx"] and r["image_sha256"] for r in rows)
+
+
+def test_page_images_match_rows_when_present():
+    import pytest
+
+    if not (PAGES / "images").is_dir():
+        pytest.skip("data/benchmark/pages/images/ absent (gitignored)")
+    bad = [r["page_id"] for r in read_jsonl(PAGES_ROWS) if (ROOT / r["image"]).exists() and sha256_file(ROOT / r["image"]) != r["image_sha256"]]
+    assert not bad, bad[:5]

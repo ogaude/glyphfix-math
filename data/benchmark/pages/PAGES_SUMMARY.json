@@ -1,0 +1,11 @@
+{
+  "compile_seconds": 160.7,
+  "n_built": 50,
+  "n_tried": 68,
+  "page_version": "1",
+  "side": "benchmark",
+  "skip_reasons": {
+    "compile_failed": 4,
+    "few_eqs": 14
+  }
+}
