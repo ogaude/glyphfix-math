@@ -1,0 +1,34 @@
+{"env": "equation", "body": "x = 1 \\label{e1} % note\n", "expected": "x = 1", "validate": true}
+{"env": "equation", "body": "x = 1 \\tag{3}", "expected": "x = 1", "validate": true}
+{"env": "equation", "body": "x = 1 \\tag*{a}", "expected": "x = 1", "validate": true}
+{"env": "equation", "body": "x = 1 \\nonumber", "expected": "x = 1", "validate": true}
+{"env": "equation", "body": "x = 1 \\notag", "expected": "x = 1", "validate": true}
+{"env": "align", "body": "a &= b \\\\ c &= d", "expected": "a &= b \\\\ c &= d", "validate": true}
+{"env": "align", "body": "a &= b \\\\", "expected": "a &= b", "validate": true}
+{"env": "align", "body": "a &= b \\label{x} \\nonumber \\\\ c &= d \\tag{2}", "expected": "a &= b \\\\ c &= d", "validate": true}
+{"env": "align", "body": "a &= b \\\\% c\n c &= d", "expected": "a &= b \\\\c &= d", "validate": true}
+{"env": "align", "body": "a &= b & c &= d \\\\ e &= f & g &= h", "expected": "a &= b & c &= d \\\\ e &= f & g &= h", "validate": false}
+{"env": "gather", "body": "a = b \\\\", "expected": "a = b", "validate": true}
+{"env": "gather", "body": "a = b \\\\ c = d", "expected": "\\begin{gathered} a = b \\\\ c = d \\end{gathered}", "validate": true}
+{"env": "gather", "body": "a = b \\label{p} \\\\ c = d \\\\", "expected": "\\begin{gathered} a = b \\\\ c = d \\end{gathered}", "validate": true}
+{"env": "equation", "body": "\n\\begin{split}\na &= b \\\\\n&= c\n\\end{split}\n", "expected": "\\begin{split} a &= b \\\\ &= c \\end{split}", "validate": true}
+{"env": "equation", "body": "\\left (x\\right ]", "expected": "\\left(x\\right]", "validate": true}
+{"env": "equation", "body": "\\left \\langle x \\right \\rangle", "expected": "\\left\\langle x \\right\\rangle", "validate": true}
+{"env": "equation", "body": "\\left. f \\right|_{0}", "expected": "\\left. f \\right|_{0}", "validate": true}
+{"env": "equation", "body": "a + b % c\n + d", "expected": "a + b + d", "validate": true}
+{"env": "equation", "body": "a \\% b % c", "expected": "a \\% b", "validate": true}
+{"env": "equation", "body": "a  +\t b\n c", "expected": "a + b c", "validate": true}
+{"env": "equation", "body": "a  +\t b\n\n c", "expected": "a + b c", "validate": false}
+{"env": "equation", "body": "x \\le y", "expected": "x \\le y", "validate": true}
+{"env": "equation", "body": "x \\leq y", "expected": "x \\leq y", "validate": true}
+{"env": "equation", "body": "\\dfrac{a}{b}", "expected": "\\dfrac{a}{b}", "validate": true}
+{"env": "equation", "body": "\\frac{a}{b}", "expected": "\\frac{a}{b}", "validate": true}
+{"env": "equation", "body": "\\mathrm{d}x", "expected": "\\mathrm{d}x", "validate": true}
+{"env": "equation", "body": "{x} + {{y}}", "expected": "{x} + {{y}}", "validate": true}
+{"env": "equation", "body": "\\bm{v} + \\boldsymbol{w}", "expected": "\\bm{v} + \\boldsymbol{w}", "validate": true}
+{"env": "equation", "body": "\\upsilon + \\nu", "expected": "\\upsilon + \\nu", "validate": true}
+{"env": "equation", "body": "x' + y^{\\prime}", "expected": "x' + y^{\\prime}", "validate": true}
+{"env": "equation", "body": "\\mathbb{1} + \\bar{x} + \\underline{y}", "expected": "\\mathbb{1} + \\bar{x} + \\underline{y}", "validate": true}
+{"env": "equation", "body": "x \\text{ if } y", "expected": "x \\text{ if } y", "validate": true}
+{"env": "equation", "body": "\\label{only}", "expected": "", "validate": false}
+{"env": "gather", "body": "\\label{a}\n  x = 1\n", "expected": "x = 1", "validate": true}
