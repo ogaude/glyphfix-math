@@ -96,6 +96,20 @@ def test_extract_display_blocks():
     assert pages.extract_display_blocks(text) == ["a+b", "c = d", "\\begin{align*}\ne &= f\n\\end{align*}", "\\begin{equation}g\\end{equation}"]
 
 
+def test_match_threshold_frozen_value():
+    assert pages.MATCH_THRESHOLD == 0.5
+    assert pages.PAGE_MATCH_VERSION == "2"
+
+
+def test_extract_display_blocks_model_page_shape():
+    # shape observed in stock page output: $$ blocks on their own lines, numbered with \tag or a leading label
+    text = "Lemma.\n\n$$\n(3.22.2) \\qquad 0 \\longrightarrow S_1 \\longrightarrow P_2,\n$$\n\nthen\n\n$$\nm = \\left\\lceil \\frac{Mn}{N} \\right\\rceil. \\tag{3}\n$$\n"
+    blocks = pages.extract_display_blocks(text)
+    assert len(blocks) == 2 and blocks[0].startswith("(3.22.2)") and blocks[1].endswith("\\tag{3}")
+    m = pages.match_equations(["0 \\longrightarrow S_1 \\longrightarrow P_2,", "m = \\Bigg{\\lceil} \\frac{Mn}{N} \\Bigg{\\rceil}."], blocks)
+    assert [x[1] for x in m] == [0, 1]
+
+
 def test_extract_display_blocks_empty():
     assert pages.extract_display_blocks("no math here $x$") == []
 

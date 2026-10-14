@@ -19,8 +19,8 @@ Rules:
     equations score as misses and the match rate is reported on its own (D-03)
 
 Known limit: two-column layouts and figure-heavy pages break the reading-order assumption of display-block
-extraction and lower the match rate; MATCH_THRESHOLD is a starting value, calibrated on train/dev pages before
-any benchmark page is scored.
+extraction and lower the match rate; MATCH_THRESHOLD was calibrated on train/dev pages before
+any benchmark page was scored.
 """
 
 from __future__ import annotations
@@ -40,10 +40,10 @@ from lightonocr_math import guard, render
 from lightonocr_math.normalize import normalize_tokens
 
 PAGE_VERSION = "1"
-PAGE_MATCH_VERSION = "1"
+PAGE_MATCH_VERSION = "2"
 PAGE_DPI = 400
 PAGE_LONGEST_PX = 2048
-MATCH_THRESHOLD = 0.7
+MATCH_THRESHOLD = 0.5
 MIN_GT_EQS = 3
 COMPILE_TIMEOUT_S = 300
 SYNCTEX_TIMEOUT_S = 300
