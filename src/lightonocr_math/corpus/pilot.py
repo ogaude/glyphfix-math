@@ -211,6 +211,9 @@ def automated_audit(
         "canon_validation": {
             "validated": n_validated, "passed": len(records), "mismatched": len(mism), "by_cause": dict(sorted(grouped.items())),
             "structural_excluded": sum(1 for r in excluded if r.get("reason") == "canon_mismatch" and r["detail"].get("cause") == "structural"),
+            "tiers": {
+                k: sum((s.get("validation_tiers") or {}).get(k, 0) for s in (summaries or [])) for k in ("identical", "glyph_equal")
+            },
         },
         "systematic_causes": systematic,
         "systematic": bool(systematic),
@@ -372,6 +375,10 @@ def render_report(m: dict) -> str:
         L += [f"- Canon validation: {cv['passed']}/{cv['validated']} passed; {cv['mismatched']} mismatched; {cv['structural_excluded']} excluded structurally",
               f"- Systematic mismatch causes (>= 2% of validated or >= 5 papers): {', '.join(a['systematic_causes']) or 'none'}"]
         L += [f"  - {k}: {v}" for k, v in cv["by_cause"].items()]
+        tiers = cv.get("tiers")
+        if tiers:
+            L.append(f"- Validation tiers of the passed labels: {tiers['identical']} bitmap-identical, {tiers['glyph_equal']} glyph-equal "
+                     "(same ink components, positions snapped by at most 2 px)")
         d = a["determinism"]
         L += [f"- Determinism: {d['identical']}/{d['sampled']} identical bitmaps on re-render (seed {d['seed']})",
               f"- Structural failures in kept labels: {a['structural_failures']['count']}",

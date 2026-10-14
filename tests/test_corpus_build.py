@@ -122,6 +122,7 @@ def test_every_reason_and_kept_record(tmp_path, sandbox):
     assert len(res.records) == 2 and res.summary["n_kept"] == 2 and res.summary["n_extracted"] == 9
     causes = sorted(r["detail"]["cause"] for r in res.excluded if r["reason"] == "canon_mismatch")
     assert causes == ["bitmap-differs", "original-compile-failed"]
+    assert res.summary["validation_tiers"] == {"identical": 2, "glyph_equal": 0}
     for rec in res.records:
         assert validate_record(rec) == []
         assert rec["license_spdx"] == "CC-BY-4.0" and rec["builder_version"] == build.BUILDER_VERSION
@@ -228,3 +229,15 @@ def test_shard_up_to_date_resume_key(tmp_path, sandbox, monkeypatch):
         with monkeypatch.context() as m:
             m.setattr(mod, name, val)
             assert not build.shard_up_to_date(summ, sha), name
+
+
+def test_glyph_equal_tier_keeps_a_label_whose_bitmap_only_shifts(tmp_path, sandbox, monkeypatch):
+    monkeypatch.setattr(render, "compare", lambda a, b, cache=None: (False, False))
+    monkeypatch.setattr(build.glyphmatch, "glyph_equal", lambda a, b: True)
+    p = _paper(tmp_path, TRAIN_ID, {"main.tex": _doc("\\begin{equation} x+y=z \\end{equation}\n")})
+    (res,) = build.build_chunk([p], cache=tmp_path / "c", out_roots={"corpus": tmp_path / "corpus", "benchmark": tmp_path / "bench"})
+    assert len(res.records) == 1 and res.summary["validation_tiers"] == {"identical": 0, "glyph_equal": 1}
+    monkeypatch.setattr(build.glyphmatch, "glyph_equal", lambda a, b: False)
+    p2 = _paper(tmp_path, TRAIN_ID, {"main.tex": _doc("\\begin{equation} x+y=z \\end{equation}\n")})
+    (res2,) = build.build_chunk([p2], cache=tmp_path / "c2", out_roots={"corpus": tmp_path / "corpus", "benchmark": tmp_path / "bench"})
+    assert res2.records == [] and [r["detail"]["cause"] for r in res2.excluded] == ["bitmap-differs"]

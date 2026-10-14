@@ -46,7 +46,7 @@ import numpy as np
 from PIL import Image
 
 from lightonocr_math import paths, render
-from lightonocr_math.corpus import canon, extract, flags
+from lightonocr_math.corpus import canon, extract, flags, glyphmatch
 from lightonocr_math.corpus._io import read_jsonl, sha256_bytes, write_json, write_jsonl
 from lightonocr_math.corpus.records import BUILDER_VERSION, Exclusion, exclusion_row, side_of, side_root, validate_record
 from lightonocr_math.ids import base_id, safe_id
@@ -102,7 +102,7 @@ def _summary_base(p: PaperInput, side: str) -> dict:
         "arxiv_id": base_id(p.arxiv_id), "version": p.version, "side": side, "split": p.catalog_row.get("split"),
         "status": "built", "kind": p.fetch_meta.get("kind"), "src_sha256": p.fetch_meta.get("sha256", ""),
         "main_file": None, "n_files": 0, "n_extracted": 0, "n_kept": 0, "exclusions": {}, "engine_hints": [],
-        "engine_flagged": False, "n_own_macros": 0, "redefined_core": [], "other_display_counts": {},
+        "engine_flagged": False, "validation_tiers": {"identical": 0, "glyph_equal": 0}, "n_own_macros": 0, "redefined_core": [], "other_display_counts": {},
         "builder_version": BUILDER_VERSION, "extract_version": extract.EXTRACT_VERSION,
         "canon_version": canon.CANON_RULES_VERSION, "canon_fingerprint": canon.CANON_FINGERPRINT,
         "flag_rules_version": flags.FLAG_RULES_VERSION, "preamble_sha256": render.PREAMBLE_SHA256,
@@ -230,7 +230,11 @@ def _finish(p: PaperInput, res: PaperResult, canon_res: dict, orig_res: dict, ca
         cause = None
         if ro.status != "rendered":
             cause = f"original-{ro.status}"
-        elif not render.compare(rc, ro, cache)[0]:
+        elif render.compare(rc, ro, cache)[0]:
+            s["validation_tiers"]["identical"] += 1
+        elif glyphmatch.glyph_equal(render.load_bitmap(rc, cache), render.load_bitmap(ro, cache)):
+            s["validation_tiers"]["glyph_equal"] += 1
+        else:
             cause = "bitmap-differs"
         if cause is not None:
             res.excluded.append(_ex(aid, Exclusion.CANON_MISMATCH, eq_index=item["eq_index"], eq=eq, cause=cause,
