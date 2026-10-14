@@ -184,3 +184,175 @@ def test_compile_failure_reported(tmp_path):
     res = pages.compile_paper(tmp_path, "main.tex")
     assert res.status == "failed"
     assert res.pdf is None
+
+
+# ---------------------------------------------------------------- CLI
+
+import io
+import json
+import tarfile
+
+from lightonocr_math import score, splits
+from lightonocr_math.corpus._io import read_jsonl, write_jsonl
+from lightonocr_math.ids import safe_id
+from scripts import corpus_pages as cli
+
+
+def _ids():
+    bench, corp = [], []
+    for n in range(1, 400):
+        aid = f"2301.{n:05d}"
+        (bench if splits.is_benchmark(aid) else corp).append(aid)
+        if bench and len(corp) >= 3:
+            break
+    return bench[0], corp[:3]
+
+
+def _make_source(sources, aid):
+    sdir = sources / safe_id(aid)
+    sdir.mkdir(parents=True)
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tf:
+        data = SYNTH.encode()
+        ti = tarfile.TarInfo("main.tex")
+        ti.size = len(data)
+        tf.addfile(ti, io.BytesIO(data))
+    (sdir / "src.bin").write_bytes(buf.getvalue())
+    (sdir / "fetch.json").write_text(json.dumps({"kind": "tar.gz", "license_uri": "u", "license_spdx": "CC-BY-4.0", "version": "v1"}))
+
+
+def _shard(shards, aid, n=3):
+    recs = [
+        {"id": f"{safe_id(aid)}-{i}", "arxiv_id": aid, "paper_version": "v1", "env": "equation", "source_file": "main.tex",
+         "source_line": 5 + i, "latex": f"x_{i}=y", "image": f"img/{i}.png", "width": 10, "height": 10}
+        for i in range(n)
+    ]
+    write_jsonl(shards / "records" / f"{safe_id(aid)}.jsonl", recs)
+    return recs
+
+
+@pytest.fixture
+def cli_env(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIGHTONOCR_MATH_ROOT", str(tmp_path))
+    bench, corp = _ids()
+    sources, shards = tmp_path / "src", tmp_path / "shards"
+    for aid in corp:
+        _make_source(sources, aid)
+        _shard(shards, aid)
+    return tmp_path, bench, corp, sources, shards
+
+
+def _fake_pipeline(monkeypatch, mapped):
+    """Replace Docker compile and SyncTeX; mapped: arxiv-safe-id -> page per record index (None = unmapped)."""
+    from PIL import Image
+
+    def fake_compile(workdir, main_rel, *, timeout_s=0):
+        if safe_id_of(workdir) in mapped and mapped[safe_id_of(workdir)] == "fail":
+            return pages.CompileResult("failed", None, "boom", 0.1)
+        pdf = workdir / "main.pdf"
+        import pypdfium2 as pdfium
+
+        d = pdfium.PdfDocument.new()
+        d.new_page(612, 792)
+        d.save(str(pdf))
+        d.close()
+        return pages.CompileResult("ok", pdf, "", 0.1)
+
+    def safe_id_of(workdir):
+        return workdir.name
+
+    def fake_synctex(workdir, queries, pdf_rel):
+        pg = mapped[workdir.name]
+        out = []
+        for qid, _line, _f in queries:
+            idx = int(qid.rsplit("-", 1)[1])
+            p = pg[idx] if isinstance(pg, list) else None
+            out.append(f"##Q {qid}")
+            if p is not None:
+                out.append(f"SyncTeX result begin\nPage:{p}\nx:100\ny:200\nh:100\nv:200\nW:50\nH:10\nSyncTeX result end")
+        return "\n".join(out) + "\n"
+
+    monkeypatch.setattr(pages, "compile_paper", fake_compile)
+    monkeypatch.setattr(pages, "run_synctex", fake_synctex)
+    monkeypatch.setattr(pages, "rasterize_page", lambda pdf, i: Image.new("RGB", (100, 140), "white"))
+
+
+def test_build_skips_and_logs(cli_env, monkeypatch):
+    tmp, _bench, corp, sources, shards = cli_env
+    _fake_pipeline(monkeypatch, {safe_id(corp[0]): [1, 1, 1], safe_id(corp[1]): "fail", safe_id(corp[2]): [1, 2, None]})
+    ids = tmp / "ids.txt"
+    ids.write_text("\n".join(corp))
+    out = tmp / "out"
+    rc = cli.main(["build", "--side", "calib", "--papers", str(ids), "--sources", str(sources), "--shards", str(shards), "--out", str(out), "--n", "5"])
+    assert rc == 0
+    built = read_jsonl(out / "pages.jsonl")
+    assert [r["arxiv_id"] for r in built] == [corp[0]]
+    row = built[0]
+    for k in ("page_id", "arxiv_id", "paper_version", "license_uri", "license_spdx", "page_index", "n_pages", "image", "width", "height",
+              "image_sha256", "gt_ids", "page_version"):
+        assert k in row
+    log = {e["arxiv_id"]: e for e in read_jsonl(out / "build_log.jsonl")}
+    assert log[corp[1]]["reason"] == "compile_failed"
+    assert log[corp[2]]["reason"] == "few_eqs"
+    assert json.loads((out / "PAGES_SUMMARY.json").read_text())["n_built"] == 1
+
+
+def test_build_stops_after_n(cli_env, monkeypatch):
+    tmp, _b, corp, sources, shards = cli_env
+    _fake_pipeline(monkeypatch, {safe_id(a): [1, 1, 1] for a in corp})
+    ids = tmp / "ids.txt"
+    ids.write_text("\n".join(corp))
+    cli.main(["build", "--side", "calib", "--papers", str(ids), "--sources", str(sources), "--shards", str(shards), "--out", str(tmp / "o"), "--n", "2"])
+    assert [r["arxiv_id"] for r in read_jsonl(tmp / "o" / "pages.jsonl")] == corp[:2]
+
+
+def test_build_refuses_wrong_side(cli_env):
+    tmp, bench, corp, sources, shards = cli_env
+    ids = tmp / "ids.txt"
+    ids.write_text("\n".join([corp[0], bench]))
+    args = ["--papers", str(ids), "--sources", str(sources), "--shards", str(shards), "--out", str(tmp / "o")]
+    assert cli.main(["build", "--side", "calib", *args]) == 2
+    ids.write_text(corp[0])
+    assert cli.main(["build", "--side", "benchmark", *args]) == 2
+
+
+def test_rows_and_stats(cli_env, monkeypatch):
+    tmp, _b, corp, sources, shards = cli_env
+    _fake_pipeline(monkeypatch, {safe_id(a): [1, 1, 1] for a in corp})
+    ids = tmp / "ids.txt"
+    ids.write_text("\n".join(corp[:2]))
+    out = tmp / "out"
+    cli.main(["build", "--side", "calib", "--papers", str(ids), "--sources", str(sources), "--shards", str(shards), "--out", str(out)])
+    built = read_jsonl(out / "pages.jsonl")
+    preds = tmp / "preds.jsonl"
+    write_jsonl(preds, [{"id": built[0]["page_id"], "paper_id": built[0]["paper_id"], "pred_text": "$$x_0=y$$\n$$x_1=y$$"},
+                        {"id": built[1]["page_id"], "paper_id": built[1]["paper_id"], "pred_error": "timeout"}])
+    rows_f, stats_f = tmp / "rows.jsonl", tmp / "stats.json"
+    rc = cli.main(["rows", "--pages", str(out / "pages.jsonl"), "--records", str(shards / "records"), "--preds", str(preds),
+                   "--out", str(rows_f), "--stats", str(stats_f)])
+    assert rc == 0
+    assert len(score.read_predictions(rows_f)) == 6
+    stats = json.loads(stats_f.read_text())
+    assert stats["n_gt"] == 6 and stats["n_matched"] == 2
+    assert stats["threshold"] == pages.MATCH_THRESHOLD and stats["page_match_version"] == pages.PAGE_MATCH_VERSION
+    assert [p["n_matched"] for p in stats["pages"]] == [2, 0]
+
+
+def test_crop_scale_cli(cli_env, monkeypatch):
+    from PIL import Image
+
+    tmp, _b, corp, sources, shards = cli_env
+    _fake_pipeline(monkeypatch, {safe_id(a): [1, 1, 1] for a in corp})
+    ids = tmp / "ids.txt"
+    ids.write_text(corp[0])
+    out = tmp / "out"
+    cli.main(["build", "--side", "calib", "--papers", str(ids), "--sources", str(sources), "--shards", str(shards), "--out", str(out)])
+    for i in range(3):
+        p = tmp / "img" / f"{i}.png"
+        p.parent.mkdir(exist_ok=True)
+        Image.new("L", (50, 20), 0).save(p)
+    res = tmp / "cs.json"
+    assert cli.main(["crop-scale", "--pages", str(out / "pages.jsonl"), "--pdf-dir", str(out / "pdf"), "--records", str(shards / "records"),
+                     "--images-root", str(tmp), "--out", str(res)]) == 0
+    d = json.loads(res.read_text())
+    assert set(d) >= {"median", "p10", "p90", "n"}
