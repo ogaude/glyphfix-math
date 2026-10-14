@@ -1,0 +1,58 @@
+{
+  "builder_version": "1",
+  "built_per_status": {
+    "bad_archive": 8,
+    "built": 173,
+    "no_main": 1,
+    "no_source": 1
+  },
+  "canon_fingerprint": "1d7d79739aef5d0534f51bf13d0372c5f095f51bac23b0244ea92729e55e7ba4",
+  "created": "2026-10-14T10:11:13Z",
+  "exclusions": {
+    "bad_archive": 8,
+    "canon_mismatch": 113,
+    "duplicate": 62,
+    "macros": 4544,
+    "no_main": 1,
+    "no_source": 1,
+    "render": 298,
+    "short_long": 19,
+    "unsafe": 4
+  },
+  "fetched": 183,
+  "finished": "2026-10-14T13:20:51Z",
+  "kept_equations": {
+    "benchmark": 5567
+  },
+  "note": "quotas met in the planned ranges; no top-up needed. Build summary counts for corpus include the 100 pilot papers.",
+  "order_sha256": "18fea8b4b4e326718ddd3a1ecf5e55622f1b68e36fd7e528b8bd32796338f2f6",
+  "pilot_ids_included": 0,
+  "planned_counts": {
+    "benchmark": 183
+  },
+  "quotas": {
+    "benchmark": 150,
+    "dev": 50,
+    "train": 800
+  },
+  "ranges": [
+    [
+      0,
+      183
+    ]
+  ],
+  "ranges_fetched": [
+    [
+      0,
+      183
+    ]
+  ],
+  "shortfall": {
+    "benchmark": 0
+  },
+  "top_up_rounds": 0,
+  "usable_papers": {
+    "benchmark": 152
+  },
+  "wall_time_s": 11379
+}
