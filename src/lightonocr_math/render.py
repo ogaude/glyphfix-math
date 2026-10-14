@@ -83,7 +83,12 @@ INFRA_EXIT_CODES = frozenset({125, 126, 127, 137, 139})
 # control equation is killed too counts as an infrastructure failure.
 KILL_EXIT_CODES = frozenset({137, 139})
 CONTROL_LATEX = "x"
+CONTROL_ENV = "\\begin{equation*}x\\end{equation*}"
 KILLED_NOTE = "container killed (oom/segv)"
+
+# "display" (default): wrap() re-wraps the body in \[ \]. "env": a starred equation/align/gather environment is typeset verbatim.
+WRAPPERS = ("display", "env")
+_VERBATIM_ENV_RE = re.compile(r"^\\begin\{(equation|align|gather)\*\}.*\\end\{\1\*\}$", re.DOTALL)
 
 STATUSES = ("rendered", "compile-failed", "blank-page", "rejected", "overflow", "timeout", "empty")
 
@@ -275,8 +280,10 @@ class RenderResult:
     note: str = ""
 
 
-def cache_key(latex: str) -> str:
+def cache_key(latex: str, *, wrapper: str = "display") -> str:
     payload = IMAGE_DIGEST + "\n" + PREAMBLE_SHA256 + "\n" + WRAP_VERSION + "\n" + FILTER_VERSION + "\n" + str(RENDER_DPI) + "\n" + latex
+    if wrapper != "display":
+        payload += "\nwrapper=" + wrapper
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
@@ -362,10 +369,11 @@ def docker_diagnosis() -> str:
         return f"docker unreachable or slow; if the daemon is up, run `docker pull {IMAGE}`"
 
 
-def _batch_source(latexes: Sequence[str]) -> str:
+def _batch_source(latexes: Sequence[str], *, wrapper: str = "display") -> str:
     parts = [PREAMBLE, "\\begin{document}\n"]
     for latex in latexes:
-        parts.append(wrap(latex) + "\n\\newpage\n")
+        body = wrap(latex) if wrapper == "display" else latex.strip()
+        parts.append(body + "\n\\newpage\n")
     parts.append("\\end{document}\n")
     return "".join(parts)
 
@@ -402,7 +410,7 @@ _START_LOCK = threading.Lock()
 _inflight = [0]  # containers started by this process and not yet finished (guarded by _START_LOCK)
 
 
-def _run_batch(latexes: Sequence[str], work_root: Path, timeout_s: int) -> tuple[Path | None, str, bool]:
+def _run_batch(latexes: Sequence[str], work_root: Path, timeout_s: int, wrapper: str = "display") -> tuple[Path | None, str, bool]:
     """Compile one batch. Returns (workdir with batch.pdf or None, first error line, timed_out).
 
     Only outcomes attributable to LaTeX are returned; infrastructure failures raise RenderInfrastructureError.
@@ -413,19 +421,19 @@ def _run_batch(latexes: Sequence[str], work_root: Path, timeout_s: int) -> tuple
         guard.preflight(ram_gb=guard.DOCKER_MEMORY_GB, workers=_inflight[0] + 1, timeout_s=600)
         _inflight[0] += 1
     try:
-        return _run_batch_reserved(latexes, work_root, timeout_s)
+        return _run_batch_reserved(latexes, work_root, timeout_s, wrapper)
     finally:
         with _START_LOCK:
             _inflight[0] -= 1
 
 
-def _run_batch_reserved(latexes: Sequence[str], work_root: Path, timeout_s: int) -> tuple[Path | None, str, bool]:
+def _run_batch_reserved(latexes: Sequence[str], work_root: Path, timeout_s: int, wrapper: str = "display") -> tuple[Path | None, str, bool]:
     keep = False
     workdir: Path | None = None
     try:
         work_root.mkdir(parents=True, exist_ok=True)
         workdir = Path(tempfile.mkdtemp(prefix="batch-", dir=work_root))
-        (workdir / "batch.tex").write_text(_batch_source(latexes), encoding="utf-8")
+        (workdir / "batch.tex").write_text(_batch_source(latexes, wrapper=wrapper), encoding="utf-8")
         name = f"lom-render-{uuid.uuid4().hex}"
         try:
             proc = subprocess.run(
@@ -504,13 +512,14 @@ def _render_group(
     *,
     abort: threading.Event | None = None,
     errors: list[BaseException] | None = None,
+    wrapper: str = "display",
 ) -> dict[str, RenderResult]:
     """Render a group; any failure (not only RenderInfrastructureError) stops sibling threads.
 
     The first real exception is kept in ``errors`` so render_many can raise it instead of an "aborted" one.
     """
     try:
-        return _render_group_inner(items, work_root, timeout_s, cache, abort=abort, errors=errors)
+        return _render_group_inner(items, work_root, timeout_s, cache, abort=abort, errors=errors, wrapper=wrapper)
     except Exception as e:
         if abort is not None:
             abort.set()
@@ -530,6 +539,7 @@ def _render_group_inner(
     abort: threading.Event | None = None,
     errors: list[BaseException] | None = None,
     first: tuple[Path | None, str, bool] | None = None,
+    wrapper: str = "display",
 ) -> dict[str, RenderResult]:
     """Render (key, latex) items; write cache entries. A failing group is bisected down to singletons.
 
@@ -540,7 +550,7 @@ def _render_group_inner(
         if first is not None and first[0] is not None:
             shutil.rmtree(first[0], ignore_errors=True)
         raise _AbortedError("aborted: an earlier batch hit an infrastructure failure")
-    workdir, err, timed_out = first if first is not None else _run_batch([latex for _, latex in items], work_root, timeout_s)
+    workdir, err, timed_out = first if first is not None else _run_batch([latex for _, latex in items], work_root, timeout_s, wrapper)
     pages = None
     if workdir is not None:
         try:
@@ -567,7 +577,7 @@ def _render_group_inner(
             return {key: RenderResult(key, "timeout", None, None, f"timeout after {timeout_s}s")}
         if err.startswith(KILLED_NOTE):
             # Pathological equation or broken sandbox? A trivial control tells them apart.
-            control = _run_batch([CONTROL_LATEX], work_root, timeout_s)
+            control = _run_batch([CONTROL_LATEX if wrapper == "display" else CONTROL_ENV], work_root, timeout_s, wrapper)
             if control[0] is not None:
                 shutil.rmtree(control[0], ignore_errors=True)
                 # transient and never cached: it is a property of this run's resources, not of the LaTeX
@@ -585,9 +595,9 @@ def _render_group_inner(
     if timed_out:
         # If both halves also time out at their first attempt the host is too slow (swap, saturated CPU): bisecting
         # further would burn ~N timeouts and report every item as failed. Stop and call it infrastructure.
-        left_first = _run_batch([latex for _, latex in items[:mid]], work_root, timeout_s)
+        left_first = _run_batch([latex for _, latex in items[:mid]], work_root, timeout_s, wrapper)
         try:
-            right_first = _run_batch([latex for _, latex in items[mid:]], work_root, timeout_s)
+            right_first = _run_batch([latex for _, latex in items[mid:]], work_root, timeout_s, wrapper)
         except BaseException:
             if left_first[0] is not None:
                 shutil.rmtree(left_first[0], ignore_errors=True)
@@ -597,8 +607,8 @@ def _render_group_inner(
                 f"both halves of a timed-out batch of {len(items)} also timed out after {timeout_s}s: host too slow "
                 "or overloaded (check swap and CPU load), refusing to score every item as a timeout"
             )
-    out = _render_group_inner(items[:mid], work_root, timeout_s, cache, abort=abort, errors=errors, first=left_first)
-    out.update(_render_group_inner(items[mid:], work_root, timeout_s, cache, abort=abort, errors=errors, first=right_first))
+    out = _render_group_inner(items[:mid], work_root, timeout_s, cache, abort=abort, errors=errors, first=left_first, wrapper=wrapper)
+    out.update(_render_group_inner(items[mid:], work_root, timeout_s, cache, abort=abort, errors=errors, first=right_first, wrapper=wrapper))
     return out
 
 
@@ -609,15 +619,26 @@ def render_many(
     cache: Path | None = None,
     timeout_s: int = 300,
     max_parallel: int | None = None,
+    wrapper: str = "display",
 ) -> list[RenderResult]:
-    """Render every input (aligned with the input order); cached, batched, sandboxed, failures bisected."""
-    keys = [cache_key(x) for x in latex_list]
+    """Render every input (aligned with the input order); cached, batched, sandboxed, failures bisected.
+
+    wrapper="display" (default) goes through wrap(), which strips labels and re-wraps bodies in aligned/\\[ \\]. wrapper="env"
+    typesets each item verbatim and accepts only a starred equation/align/gather environment (anything else is "rejected"):
+    the corpus canonicalizer uses it to render the paper's own environment and compare it with the canonical label rendered
+    through the default wrapper. Cache keys carry the wrapper, so bitmaps never cross wrappers.
+    """
+    if wrapper not in WRAPPERS:
+        raise ValueError(f"unknown wrapper {wrapper!r}; expected one of {WRAPPERS}")
+    keys = [cache_key(x, wrapper=wrapper) for x in latex_list]
     todo: dict[str, str] = {}
     for key, latex in zip(keys, latex_list, strict=True):
         if key in todo:
             continue
         # check_safe runs before the cache lookup, so entries written under an older, laxer filter are not served
         reason = check_safe(latex)
+        if reason is None and wrapper == "env" and not _VERBATIM_ENV_RE.match(latex.strip()):
+            reason = "not a starred display env"
         cached = _cache_get(cache, key)
         if reason is not None:
             status = "empty" if reason == "empty" else "rejected"
@@ -645,7 +666,7 @@ def render_many(
         abort = threading.Event()
         errors: list[BaseException] = []
         with ThreadPoolExecutor(max_workers=max(1, min(parallel, len(groups)))) as ex:
-            futs = [ex.submit(_render_group, g, work_root, timeout_s, cache, abort=abort, errors=errors) for g in groups]
+            futs = [ex.submit(_render_group, g, work_root, timeout_s, cache, abort=abort, errors=errors, wrapper=wrapper) for g in groups]
             for fut in futs:
                 try:
                     transient.update(fut.result())
