@@ -35,3 +35,4 @@
 {"env": "equation", "body": "\n\\label{eq:a}\n  x = 1\n", "expected": "x = 1", "validate": true}
 {"env": "align", "body": "\n  \\label{eq:b}\n  f = 0 \\quad \\text{in } \\Omega,\n", "expected": "f = 0 \\quad \\text{in } \\Omega,", "validate": false}
 {"env": "equation", "body": "a\\\nb", "expected": "a\\ b", "validate": true}
+{"env": "equation", "body": "\n\t\\begin{gathered}\n\t\ta = b \\\\\n\t\tc = d\n\t\\end{gathered}\n", "expected": "\\begin{gathered} a = b \\\\ c = d \\end{gathered}", "validate": true}

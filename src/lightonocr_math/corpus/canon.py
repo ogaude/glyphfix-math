@@ -41,7 +41,7 @@ from lightonocr_math.render import _needs_aligned
 
 CANON_RULES_VERSION = "2"
 CANON_GOLDEN_PATH = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "canon_golden.jsonl"
-CANON_FINGERPRINT = "cdf58bb8c5e031ce745baee901f147f083b0374c254d6f05e621dee13503aac1"
+CANON_FINGERPRINT = "1d7d79739aef5d0534f51bf13d0372c5f095f51bac23b0244ea92729e55e7ba4"
 MAX_LABEL_CHARS = 1500
 
 RULES = (
@@ -142,7 +142,8 @@ def layout_only_diff(raw_body: str, canonical: str) -> list[str]:
     Entries are "-tok" (in the raw body only) and "+tok" (in the label only). Token order is not compared:
     canonicalization never reorders, and a multiset check keeps the diff readable.
     """
-    if canonical.startswith(_GATHERED_OPEN) and canonical.endswith(_GATHERED_CLOSE):
+    own_wrapper = _WS_RE.sub(" ", _strip_comments(raw_body)).strip().startswith(_GATHERED_OPEN.strip())
+    if not own_wrapper and canonical.startswith(_GATHERED_OPEN) and canonical.endswith(_GATHERED_CLOSE):
         canonical = canonical[len(_GATHERED_OPEN) : len(canonical) - len(_GATHERED_CLOSE)]
     raw, can = Counter(_layout_tokens(raw_body)), Counter(tokenize(_control_space(canonical)))
     diff = [f"-{t}" for t in sorted((raw - can).elements())] + [f"+{t}" for t in sorted((can - raw).elements())]
