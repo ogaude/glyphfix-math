@@ -7,3 +7,14 @@ experiments/*/out-*/*/
 *.bak
 data/spikes/
 data/candidates_cache/
+data/sources/
+data/work/
+data/catalog_cache/
+data/corpus/shards/
+data/corpus/images/
+data/corpus/pages_calib/images/
+data/corpus/pages_calib/pdf/
+data/benchmark/shards/
+data/benchmark/images/
+data/benchmark/pages/images/
+data/benchmark/pages/pdf/

@@ -20,6 +20,7 @@ Allowed paths, and why (candidates.jsonl is an exact match: candidates.jsonl.bak
   data/candidates.jsonl      the candidate population the split was computed from
   data/candidates_cache/     raw metadata harvest for the same population
   .planning/                 prose documents
+  data/benchmark/            benchmark-side corpus artifacts (catalog, records, pages, baseline); training code never reads it
 
 Quarantined ids are not reported: quarantine is a training-side filter enforced by
 splits.load_train_ids, not a leak.
@@ -45,7 +46,7 @@ from lightonocr_math.splits import FrozenSplit, frozen, is_benchmark
 
 SCAN_SUFFIXES = {".jsonl", ".json", ".csv", ".tsv", ".txt", ".parquet", ".arrow"}
 # Directory prefixes (startswith) and exact files (==): "data/candidates.jsonl.bak" must not inherit the exemption.
-ALLOW_PREFIXES = ("data/splits/", "data/candidates_cache/", ".planning/")
+ALLOW_PREFIXES = ("data/splits/", "data/candidates_cache/", ".planning/", "data/benchmark/")
 ALLOW_FILES = ("data/candidates.jsonl",)
 ID_KEYS = {"arxiv_id", "paper_id", "paper", "source_id", "arxiv"}
 MAX_JSON_BYTES = 200 * 1024 * 1024

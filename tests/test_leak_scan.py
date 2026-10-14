@@ -144,3 +144,19 @@ def test_parquet_without_pyarrow_fails_closed(env, monkeypatch):
     _write(repo, "ds/train.parquet", "not really parquet")
     with pytest.raises(RuntimeError, match="pyarrow"):
         scan_repo(repo, fs)
+
+
+def test_benchmark_dir_is_allow_listed(env):
+    repo, fs, new, _ = env
+    assert "data/benchmark/" in ALLOW_PREFIXES
+    _write(repo, "data/benchmark/x.jsonl", json.dumps({"arxiv_id": new}) + "\n")
+    assert scan_repo(repo, fs) == []
+
+
+def test_corpus_dir_is_still_scanned(env):
+    repo, fs, new, _ = env
+    assert "data/corpus/" not in ALLOW_PREFIXES
+    _write(repo, "data/corpus/x.jsonl", json.dumps({"arxiv_id": new}) + "\n")
+    _write(repo, f"data/corpus/images/{safe_id(new)}/a.png", "x")
+    paths_hit = {lk.path for lk in scan_repo(repo, fs)}
+    assert paths_hit == {"data/corpus/x.jsonl", f"data/corpus/images/{safe_id(new)}/a.png"}
