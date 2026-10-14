@@ -39,9 +39,9 @@ from pathlib import Path
 from lightonocr_math.latex_tokens import tokenize
 from lightonocr_math.render import _needs_aligned
 
-CANON_RULES_VERSION = "1"
+CANON_RULES_VERSION = "2"
 CANON_GOLDEN_PATH = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "canon_golden.jsonl"
-CANON_FINGERPRINT = "4ad188f43abfe719471ecfe141d2105e13f19bb28f10d9002bcd32e98103ae94"
+CANON_FINGERPRINT = "cdf58bb8c5e031ce745baee901f147f083b0374c254d6f05e621dee13503aac1"
 MAX_LABEL_CHARS = 1500
 
 RULES = (
@@ -61,6 +61,8 @@ _LAYOUT_RES = (
 _TRAILING_BREAK_RE = re.compile(r"(?<!\\)\\\\\s*$")
 _LEFT_RIGHT_RE = re.compile(r"(\\(?:left|right))(?![A-Za-z])\s+(?=[^\sA-Za-z])")
 _WS_RE = re.compile(r"\s+")
+_BLANK_LINE_RE = re.compile(r"\n[ \t]*(?=\n)")
+_CONTROL_SEQ_RE = re.compile(r"\\(?:[A-Za-z]+|.)", re.DOTALL)
 _VALIDATION_ENVS = ("equation", "align", "gather")
 _GATHERED_OPEN = "\\begin{gathered} "
 _GATHERED_CLOSE = " \\end{gathered}"
@@ -114,15 +116,24 @@ def canonicalize(body: str, env: str) -> str:
 
 
 def original_for_validation(body: str, env: str) -> str:
-    """The paper's own starred environment: comments, labels, tags and numbering switches removed, nothing else."""
+    """The paper's own starred environment: comments, labels, tags and numbering switches removed, nothing else.
+
+    Removing a \\label or \\tag that sat on its own line leaves a whitespace-only line, which TeX reads as a paragraph
+    break and rejects inside align* and gather*; such lines are dropped so the check sees the equation, not the gap.
+    """
     if env not in _VALIDATION_ENVS:
         raise ValueError(f"unsupported env {env!r} for validation; expected one of {_VALIDATION_ENVS}")
-    s = _strip_layout_commands(_strip_comments(body))
+    s = _BLANK_LINE_RE.sub("", _strip_layout_commands(_strip_comments(body)))
     return f"\\begin{{{env}*}}{s}\\end{{{env}*}}"
 
 
+def _control_space(s: str) -> str:
+    """Spell a backslash followed by a whitespace character (a control space) as backslash and a blank."""
+    return _CONTROL_SEQ_RE.sub(lambda m: "\\ " if m.group(0)[1:].isspace() else m.group(0), s)
+
+
 def _layout_tokens(s: str) -> list[str]:
-    return tokenize(_drop_trailing_breaks(_strip_layout_commands(_strip_comments(s))))
+    return tokenize(_control_space(_drop_trailing_breaks(_strip_layout_commands(_strip_comments(s)))))
 
 
 def layout_only_diff(raw_body: str, canonical: str) -> list[str]:
@@ -133,7 +144,7 @@ def layout_only_diff(raw_body: str, canonical: str) -> list[str]:
     """
     if canonical.startswith(_GATHERED_OPEN) and canonical.endswith(_GATHERED_CLOSE):
         canonical = canonical[len(_GATHERED_OPEN) : len(canonical) - len(_GATHERED_CLOSE)]
-    raw, can = Counter(_layout_tokens(raw_body)), Counter(tokenize(canonical))
+    raw, can = Counter(_layout_tokens(raw_body)), Counter(tokenize(_control_space(canonical)))
     diff = [f"-{t}" for t in sorted((raw - can).elements())] + [f"+{t}" for t in sorted((can - raw).elements())]
     return diff
 

@@ -65,6 +65,19 @@ def test_original_for_validation():
         original_for_validation("x", "multline")
 
 
+def test_original_for_validation_drops_blank_lines_left_by_stripped_labels():
+    out = original_for_validation("\n\\label{eq:a}\n  x = 1\n", "align")
+    assert out == "\\begin{align*}\n  x = 1\n\\end{align*}"
+    assert "\n\n" not in original_for_validation("a\n  \\label{b}\n\n  \\nonumber\nc", "equation")
+    assert original_for_validation("a\n\\label{q}\nb", "gather") == "\\begin{gather*}a\nb\\end{gather*}"
+
+
+def test_layout_only_diff_treats_control_newline_as_control_space():
+    assert layout_only_diff("a\\\nb", canonicalize("a\\\nb", "equation")) == []
+    assert layout_only_diff("a\\\\\nb", canonicalize("a\\\\\nb", "equation")) == []
+    assert layout_only_diff("a\\\nb", "a b") != []
+
+
 def test_layout_only_diff_detects_glyph_change():
     assert layout_only_diff("a \\le b", "a \\leq b") == ["-\\le", "+\\leq"]
     assert layout_only_diff("x'", "x") == ["-'"]

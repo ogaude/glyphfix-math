@@ -32,3 +32,6 @@
 {"env": "equation", "body": "x \\text{ if } y", "expected": "x \\text{ if } y", "validate": true}
 {"env": "equation", "body": "\\label{only}", "expected": "", "validate": false}
 {"env": "gather", "body": "\\label{a}\n  x = 1\n", "expected": "x = 1", "validate": true}
+{"env": "equation", "body": "\n\\label{eq:a}\n  x = 1\n", "expected": "x = 1", "validate": true}
+{"env": "align", "body": "\n  \\label{eq:b}\n  f = 0 \\quad \\text{in } \\Omega,\n", "expected": "f = 0 \\quad \\text{in } \\Omega,", "validate": false}
+{"env": "equation", "body": "a\\\nb", "expected": "a\\ b", "validate": true}
