@@ -61,6 +61,17 @@ def test_exact_overlap_dropped_and_short_kept(cand):
     assert len(res.kept) == 1 and res.report["short_collisions"]
 
 
+def test_missing_candidates_file_fails_closed(tmp_path):
+    corpus, bench, cat = _setup("m + n + o")
+    missing = tmp_path / "nope.jsonl"
+    with pytest.raises(splits.LeakageError):
+        G.apply_gate(corpus, bench, cat, candidates_path=missing)
+    with pytest.raises(splits.LeakageError):
+        G.assert_clean(corpus, bench, cat, candidates_path=missing)
+    res = G.apply_gate(corpus, bench, cat, candidates_path=missing, allow_missing_candidates=True)
+    assert res.report["candidates_used"] is False
+
+
 def test_near_duplicate_threshold(cand):
     toks = normalize.normalize_tokens(BASE)
     close = BASE.replace("a_{12}", "b_{12}")

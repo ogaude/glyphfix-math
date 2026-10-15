@@ -112,8 +112,8 @@ def run(args: argparse.Namespace) -> int:
         if p.exists():
             catalog_rows += read_jsonl(p)
 
-    res = G.apply_gate(tsel.selected + dsel.selected, bsel.selected, catalog_rows)
     try:
+        res = G.apply_gate(tsel.selected + dsel.selected, bsel.selected, catalog_rows)
         G.assert_clean(res.kept, bsel.selected, catalog_rows)
     except splits.LeakageError as e:
         print(f"LEAK: {e}", file=sys.stderr)

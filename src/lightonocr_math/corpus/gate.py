@@ -16,6 +16,7 @@ Checks (in the order a record is charged with them; thresholds in GateConfig):
   paper_shared_eq  at least shared_eq_paper (5) exact equations shared with one benchmark paper
   same_author      catalog authors share an authors.author_keys entry with any benchmark paper (catalog rows and the
                    frozen candidates file)
+  (a missing frozen candidates file raises LeakageError unless allow_missing_candidates is set; report["candidates_used"] says which)
   ids              benchmark or quarantined arxiv ids among corpus records (assert_clean only: a hard fail, never repaired)
 
 Rules:
@@ -148,9 +149,16 @@ def _bench_ids(bench_records, rows: dict[str, dict]) -> set[str]:
     return ids
 
 
-def _candidate_authors(candidates_path: Path) -> dict[str, list[str]]:
+def _candidate_authors(candidates_path: Path, *, allow_missing: bool = False) -> dict[str, list[str]]:
     out: dict[str, list[str]] = {}
-    if candidates_path.exists():
+    if not candidates_path.exists():
+        if not allow_missing:
+            raise splits.LeakageError(
+                f"frozen candidates file missing: {candidates_path} (the same-author check would be weakened; "
+                "pass allow_missing_candidates / --allow-missing-candidates to run without it)",
+                {},
+            )
+    else:
         for row in read_jsonl(candidates_path):
             try:
                 out[base_id(row["arxiv_id"])] = list(row.get("authors") or [])
@@ -159,7 +167,9 @@ def _candidate_authors(candidates_path: Path) -> dict[str, list[str]]:
     return out
 
 
-def _findings(corpus_records, bench_records, catalog_rows, cfg: GateConfig, candidates_path: Path) -> dict:
+def _findings(
+    corpus_records, bench_records, catalog_rows, cfg: GateConfig, candidates_path: Path, *, allow_missing_candidates: bool = False
+) -> dict:
     """Return {"by_record": {record_id: (check, detail)}, "report": {...}} over every check."""
     rows = _rows_by_id(catalog_rows)
     bench_ids = _bench_ids(bench_records, rows)
@@ -242,7 +252,8 @@ def _findings(corpus_records, bench_records, catalog_rows, cfg: GateConfig, cand
             paper_flag.setdefault(paper, ("paper_shared_eq", {"bench_paper": bpaper, "n_shared": len(eqs)}))
 
     # same author
-    cand_auth = _candidate_authors(candidates_path)
+    cand_auth = _candidate_authors(candidates_path, allow_missing=allow_missing_candidates)
+    report["candidates_used"] = Path(candidates_path).exists()
     bench_keys: dict[str, set[str]] = defaultdict(set)
     for b in bench_ids:
         ks = set()
@@ -279,12 +290,15 @@ def _findings(corpus_records, bench_records, catalog_rows, cfg: GateConfig, cand
 
 
 def apply_gate(
-    corpus_records, bench_records, catalog_rows, *, cfg: GateConfig | None = None, candidates_path: Path | None = None
+    corpus_records, bench_records, catalog_rows, *, cfg: GateConfig | None = None, candidates_path: Path | None = None,
+    allow_missing_candidates: bool = False,
 ) -> GateResult:
     cfg = cfg or GateConfig()
     candidates_path = candidates_path or _default_candidates()
     corpus_records = list(corpus_records)
-    found = _findings(corpus_records, list(bench_records), catalog_rows, cfg, candidates_path)
+    found = _findings(
+        corpus_records, list(bench_records), catalog_rows, cfg, candidates_path, allow_missing_candidates=allow_missing_candidates
+    )
     charged: dict[str, str] = {}
     # first check in CHECK_ORDER that charged the record
     for c in CHECK_ORDER:
@@ -303,13 +317,16 @@ def apply_gate(
 
 
 def assert_clean(
-    corpus_records, bench_records, catalog_rows, *, cfg: GateConfig | None = None, candidates_path: Path | None = None
+    corpus_records, bench_records, catalog_rows, *, cfg: GateConfig | None = None, candidates_path: Path | None = None,
+    allow_missing_candidates: bool = False,
 ) -> dict:
     cfg = cfg or GateConfig()
     candidates_path = candidates_path or _default_candidates()
     corpus_records = list(corpus_records)
     splits.assert_disjoint([r["arxiv_id"] for r in corpus_records], context="corpus records")
-    found = _findings(corpus_records, list(bench_records), catalog_rows, cfg, candidates_path)
+    found = _findings(
+        corpus_records, list(bench_records), catalog_rows, cfg, candidates_path, allow_missing_candidates=allow_missing_candidates
+    )
     report = found["report"]
     offenders: dict[str, str] = {}
     for c in CHECK_ORDER:
@@ -383,7 +400,7 @@ def _check(args: argparse.Namespace) -> int:
             rows += read_jsonl(p)
     cand = Path(args.candidates) if args.candidates else None
     try:
-        report = assert_clean(train + dev, bench_records, rows, candidates_path=cand)
+        report = assert_clean(train + dev, bench_records, rows, candidates_path=cand, allow_missing_candidates=args.allow_missing_candidates)
         assert_side_clean(corpus)
     except splits.LeakageError as e:
         print(f"LEAK: {e}", file=sys.stderr)
@@ -401,6 +418,7 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--benchmark", default="data/benchmark")
     c.add_argument("--catalog", action="append", default=[])
     c.add_argument("--candidates", default=None)
+    c.add_argument("--allow-missing-candidates", action="store_true", help="run without data/candidates.jsonl (weakens same_author)")
     t = sub.add_parser("timing-probe")
     t.add_argument("--bench", type=int, default=3000)
     t.add_argument("--train", type=int, default=20000)
