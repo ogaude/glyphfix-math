@@ -89,7 +89,7 @@ def _hardened_prefix(name: str, workdir: Path) -> list[str]:
 def latexmk_docker_cmd(name: str, workdir: Path, main_rel: str) -> list[str]:
     return [
         *_hardened_prefix(name, Path(workdir)),
-        "latexmk", "-pdf", "-synctex=1", "-interaction=nonstopmode", "-halt-on-error",
+        "latexmk", "-norc", "-pdf", "-synctex=1", "-interaction=nonstopmode", "-halt-on-error",
         "-pdflatex=pdflatex -no-shell-escape %O %S",
         main_rel,
     ]

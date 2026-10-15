@@ -9,6 +9,7 @@ def test_latexmk_cmd_is_hardened(tmp_path):
     assert cmd[cmd.index("--network") + 1] == "none"
     for flag in ("--read-only", "--cap-drop", "ALL", render.IMAGE, "latexmk", "-pdf", "-synctex=1", "-interaction=nonstopmode"):
         assert flag in cmd
+    assert "-norc" in cmd  # a paper-supplied latexmkrc is Perl and must not be read
     assert "-pdflatex=pdflatex -no-shell-escape %O %S" in cmd
     assert not any("-shell-escape" in a and "-no-shell-escape" not in a for a in cmd)
 
