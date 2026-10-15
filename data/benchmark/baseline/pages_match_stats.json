@@ -1,0 +1,309 @@
+{
+  "match_rate": 0.9696969696969697,
+  "n_gt": 297,
+  "n_matched": 288,
+  "page_match_version": "2",
+  "pages": [
+    {
+      "match_rate": 1.0,
+      "n_gt": 10,
+      "n_matched": 10,
+      "page_id": "2604.07832_p6"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 11,
+      "n_matched": 11,
+      "page_id": "2512.18837_p1"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 4,
+      "n_matched": 4,
+      "page_id": "2603.07247_p6"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 4,
+      "n_matched": 4,
+      "page_id": "2603.07467_p30"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 7,
+      "n_matched": 7,
+      "page_id": "2605.04746_p41"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 4,
+      "n_matched": 4,
+      "page_id": "2507.06846_p2"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 8,
+      "n_matched": 8,
+      "page_id": "2510.20320_p41"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 6,
+      "n_matched": 6,
+      "page_id": "2512.08771_p4"
+    },
+    {
+      "match_rate": 0.3333333333333333,
+      "n_gt": 3,
+      "n_matched": 1,
+      "page_id": "2512.07835_p52"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 7,
+      "n_matched": 7,
+      "page_id": "2103.05478_p12"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 3,
+      "n_matched": 3,
+      "page_id": "2410.06937_p2"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 5,
+      "n_matched": 5,
+      "page_id": "2509.07659_p8"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 10,
+      "n_matched": 10,
+      "page_id": "2502.15927_p10"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 5,
+      "n_matched": 5,
+      "page_id": "2505.05904_p11"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 4,
+      "n_matched": 4,
+      "page_id": "2301.13334_p21"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 5,
+      "n_matched": 5,
+      "page_id": "2603.07870_p1"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 14,
+      "n_matched": 14,
+      "page_id": "2605.08079_p16"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 4,
+      "n_matched": 4,
+      "page_id": "2609.06197_p4"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 4,
+      "n_matched": 4,
+      "page_id": "2511.05322_p22"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 5,
+      "n_matched": 5,
+      "page_id": "2603.08527_p5"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 9,
+      "n_matched": 9,
+      "page_id": "2411.15803_p4"
+    },
+    {
+      "match_rate": 0.6666666666666666,
+      "n_gt": 6,
+      "n_matched": 4,
+      "page_id": "2604.07708_p48"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 4,
+      "n_matched": 4,
+      "page_id": "2609.10460_p2"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 6,
+      "n_matched": 6,
+      "page_id": "2607.03234_p32"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 5,
+      "n_matched": 5,
+      "page_id": "2308.13685_p9"
+    },
+    {
+      "match_rate": 0.8,
+      "n_gt": 5,
+      "n_matched": 4,
+      "page_id": "2503.23520_p23"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 3,
+      "n_matched": 3,
+      "page_id": "2609.06281_p4"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 5,
+      "n_matched": 5,
+      "page_id": "2503.05633_p15"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 4,
+      "n_matched": 4,
+      "page_id": "2609.10446_p16"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 7,
+      "n_matched": 7,
+      "page_id": "2506.06723_p16"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 3,
+      "n_matched": 3,
+      "page_id": "2501.12944_p3"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 5,
+      "n_matched": 5,
+      "page_id": "2312.10330_p18"
+    },
+    {
+      "match_rate": 0.75,
+      "n_gt": 4,
+      "n_matched": 3,
+      "page_id": "2311.08918_p22"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 13,
+      "n_matched": 13,
+      "page_id": "2407.13428_p5"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 9,
+      "n_matched": 9,
+      "page_id": "2604.25873_p5"
+    },
+    {
+      "match_rate": 0.25,
+      "n_gt": 4,
+      "n_matched": 1,
+      "page_id": "2402.16471_p1"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 6,
+      "n_matched": 6,
+      "page_id": "2412.11880_p16"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 6,
+      "n_matched": 6,
+      "page_id": "2608.06639_p4"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 8,
+      "n_matched": 8,
+      "page_id": "2406.19886_p3"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 3,
+      "n_matched": 3,
+      "page_id": "2204.00093_p2"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 3,
+      "n_matched": 3,
+      "page_id": "2310.07616_p18"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 15,
+      "n_matched": 15,
+      "page_id": "2604.10289_p2"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 6,
+      "n_matched": 6,
+      "page_id": "2603.06807_p13"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 5,
+      "n_matched": 5,
+      "page_id": "2604.08289_p2"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 9,
+      "n_matched": 9,
+      "page_id": "2601.05550_p10"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 4,
+      "n_matched": 4,
+      "page_id": "2501.00937_p2"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 5,
+      "n_matched": 5,
+      "page_id": "2508.15511_p2"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 5,
+      "n_matched": 5,
+      "page_id": "2207.12695_p5"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 4,
+      "n_matched": 4,
+      "page_id": "2207.06956_p14"
+    },
+    {
+      "match_rate": 1.0,
+      "n_gt": 3,
+      "n_matched": 3,
+      "page_id": "2602.07743_p1"
+    }
+  ],
+  "threshold": 0.5
+}
