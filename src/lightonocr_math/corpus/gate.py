@@ -8,8 +8,9 @@ Usage:
   python -m lightonocr_math.corpus.gate timing-probe --bench 3000 --train 20000 --out reports/gate_timing.json
 
 Checks (in the order a record is charged with them; thresholds in GateConfig):
-  exact            normalize.canonical equal to a benchmark record's, at least exact_min_tokens (8) tokens; shorter
-                   collisions are logged under short_collisions and kept
+  exact            normalize.canonical equal to a benchmark record's, whatever the length (identical labels render to
+                   bitmap-identical crops); exact_min_tokens (8) only decides which collisions count toward
+                   paper_shared_eq; short_collisions stays in the report as the list of those short ones
   near             normalized Levenshtein similarity >= near_threshold (0.9) on normalize_tokens, both sides with at
                    least near_min_tokens (12) tokens
   paper_title      paper title token_set_ratio >= title_threshold (90) with a benchmark paper title
@@ -54,7 +55,7 @@ from lightonocr_math.corpus.catalog import split_raw_authors
 from lightonocr_math.corpus.records import Exclusion, exclusion_row
 from lightonocr_math.ids import base_id
 
-GATE_VERSION = "1"
+GATE_VERSION = "2"
 CHECK_ORDER = ("exact", "near", "paper_title", "paper_shared_eq", "same_author")
 _CHUNK = 256
 
@@ -210,8 +211,8 @@ def _findings(
         hit = bench_by_canon.get(canon)
         if not hit:
             continue
+        charge("exact", rid, {"bench_id": hit[0][0], "bench_paper": hit[0][1]})
         if len(toks) >= cfg.exact_min_tokens:
-            charge("exact", rid, {"bench_id": hit[0][0], "bench_paper": hit[0][1]})
             for _, bpaper in hit:
                 shared[(paper, bpaper)].add(canon)
         else:

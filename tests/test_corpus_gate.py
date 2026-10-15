@@ -51,14 +51,14 @@ def _setup(corpus_latex, *, title="Quiet title about zebras", authors=("Alice Ze
     return corpus, bench, cat
 
 
-def test_exact_overlap_dropped_and_short_kept(cand):
+def test_exact_overlap_dropped_including_short(cand):
     corpus, bench, cat = _setup(BASE)
     res = G.apply_gate(corpus, bench, cat, candidates_path=cand)
     assert res.kept == [] and res.dropped[0]["check"] == "exact"
     assert res.report["checks"]["exact"]["count"] == 1
     corpus, bench, cat = _setup("x + y", bench_latex="x + y")
     res = G.apply_gate(corpus, bench, cat, candidates_path=cand)
-    assert len(res.kept) == 1 and res.report["short_collisions"]
+    assert res.kept == [] and res.dropped[0]["check"] == "exact" and res.report["short_collisions"]
 
 
 def test_missing_candidates_file_fails_closed(tmp_path):
