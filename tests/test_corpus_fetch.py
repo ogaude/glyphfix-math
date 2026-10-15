@@ -171,6 +171,49 @@ def test_fetch_too_large(tmp_path, monkeypatch):
     assert [p.name for p in (tmp_path / "2301.01234").iterdir()] == ["fetch.json"]
 
 
+def _redirect(loc, code=301):
+    h = Message()
+    h["Location"] = loc
+    return urllib.error.HTTPError("u", code, "x", h, None)
+
+
+def test_redirect_hop_is_paced_and_recorded(tmp_path):
+    t = [0.0]
+    sleeps = []
+
+    def sleep(s):
+        sleeps.append(s)
+        t[0] += s
+
+    lim = F.Limiter(3.1, clock=lambda: t[0], sleep=sleep)
+    data = _tgz({"main.tex": b"x"})
+    op = _Opener(_redirect("/src/2301.01234v2"), _Resp(data, "https://export.arxiv.org/src/2301.01234v2"))
+    meta = F.fetch_one(ROW, tmp_path, limiter=lim, policy_ack="a", opener=op)
+    assert len(op.calls) == 2 and sleeps == [3.1]
+    assert op.calls[1].full_url == "https://export.arxiv.org/src/2301.01234v2"
+    assert meta["status"] == "ok" and meta["url_final"].endswith("/src/2301.01234v2")
+
+
+def test_redirect_off_host_refused(tmp_path):
+    for loc in ("https://evil.example/x", "http://export.arxiv.org/src/x", "https://export.arxiv.org.evil.example/x"):
+        op = _Opener(_redirect(loc))
+        with pytest.raises(F.FetchForbidden):
+            F.fetch_one(ROW, tmp_path, limiter=_lim(), policy_ack="a", opener=op)
+        assert len(op.calls) == 1
+
+
+def test_redirect_loop_capped(tmp_path):
+    op = _Opener(*[_redirect("/src/2301.01234v2") for _ in range(10)])
+    with pytest.raises(F.FetchForbidden):
+        F.fetch_one(ROW, tmp_path, limiter=_lim(), policy_ack="a", opener=op)
+    assert len(op.calls) == F.MAX_REDIRECTS + 1
+
+
+def test_default_opener_does_not_follow_redirects():
+    assert F.default_open is not None
+    assert F._NoRedirect().redirect_request(None, None, 301, "x", {}, "http://a") is None
+
+
 def test_fetch_order_deterministic():
     ids = ["2301.00001", "2301.00002v3", "math/0508005", "2302.12345"]
     a = F.fetch_order(ids, 0)

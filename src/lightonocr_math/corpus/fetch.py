@@ -15,7 +15,8 @@ Rules:
   * 403 stops the stage (FetchForbidden); 429/503 honor Retry-After (capped 600 s), up to 3 retries
   * a bundle is stored as src.bin (sha256 recorded in fetch.json); an intact pair is never refetched
 
-Known limit: the redirect to /src/<id>vN is followed by urllib; the final URL is recorded, not validated.
+Redirects: urllib's automatic redirect is disabled. arXiv answers /e-print/<id>vN with a 3xx to /src/<id>vN; each hop
+is a separate request that goes through the limiter, and its target must be https on ALLOWED_HOST (else FetchForbidden).
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ import os
 import tempfile
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import zlib
 from collections.abc import Callable
@@ -42,7 +44,10 @@ MAX_RETRIES = 3
 MAX_CONSECUTIVE_FAILURES = 5
 MAX_RETRY_AFTER_S = 600.0
 FETCH_VERSION = "1"
-EPRINT_BASE = "https://export.arxiv.org/e-print/"
+ALLOWED_HOST = "export.arxiv.org"
+EPRINT_BASE = f"https://{ALLOWED_HOST}/e-print/"
+MAX_REDIRECTS = 3
+_REDIRECT_CODES = (301, 302, 303, 307, 308)
 _CHUNK = 1 << 16
 
 
@@ -52,6 +57,30 @@ class FetchForbidden(RuntimeError):
 
 class FetchAborted(RuntimeError):
     """Too many consecutive failures."""
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *a, **k):  # noqa: ARG002
+        return None
+
+
+_NO_REDIRECT_OPENER = urllib.request.build_opener(_NoRedirect)
+
+
+def default_open(req, timeout=None):
+    """urlopen without automatic redirects: a 3xx surfaces as HTTPError so the caller can pace and validate it."""
+    return _NO_REDIRECT_OPENER.open(req, timeout=timeout)
+
+
+def _check_redirect(base_url: str, err: urllib.error.HTTPError) -> str:
+    loc = err.headers.get("Location") if err.headers else None
+    if not loc:
+        raise FetchForbidden(f"redirect {err.code} without Location from {base_url}") from err
+    target = urllib.parse.urljoin(base_url, loc)
+    parsed = urllib.parse.urlparse(target)
+    if parsed.scheme != "https" or parsed.hostname != ALLOWED_HOST:
+        raise FetchForbidden(f"redirect from {base_url} to {target} leaves https://{ALLOWED_HOST}")
+    return target
 
 
 class Limiter:
@@ -131,7 +160,7 @@ def fetch_one(
     *,
     limiter: Limiter,
     policy_ack: str,
-    opener: Callable = urllib.request.urlopen,
+    opener: Callable = default_open,
     now: Callable[[], str] = _utc_now,
     sleep: Callable[[float], None] = time.sleep,
 ) -> dict:
@@ -150,12 +179,20 @@ def fetch_one(
         "fetch_version": FETCH_VERSION,
     }
     attempt = 0
+    hops = 0
     while True:
         limiter.wait()
         req = urllib.request.Request(url, headers={"User-Agent": catalog.UA})
         try:
             resp = opener(req, timeout=120)
         except urllib.error.HTTPError as e:
+            if e.code in _REDIRECT_CODES:
+                if hops >= MAX_REDIRECTS:
+                    raise FetchForbidden(f"more than {MAX_REDIRECTS} redirects from {meta['url']}") from e
+                hops += 1
+                url = _check_redirect(url, e)
+                meta["url_final"] = url
+                continue  # the next iteration paces the redirect hop through the limiter
             if e.code == 403:
                 raise FetchForbidden(f"403 for {url}") from e
             if e.code == 404:
