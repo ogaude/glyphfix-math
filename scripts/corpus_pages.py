@@ -25,7 +25,7 @@ from collections import Counter
 from pathlib import Path
 
 from lightonocr_math import paths
-from lightonocr_math.corpus import extract, pages
+from lightonocr_math.corpus import extract, freeze, pages
 from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
 from lightonocr_math.corpus.records import side_of
 from lightonocr_math.ids import base_id, safe_id
@@ -131,6 +131,9 @@ def cmd_build(a: argparse.Namespace) -> int:
         print(f"refusing: --side {a.side} needs {want} papers, got {len(bad)} from the other side (first: {bad[0]})", file=sys.stderr)
         return 2
     out = Path(a.out)
+    if freeze.pages_dir_is_frozen(out):
+        print(f"refusing: {out} is the frozen pages set (PAGES_FREEZE.json, pinned pages.jsonl or the repo benchmark pages dir); build elsewhere", file=sys.stderr)
+        return 1
     out.mkdir(parents=True, exist_ok=True)
     work_root = paths.repo_root() / "data" / "work" / "pages"
     built: list[dict] = []

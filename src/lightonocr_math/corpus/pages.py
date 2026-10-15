@@ -39,7 +39,11 @@ import numpy as np
 from lightonocr_math import guard, render
 from lightonocr_math.normalize import normalize_tokens
 
-PAGE_VERSION = "1"
+# Version "2": compile semantics changed after the frozen pages set was built (latexmk -norc, a non-zero latexmk exit counts as
+# a failed compile even when a PDF exists, stale PDFs are unlinked before compiling). The frozen set stays version "1" on disk;
+# a rebuilt set carries "2". Decision: a non-zero latexmk exit (for example a failed bibtex sub-run with a complete PDF)
+# drops the paper, because a PDF produced after an error is not guaranteed complete; this lowers yield, not correctness.
+PAGE_VERSION = "2"
 PAGE_MATCH_VERSION = "2"
 PAGE_DPI = 400
 PAGE_LONGEST_PX = 2048
