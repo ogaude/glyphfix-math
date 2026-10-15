@@ -14,6 +14,7 @@ Exit codes: 0 ok, 2 refused before any request, 3 arXiv answered 403, 4 too many
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import sys
 import time
@@ -83,7 +84,7 @@ def _fetch(args: argparse.Namespace) -> int:
         except F.FetchForbidden as e:
             print(f"STOP: {e}", file=sys.stderr)
             return 3
-        except OSError as e:
+        except (OSError, http.client.HTTPException) as e:
             consecutive += 1
             meta = {"status": "error", "http_status": getattr(e, "code", None)}
             print(f"[{n}/{len(chosen)}] {i}: error {e!r}", file=sys.stderr)

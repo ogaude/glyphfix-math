@@ -214,6 +214,37 @@ def test_default_opener_does_not_follow_redirects():
     assert F._NoRedirect().redirect_request(None, None, 301, "x", {}, "http://a") is None
 
 
+def test_html_body_is_bad_body_retried_then_terminal(tmp_path):
+    d = tmp_path / "2301.01234"
+    for n in range(1, F.MAX_BAD_BODY_ATTEMPTS + 1):
+        op = _Opener(_Resp(b"<html>try again later</html>"))
+        meta = F.fetch_one(ROW, tmp_path, limiter=_lim(), policy_ack="a", opener=op)
+        assert meta["status"] == "bad_body" and meta["bad_body_attempts"] == n and len(op.calls) == 1
+        assert not (d / "src.bin").exists()
+    op = _Opener()
+    assert F.fetch_one(ROW, tmp_path, limiter=_lim(), policy_ack="a", opener=op)["status"] == "bad_body"
+    assert op.calls == []
+
+
+def test_bad_body_then_good_body_recovers(tmp_path):
+    F.fetch_one(ROW, tmp_path, limiter=_lim(), policy_ack="a", opener=_Opener(_Resp(b"<html>x</html>")))
+    meta = F.fetch_one(ROW, tmp_path, limiter=_lim(), policy_ack="a", opener=_Opener(_Resp(_tgz({"a.tex": b"x"}))))
+    assert meta["status"] == "ok" and meta["kind"] == "tar.gz"
+
+
+def test_cli_counts_http_exception_as_failure(tmp_path, monkeypatch):
+    import http.client
+
+    def boom(*a, **k):
+        raise http.client.IncompleteRead(b"")
+
+    monkeypatch.setattr(F, "fetch_one", boom)
+    cat = _catalog(tmp_path, [_row(f"2301.0000{i}") for i in range(1, 7)])
+    order = tmp_path / "o.json"
+    order.write_text(json.dumps({"ids": [f"2301.0000{i}" for i in range(1, 7)]}))
+    assert cli.main(_fetch_args(tmp_path, cat, order, "--policy-ack", "x")) == 4
+
+
 def test_fetch_order_deterministic():
     ids = ["2301.00001", "2301.00002v3", "math/0508005", "2302.12345"]
     a = F.fetch_order(ids, 0)

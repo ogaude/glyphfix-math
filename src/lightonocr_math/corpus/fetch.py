@@ -14,6 +14,8 @@ Rules:
   * each bundle is requested as /e-print/<id>vN with the catalog-pinned version
   * 403 stops the stage (FetchForbidden); 429/503 honor Retry-After (capped 600 s), up to 3 retries
   * a bundle is stored as src.bin (sha256 recorded in fetch.json); an intact pair is never refetched
+  * a 200 whose body sniffs as html or unknown is not a bundle: status "bad_body", nothing stored, refetched on the
+    next run until MAX_BAD_BODY_ATTEMPTS answers in a row (then terminal, like "missing")
 
 Redirects: urllib's automatic redirect is disabled. arXiv answers /e-print/<id>vN with a 3xx to /src/<id>vN; each hop
 is a separate request that goes through the limiter, and its target must be https on ALLOWED_HOST (else FetchForbidden).
@@ -43,6 +45,8 @@ MAX_BUNDLE_BYTES = 200 * 1024 * 1024
 MAX_RETRIES = 3
 MAX_CONSECUTIVE_FAILURES = 5
 MAX_RETRY_AFTER_S = 600.0
+MAX_BAD_BODY_ATTEMPTS = 3
+BAD_BODY_KINDS = ("html", "unknown")
 FETCH_VERSION = "1"
 ALLOWED_HOST = "export.arxiv.org"
 EPRINT_BASE = f"https://{ALLOWED_HOST}/e-print/"
@@ -147,11 +151,23 @@ def _intact(dir_: Path) -> dict | None:
     except ValueError:
         return None
     if meta.get("status") != "ok":
-        # missing / too_large are terminal answers; no src.bin exists
+        # missing / too_large are terminal answers; no src.bin exists. bad_body is terminal only after repeated attempts
+        if meta.get("status") == "bad_body" and meta.get("bad_body_attempts", 0) >= MAX_BAD_BODY_ATTEMPTS and not bin_p.exists():
+            return meta
         return meta if meta.get("status") in ("missing", "too_large") and not bin_p.exists() else None
     if bin_p.exists() and sha256_file(bin_p) == meta.get("sha256"):
         return meta
     return None
+
+
+def _prior_bad_body_attempts(dir_: Path) -> int:
+    import json
+
+    try:
+        prior = json.loads((dir_ / "fetch.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return 0
+    return int(prior.get("bad_body_attempts", 0)) if prior.get("status") == "bad_body" else 0
 
 
 def fetch_one(
@@ -170,6 +186,7 @@ def fetch_one(
     if done is not None:
         return done
     out.mkdir(parents=True, exist_ok=True)
+    prior_attempts = _prior_bad_body_attempts(out)
     url = eprint_url(arxiv_id, version)
     meta = {
         "arxiv_id": base_id(arxiv_id), "version": version, "url": url, "url_final": url, "http_status": None,
@@ -234,6 +251,16 @@ def fetch_one(
             meta.update(http_status=status_code, url_final=final, content_type=ctype, kind="too_large", status="too_large", fetched_at=now())
             write_json(out / "fetch.json", meta)
             return meta
+        kind = sniff_kind(head)
+        if kind in BAD_BODY_KINDS:
+            os.unlink(tmp)
+            meta.update(
+                http_status=status_code, url_final=final, content_type=ctype, bytes=total, kind=kind, status="bad_body",
+                fetched_at=now(), bad_body_attempts=prior_attempts + 1,
+            )
+            (out / "src.bin").unlink(missing_ok=True)
+            write_json(out / "fetch.json", meta)
+            return meta
         os.replace(tmp, out / "src.bin")
     except BaseException:
         if os.path.exists(tmp):
@@ -241,7 +268,7 @@ def fetch_one(
         raise
     meta.update(
         http_status=status_code, url_final=final, content_type=ctype, bytes=total, sha256=h.hexdigest(),
-        kind=sniff_kind(head), status="ok", fetched_at=now(),
+        kind=kind, status="ok", fetched_at=now(),
     )
     write_json(out / "fetch.json", meta)
     return meta
