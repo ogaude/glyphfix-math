@@ -370,3 +370,37 @@ def test_crop_scale_cli(cli_env, monkeypatch):
                      "--images-root", str(tmp), "--out", str(res)]) == 0
     d = json.loads(res.read_text())
     assert set(d) >= {"median", "p10", "p90", "n"}
+
+
+def _fake_run(returncode, write_pdf, workdir):
+    import subprocess as sp
+
+    def run(cmd, **kw):
+        if write_pdf:
+            (workdir / "main.pdf").write_bytes(b"%PDF-partial")
+        return sp.CompletedProcess(cmd, returncode, "", "")
+
+    return run
+
+
+def test_nonzero_exit_with_partial_pdf_is_failed(tmp_path, monkeypatch):
+    monkeypatch.setattr(pages.guard, "preflight", lambda **k: None)
+    monkeypatch.setattr(pages.subprocess, "run", _fake_run(12, True, tmp_path))
+    (tmp_path / "main.pdf").write_bytes(b"%PDF-stale")
+    res = pages.compile_paper(tmp_path, "main.tex")
+    assert res.status == "failed" and res.pdf is None
+    assert not (tmp_path / "main.pdf").exists()
+
+
+def test_stale_pdf_removed_before_compile(tmp_path, monkeypatch):
+    monkeypatch.setattr(pages.guard, "preflight", lambda **k: None)
+    monkeypatch.setattr(pages.subprocess, "run", _fake_run(0, False, tmp_path))
+    (tmp_path / "main.pdf").write_bytes(b"%PDF-stale")
+    assert pages.compile_paper(tmp_path, "main.tex").status == "failed"
+
+
+def test_clean_exit_with_pdf_is_ok(tmp_path, monkeypatch):
+    monkeypatch.setattr(pages.guard, "preflight", lambda **k: None)
+    monkeypatch.setattr(pages.subprocess, "run", _fake_run(0, True, tmp_path))
+    res = pages.compile_paper(tmp_path, "main.tex")
+    assert res.status == "ok" and res.pdf is not None

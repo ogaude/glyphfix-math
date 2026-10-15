@@ -106,6 +106,9 @@ def compile_paper(workdir: Path, main_rel: str, *, timeout_s: int = COMPILE_TIME
     workdir = Path(workdir).resolve()
     guard.preflight(ram_gb=guard.DOCKER_MEMORY_GB, timeout_s=600)
     name = f"lom-pages-{uuid.uuid4().hex}"
+    pdf = workdir / (Path(main_rel).stem + ".pdf")  # latexmk writes outputs to the working directory
+    pdf.unlink(missing_ok=True)  # a stale or truncated PDF from an earlier attempt must never count as output
+    pdf.with_suffix(".synctex.gz").unlink(missing_ok=True)
     t0 = time.monotonic()
     try:
         proc = subprocess.run(
@@ -119,10 +122,10 @@ def compile_paper(workdir: Path, main_rel: str, *, timeout_s: int = COMPILE_TIME
     secs = time.monotonic() - t0
     if proc.returncode in render.INFRA_EXIT_CODES:
         return CompileResult("infra", None, (proc.stderr or "")[-LOG_TAIL_CHARS:], secs)
-    pdf = workdir / (Path(main_rel).stem + ".pdf")  # latexmk writes outputs to the working directory
     log_path = pdf.with_suffix(".log")
     log = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else (proc.stdout or "")
-    if not pdf.exists():
+    if proc.returncode != 0 or not pdf.exists():
+        pdf.unlink(missing_ok=True)  # -halt-on-error leaves a truncated PDF of the pages before the error
         return CompileResult("failed", None, _first_error(log) or log[-LOG_TAIL_CHARS:], secs)
     return CompileResult("ok", pdf, log[-LOG_TAIL_CHARS:], secs)
 
