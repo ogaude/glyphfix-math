@@ -10,6 +10,11 @@ and writes the manifests only after the gate passes:
   data/corpus/{train,dev}/records.jsonl, data/corpus/selection_manifest.json, data/corpus/excluded_selection.jsonl
   data/benchmark/records.jsonl, data/benchmark/selection_manifest.json, data/benchmark/excluded_selection.jsonl
   data/benchmark/leak_report.json   (all offender detail: it names benchmark ids, so it never goes on the corpus side)
+Recheck: --drift and --drift-benchmark (the output of the license/version recheck) are both required, or pass
+--skip-recheck explicitly; the manifests record which was used. Every loaded shard record goes through
+records.validate_record (id, license_spdx) and any problem stops the run before anything is written.
+On a side-scan failure the corpus-side files written by this run are removed again.
+
 Frozen benchmark: when data/benchmark/BENCHMARK_FREEZE.json exists, its pinned digests are verified first and the
 benchmark-side records, manifest and exclusions are never rewritten. A selection that would differ from the frozen
 records is refused with exit 1 and nothing is written (a changed benchmark needs a new benchmark_version, a new root
@@ -30,7 +35,7 @@ from lightonocr_math.corpus import gate as G
 from lightonocr_math.corpus import select as S
 from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
 from lightonocr_math.corpus.flags import FLAG_RULES_VERSION
-from lightonocr_math.corpus.records import BUILDER_VERSION, Exclusion, exclusion_row, side_root
+from lightonocr_math.corpus.records import BUILDER_VERSION, Exclusion, exclusion_row, side_root, validate_record
 from lightonocr_math.ids import base_id
 
 
@@ -41,6 +46,9 @@ def _load_side(root: Path) -> tuple[dict[str, list[dict]], list[str], dict[str, 
         recs = read_jsonl(p)
         shard_hashes.append(f"{p.relative_to(root).as_posix()} {sha256_file(p)}")
         for r in recs:
+            problems = validate_record(r)
+            if problems:
+                raise splits.LeakageError(f"invalid record {r.get('id')!r} in {p.name}: {'; '.join(problems)}", {})
             by_paper.setdefault(base_id(r["arxiv_id"]), []).append(r)
     summaries: dict[str, dict] = {}
     for p in sorted((root / "shards" / "papers").glob("*.json")):
@@ -58,6 +66,17 @@ def _drift_rows(path: str | None) -> dict[str, str]:
     return out
 
 
+def _recheck_info(args: argparse.Namespace) -> dict:
+    import datetime
+
+    info: dict = {"skipped": bool(args.skip_recheck), "files": {}}
+    for label, path in (("corpus", args.drift), ("benchmark", args.drift_benchmark)):
+        if path and Path(path).exists():
+            mtime = datetime.datetime.fromtimestamp(Path(path).stat().st_mtime, datetime.UTC).strftime("%Y-%m-%d")
+            info["files"][label] = {"path": str(path), "sha256": sha256_file(path), "date": mtime}
+    return info
+
+
 def _order(path: Path) -> list[str]:
     return json.loads(path.read_text(encoding="utf-8"))["ids"]
 
@@ -73,6 +92,9 @@ def run(args: argparse.Namespace) -> int:
     root = paths.repo_root()
     cfg = S.SelectionConfig.from_json(args.config)
     corpus_root, bench_root = side_root("corpus"), side_root("benchmark")
+    if not args.skip_recheck and not (args.drift and args.drift_benchmark and Path(args.drift).exists() and Path(args.drift_benchmark).exists()):
+        print("missing input: --drift and --drift-benchmark (license/version recheck output), or pass --skip-recheck", file=sys.stderr)
+        return 2
     for need in (corpus_root / "fetch_order.json", bench_root / "fetch_order.json"):
         if not need.exists():
             print(f"missing input: {need}", file=sys.stderr)
@@ -86,8 +108,12 @@ def run(args: argparse.Namespace) -> int:
             print(f"FROZEN: {e}", file=sys.stderr)
             return 1
 
-    corpus_by_paper, corpus_hashes, corpus_sum = _load_side(corpus_root)
-    bench_by_paper, bench_hashes, bench_sum = _load_side(bench_root)
+    try:
+        corpus_by_paper, corpus_hashes, corpus_sum = _load_side(corpus_root)
+        bench_by_paper, bench_hashes, bench_sum = _load_side(bench_root)
+    except splits.LeakageError as e:
+        print(f"INVALID: {e}", file=sys.stderr)
+        return 1
     drift_c, drift_b = _drift_rows(args.drift), _drift_rows(args.drift_benchmark)
     drift_rows_c = [exclusion_row(p, r) for p, r in sorted(drift_c.items()) if p in corpus_by_paper]
     drift_rows_b = [exclusion_row(p, r) for p, r in sorted(drift_b.items()) if p in bench_by_paper]
@@ -131,7 +157,7 @@ def run(args: argparse.Namespace) -> int:
     leak_counts = {c: res.report["checks"][c]["count"] for c in G.CHECK_ORDER}
     base_manifest = {
         "config": {"seed": cfg.seed, "cap": cfg.cap, "quotas": cfg.quotas, "min_papers_per_flag": cfg.min_papers_per_flag},
-        "seed": cfg.seed,
+        "seed": cfg.seed, "recheck": _recheck_info(args),
         "select_version": S.SELECT_VERSION, "gate_version": G.GATE_VERSION, "flag_rules_version": FLAG_RULES_VERSION,
     }
     corpus_manifest = {
@@ -148,10 +174,14 @@ def run(args: argparse.Namespace) -> int:
         "stats": bsel.stats, "input_shards": bench_hashes, "n_records": len(bsel.selected),
     }
 
-    write_jsonl(corpus_root / "train" / "records.jsonl", train)
-    write_jsonl(corpus_root / "dev" / "records.jsonl", dev)
-    write_json(corpus_root / "selection_manifest.json", corpus_manifest)
-    write_jsonl(corpus_root / "excluded_selection.jsonl", corpus_excluded)
+    written = [
+        corpus_root / "train" / "records.jsonl", corpus_root / "dev" / "records.jsonl",
+        corpus_root / "selection_manifest.json", corpus_root / "excluded_selection.jsonl",
+    ]
+    write_jsonl(written[0], train)
+    write_jsonl(written[1], dev)
+    write_json(written[2], corpus_manifest)
+    write_jsonl(written[3], corpus_excluded)
     if not frozen:
         write_jsonl(bench_root / "records.jsonl", bsel.selected)
         write_json(bench_root / "selection_manifest.json", bench_manifest)
@@ -161,6 +191,8 @@ def run(args: argparse.Namespace) -> int:
     try:
         G.assert_side_clean(corpus_root)
     except splits.LeakageError as e:
+        for f in written:
+            f.unlink(missing_ok=True)  # never leave offending manifests on disk
         print(f"LEAK: {e}", file=sys.stderr)
         return 1
     short = {f: v for f, v in corpus_manifest["floor_report"].items() if v["short"]}
@@ -176,6 +208,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--config", default="data/corpus/SELECTION_CONFIG.json")
     r.add_argument("--drift", default=None)
     r.add_argument("--drift-benchmark", default=None)
+    r.add_argument("--skip-recheck", action="store_true", help="run without a license/version recheck (recorded in the manifests)")
     args = ap.parse_args(argv)
     return run(args)
 

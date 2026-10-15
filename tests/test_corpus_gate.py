@@ -28,7 +28,7 @@ def _free_ids(n, start=1):
 
 
 def _rec(arxiv_id, latex, split="train"):
-    return {"id": record_id(arxiv_id, "v1", latex), "arxiv_id": arxiv_id, "paper_version": "v1", "latex": latex, "split": split, "flags": ["plain"]}
+    return {"id": record_id(arxiv_id, "v1", latex), "arxiv_id": arxiv_id, "paper_version": "v1", "latex": latex, "split": split, "flags": ["plain"], "license_spdx": "CC-BY-4.0"}
 
 
 def _cat(arxiv_id, title, authors, split="train"):
@@ -258,7 +258,7 @@ def test_corpus_select_script_end_to_end(tmp_path, monkeypatch):
     cfg = tmp_path / "cfg.json"
     cfg.write_text(json.dumps({"seed": 0, "cap": 30, "quotas": {"benchmark": 5, "dev": 5, "train": 5}, "floors": {"corpus": {}, "benchmark": {}}}))
 
-    assert mod.main(["run", "--config", str(cfg)]) == 0
+    assert mod.main(["run", "--config", str(cfg), "--skip-recheck"]) == 0
     train_ids = {r["arxiv_id"] for r in (json.loads(x) for x in (corpus_root / "train" / "records.jsonl").read_text().splitlines())}
     assert train_ids == {c1}
     excluded = [json.loads(x) for x in (corpus_root / "excluded_selection.jsonl").read_text().splitlines()]
@@ -267,3 +267,43 @@ def test_corpus_select_script_end_to_end(tmp_path, monkeypatch):
     assert b not in (corpus_root / "selection_manifest.json").read_text()
     assert (bench_root / "leak_report.json").exists()
     assert (corpus_root / "dev" / "records.jsonl").exists()
+
+
+def test_corpus_select_requires_recheck_or_explicit_skip(tmp_path, monkeypatch, capsys):
+    import importlib.util
+
+    monkeypatch.setenv("LIGHTONOCR_MATH_ROOT", str(tmp_path))
+    spec = importlib.util.spec_from_file_location("corpus_select_script2", "scripts/corpus_select.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    cfg = tmp_path / "cfg.json"
+    cfg.write_text(json.dumps({"seed": 0}))
+    assert mod.main(["run", "--config", str(cfg)]) == 2
+    assert "--skip-recheck" in capsys.readouterr().err
+    # with the explicit skip the next check (missing fetch_order) is reached instead
+    assert mod.main(["run", "--config", str(cfg), "--skip-recheck"]) == 2
+    assert "fetch_order" in capsys.readouterr().err
+
+
+def test_corpus_select_rejects_invalid_shard_record(tmp_path, monkeypatch, capsys):
+    import importlib.util
+
+    splits.frozen()
+    monkeypatch.setenv("LIGHTONOCR_MATH_ROOT", str(tmp_path))
+    spec = importlib.util.spec_from_file_location("corpus_select_script3", "scripts/corpus_select.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    b = _bench_id()
+    c = _free_ids(1)[0]
+    data = tmp_path / "data"
+    bad = _rec(c, "m + n + o")
+    bad["license_spdx"] = "CC-BY-NC-4.0"
+    _shard(data / "benchmark", b, [_rec(b, BASE, "benchmark")])
+    _shard(data / "corpus", c, [bad])
+    (data / "benchmark" / "fetch_order.json").write_text(json.dumps({"ids": [b]}))
+    (data / "corpus" / "fetch_order.json").write_text(json.dumps({"ids": [c]}))
+    cfg = tmp_path / "cfg.json"
+    cfg.write_text(json.dumps({"seed": 0}))
+    assert mod.main(["run", "--config", str(cfg), "--skip-recheck"]) == 1
+    assert "INVALID" in capsys.readouterr().err
+    assert not (data / "corpus" / "train" / "records.jsonl").exists()
