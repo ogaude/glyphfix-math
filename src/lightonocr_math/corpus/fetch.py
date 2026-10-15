@@ -132,8 +132,9 @@ def _utc_now() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _retry_after(err: urllib.error.HTTPError) -> float:
-    return catalog.retry_after_seconds(err.headers, default=0.0, cap=MAX_RETRY_AFTER_S)
+def _retry_after(err: urllib.error.HTTPError, attempt: int = 1) -> float:
+    # a missing or unparseable Retry-After backs off (30 s, 60 s, ...) instead of retrying at the pacing interval
+    return catalog.retry_after_seconds(err.headers, default=30.0 * max(attempt, 1), cap=MAX_RETRY_AFTER_S)
 
 
 def _intact(dir_: Path) -> dict | None:
@@ -203,18 +204,22 @@ def fetch_one(
                 if hops >= MAX_REDIRECTS:
                     raise FetchForbidden(f"more than {MAX_REDIRECTS} redirects from {meta['url']}") from e
                 hops += 1
-                url = _check_redirect(url, e)
+                try:
+                    url = _check_redirect(url, e)
+                finally:
+                    e.close()
                 meta["url_final"] = url
                 continue  # the next iteration paces the redirect hop through the limiter
             if e.code == 403:
                 raise FetchForbidden(f"403 for {url}") from e
             if e.code == 404:
+                e.close()
                 meta.update(http_status=404, fetched_at=now())
                 write_json(out / "fetch.json", meta)
                 return meta
             if e.code in (429, 503) and attempt < MAX_RETRIES:
                 attempt += 1
-                sleep(_retry_after(e))
+                sleep(_retry_after(e, attempt))
                 continue
             raise
         break

@@ -156,6 +156,13 @@ def test_fetch_429_retry_after(tmp_path):
     assert slept == [7.0, 600.0] and meta["kind"] == "pdf" and len(op.calls) == 3
 
 
+def test_fetch_429_without_retry_after_backs_off(tmp_path):
+    slept = []
+    op = _Opener(_http_error(429), _http_error(503), _Resp(b"%PDF-1"))
+    F.fetch_one(ROW, tmp_path, limiter=_lim(), policy_ack="a", opener=op, sleep=slept.append)
+    assert slept == [30.0, 60.0]
+
+
 def test_fetch_retries_exhausted(tmp_path):
     op = _Opener(*[_http_error(503, 1) for _ in range(4)])
     with pytest.raises(urllib.error.HTTPError):
