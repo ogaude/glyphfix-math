@@ -468,7 +468,16 @@ def _run_batch_reserved(latexes: Sequence[str], work_root: Path, timeout_s: int,
             shutil.rmtree(workdir, ignore_errors=True)
 
 
+# pdfium is not thread-safe; parallel batches rasterize one at a time (the Docker compile is what runs in parallel)
+_PDFIUM_LOCK = threading.Lock()
+
+
 def _rasterize(workdir: Path, expected: int) -> list[np.ndarray] | None:
+    with _PDFIUM_LOCK:
+        return _rasterize_locked(workdir, expected)
+
+
+def _rasterize_locked(workdir: Path, expected: int) -> list[np.ndarray] | None:
     import pypdfium2 as pdfium
 
     try:
