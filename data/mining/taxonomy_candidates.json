@@ -1,0 +1,915 @@
+{
+  "available_for_training": {
+    "c00": 1398,
+    "c01": 1691,
+    "c02": 1658,
+    "c03": 1108,
+    "c04": 666,
+    "c05": 534,
+    "c06": 407,
+    "c07": 341,
+    "c08": 333,
+    "c09": 333,
+    "c10": 319,
+    "c11": 240,
+    "c12": 177,
+    "c13": 177,
+    "c14": 170,
+    "c15": 133,
+    "c16": 132,
+    "c17": 127,
+    "c18": 116,
+    "c19": 116,
+    "c20": 113,
+    "c21": 111,
+    "c22": 110,
+    "c23": 104,
+    "c24": 101,
+    "c25": 90,
+    "c26": 86,
+    "c27": 86,
+    "c28": 76,
+    "c29": 75,
+    "c30": 70,
+    "c31": 61,
+    "c32": 61,
+    "c33": 60,
+    "c34": 60,
+    "c35": 60,
+    "c36": 60,
+    "c37": 59,
+    "c38": 58,
+    "c39": 56,
+    "c40": 55
+  },
+  "candidates": [
+    {
+      "example_ids": [
+        "008845d6cc5230fe",
+        "00ab248340bd466c",
+        "0107bd486644b38f",
+        "0139219bfc31f1f5",
+        "014cf9dc6cd2c2b5"
+      ],
+      "family": "layout",
+      "gt_tokens": [
+        "NORM_EQUAL"
+      ],
+      "id": "c00",
+      "n_papers": 476,
+      "n_records": 1398,
+      "pred_tokens": [
+        "NORM_EQUAL"
+      ]
+    },
+    {
+      "example_ids": [
+        "000645985983d36e",
+        "00082fe2f5263ba9",
+        "000d9eabb4c3757f",
+        "00148911f90f88b1",
+        "004e8f86b197a332"
+      ],
+      "family": "style",
+      "gt_tokens": [],
+      "id": "c01",
+      "n_papers": 480,
+      "n_records": 1691,
+      "pred_tokens": [
+        "\\right"
+      ]
+    },
+    {
+      "example_ids": [
+        "000645985983d36e",
+        "00082fe2f5263ba9",
+        "000d9eabb4c3757f",
+        "00148911f90f88b1",
+        "004e8f86b197a332"
+      ],
+      "family": "style",
+      "gt_tokens": [],
+      "id": "c02",
+      "n_papers": 475,
+      "n_records": 1658,
+      "pred_tokens": [
+        "\\left"
+      ]
+    },
+    {
+      "example_ids": [
+        "000645985983d36e",
+        "007baffda9bd2167",
+        "007f668c7ba8e9a1",
+        "008074437a7cfb5e",
+        "009ad747e41db053"
+      ],
+      "family": "style",
+      "gt_tokens": [],
+      "id": "c03",
+      "n_papers": 408,
+      "n_records": 1108,
+      "pred_tokens": [
+        "&"
+      ]
+    },
+    {
+      "example_ids": [
+        "009ad747e41db053",
+        "00bae81080ea3a6b",
+        "0102c56104aad693",
+        "0113ec286892e3f4",
+        "013d9861b58ef901"
+      ],
+      "family": "glyph",
+      "gt_tokens": [],
+      "id": "c04",
+      "n_papers": 312,
+      "n_records": 666,
+      "pred_tokens": [
+        "\\begin",
+        "{",
+        "a",
+        "l",
+        "i",
+        "g",
+        "n",
+        "e",
+        "d",
+        "}"
+      ]
+    },
+    {
+      "example_ids": [
+        "00e202da73666897",
+        "0102c56104aad693",
+        "01b1bcdefa822e70",
+        "01bab01cef0b1e3a",
+        "026898b83fde27e3"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "}"
+      ],
+      "id": "c05",
+      "n_papers": 236,
+      "n_records": 534,
+      "pred_tokens": []
+    },
+    {
+      "example_ids": [
+        "009ad747e41db053",
+        "00bae81080ea3a6b",
+        "013d9861b58ef901",
+        "01df9291a81f9863",
+        "01f627fc3c551142"
+      ],
+      "family": "glyph",
+      "gt_tokens": [],
+      "id": "c06",
+      "n_papers": 234,
+      "n_records": 407,
+      "pred_tokens": [
+        ".",
+        "\\end",
+        "{",
+        "a",
+        "l",
+        "i",
+        "g",
+        "n",
+        "e",
+        "d",
+        "}"
+      ]
+    },
+    {
+      "example_ids": [
+        "02a7e83a69e99229",
+        "05cc4208286a77b5",
+        "05f2ec965ed4279e",
+        "05f62589ff1bc71a",
+        "05f70e22fceb350c"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "\\right"
+      ],
+      "id": "c07",
+      "n_papers": 146,
+      "n_records": 341,
+      "pred_tokens": []
+    },
+    {
+      "example_ids": [
+        "005bcab0f880bbb2",
+        "00ba0a75ddb17f74",
+        "01b1bcdefa822e70",
+        "022560b784886d1f",
+        "02e4b43413de9f5b"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "&"
+      ],
+      "id": "c08",
+      "n_papers": 160,
+      "n_records": 333,
+      "pred_tokens": []
+    },
+    {
+      "example_ids": [
+        "02a7e83a69e99229",
+        "030b200ffdeb1b36",
+        "05f62589ff1bc71a",
+        "05f70e22fceb350c",
+        "0659354bc9393772"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "\\left"
+      ],
+      "id": "c09",
+      "n_papers": 143,
+      "n_records": 333,
+      "pred_tokens": []
+    },
+    {
+      "example_ids": [
+        "00e202da73666897",
+        "01bab01cef0b1e3a",
+        "026898b83fde27e3",
+        "03255200a089214b",
+        "032ce47e2e278837"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "{"
+      ],
+      "id": "c10",
+      "n_papers": 142,
+      "n_records": 319,
+      "pred_tokens": []
+    },
+    {
+      "example_ids": [
+        "009ad747e41db053",
+        "01df9291a81f9863",
+        "020bfe4981200072",
+        "0211a14ad5a58c11",
+        "033d5f3b70d4cded"
+      ],
+      "family": "style",
+      "gt_tokens": [],
+      "id": "c11",
+      "n_papers": 141,
+      "n_records": 240,
+      "pred_tokens": [
+        "}"
+      ]
+    },
+    {
+      "example_ids": [
+        "008074437a7cfb5e",
+        "04665792a22b2f6a",
+        "0ae8216b74dddceb",
+        "0bab1521520b62f0",
+        "0dd75e10284df167"
+      ],
+      "family": "glyph",
+      "gt_tokens": [
+        "s",
+        "p"
+      ],
+      "id": "c12",
+      "n_papers": 66,
+      "n_records": 177,
+      "pred_tokens": [
+        "a"
+      ]
+    },
+    {
+      "example_ids": [
+        "008074437a7cfb5e",
+        "04665792a22b2f6a",
+        "0ae8216b74dddceb",
+        "0bab1521520b62f0",
+        "0dd75e10284df167"
+      ],
+      "family": "glyph",
+      "gt_tokens": [
+        "t"
+      ],
+      "id": "c13",
+      "n_papers": 66,
+      "n_records": 177,
+      "pred_tokens": [
+        "g",
+        "n",
+        "e",
+        "d"
+      ]
+    },
+    {
+      "example_ids": [
+        "000645985983d36e",
+        "0102c56104aad693",
+        "0201de251084de5f",
+        "02b081db4bc509c6",
+        "03090b55325f056d"
+      ],
+      "family": "glyph",
+      "gt_tokens": [],
+      "id": "c14",
+      "n_papers": 111,
+      "n_records": 170,
+      "pred_tokens": [
+        ",",
+        "\\end",
+        "{",
+        "a",
+        "l",
+        "i",
+        "g",
+        "n",
+        "e",
+        "d",
+        "}"
+      ]
+    },
+    {
+      "example_ids": [
+        "007baffda9bd2167",
+        "03ec22ef4a3b7c08",
+        "08ae9da6a34af99a",
+        "08cc97eceeaee1f4",
+        "0b7a196818e283d3"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "\\dots"
+      ],
+      "id": "c15",
+      "n_papers": 87,
+      "n_records": 133,
+      "pred_tokens": [
+        "\\ldots"
+      ]
+    },
+    {
+      "example_ids": [
+        "0138fb4d9c0647d3",
+        "0250bea6e9d71396",
+        "05c4cba0ce9c556b",
+        "05f62589ff1bc71a",
+        "05f98ba907f96689"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "\\\\"
+      ],
+      "id": "c16",
+      "n_papers": 84,
+      "n_records": 132,
+      "pred_tokens": []
+    },
+    {
+      "example_ids": [
+        "000645985983d36e",
+        "0211a14ad5a58c11",
+        "0299b0d29343e012",
+        "032ce47e2e278837",
+        "0429061d48844917"
+      ],
+      "family": "glyph",
+      "gt_tokens": [],
+      "id": "c17",
+      "n_papers": 86,
+      "n_records": 127,
+      "pred_tokens": [
+        "\\begin",
+        "{",
+        "a",
+        "l",
+        "i",
+        "g",
+        "n",
+        "e",
+        "d",
+        "}",
+        "&"
+      ]
+    },
+    {
+      "example_ids": [
+        "0113ec286892e3f4",
+        "039e8de46e111d0c",
+        "086b3dc7d9a7b7f8",
+        "0b4f2b58f8a0e635",
+        "0ccc4f7f2946d0b9"
+      ],
+      "family": "glyph",
+      "gt_tokens": [],
+      "id": "c18",
+      "n_papers": 71,
+      "n_records": 116,
+      "pred_tokens": [
+        "\\end",
+        "{",
+        "a",
+        "l",
+        "i",
+        "g",
+        "n",
+        "e",
+        "d",
+        "}"
+      ]
+    },
+    {
+      "example_ids": [
+        "05db929846400b56",
+        "05f62589ff1bc71a",
+        "083d390e49070f63",
+        "0ad5237441c19e12",
+        "11fa9aaf6e3e8337"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "\\dfrac"
+      ],
+      "id": "c19",
+      "n_papers": 47,
+      "n_records": 116,
+      "pred_tokens": [
+        "\\frac"
+      ]
+    },
+    {
+      "example_ids": [
+        "0410685ac29fa23e",
+        "041d24b224509e73",
+        "086b3dc7d9a7b7f8",
+        "0978ac16b4f84943",
+        "0aae7e7f203ad7ba"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "\\limits"
+      ],
+      "id": "c20",
+      "n_papers": 37,
+      "n_records": 113,
+      "pred_tokens": []
+    },
+    {
+      "example_ids": [
+        "03588c73a1f27737",
+        "03ec22ef4a3b7c08",
+        "0411a941e0218b35",
+        "0512a45f412cc673",
+        "051eee3d8cc59ac4"
+      ],
+      "family": "other",
+      "gt_tokens": [
+        "$"
+      ],
+      "id": "c21",
+      "n_papers": 67,
+      "n_records": 111,
+      "pred_tokens": [
+        "}"
+      ]
+    },
+    {
+      "example_ids": [
+        "025c8a01eab53113",
+        "044a21000cbafa36",
+        "049e4357c60a0f36",
+        "05db929846400b56",
+        "0cfd2be07893d0f3"
+      ],
+      "family": "glyph",
+      "gt_tokens": [],
+      "id": "c22",
+      "n_papers": 78,
+      "n_records": 110,
+      "pred_tokens": [
+        "}",
+        ".",
+        "\\end",
+        "{",
+        "a",
+        "l",
+        "i",
+        "g",
+        "n",
+        "e",
+        "d"
+      ]
+    },
+    {
+      "example_ids": [
+        "01df9291a81f9863",
+        "0211a14ad5a58c11",
+        "034f0d93616cce37",
+        "0370b7c4bb76cc00",
+        "04310f3d079a621c"
+      ],
+      "family": "style",
+      "gt_tokens": [],
+      "id": "c23",
+      "n_papers": 63,
+      "n_records": 104,
+      "pred_tokens": [
+        "{"
+      ]
+    },
+    {
+      "example_ids": [
+        "012db42e7f06f127",
+        "02b8e40e66dffa3b",
+        "086fc1003c9f6996",
+        "08d4a0423acf9986",
+        "0b2868eb04c531c6"
+      ],
+      "family": "other",
+      "gt_tokens": [
+        "\\coloneqq"
+      ],
+      "id": "c24",
+      "n_papers": 42,
+      "n_records": 101,
+      "pred_tokens": [
+        ":",
+        "="
+      ]
+    },
+    {
+      "example_ids": [
+        "01b1bcdefa822e70",
+        "01bab01cef0b1e3a",
+        "0b4068cff8a03634",
+        "0bc1bcd7e9cceadf",
+        "0c835a0153f5f01b"
+      ],
+      "family": "glyph",
+      "gt_tokens": [
+        "\\begin",
+        "{",
+        "s",
+        "p",
+        "l",
+        "i",
+        "t",
+        "}"
+      ],
+      "id": "c25",
+      "n_papers": 49,
+      "n_records": 90,
+      "pred_tokens": []
+    },
+    {
+      "example_ids": [
+        "044a21000cbafa36",
+        "05ce73791ea198ec",
+        "0bf4c95d892c1cdf",
+        "0caee6cd39b495c1",
+        "11ca63d26ad57db2"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "\\tfrac"
+      ],
+      "id": "c26",
+      "n_papers": 41,
+      "n_records": 86,
+      "pred_tokens": [
+        "\\frac"
+      ]
+    },
+    {
+      "example_ids": [
+        "0211a14ad5a58c11",
+        "0370b7c4bb76cc00",
+        "04c37c9078e942f6",
+        "055dfea104da9192",
+        "08cc670e6055ca90"
+      ],
+      "family": "other",
+      "gt_tokens": [
+        "|",
+        "|"
+      ],
+      "id": "c27",
+      "n_papers": 20,
+      "n_records": 86,
+      "pred_tokens": [
+        "\\|"
+      ]
+    },
+    {
+      "example_ids": [
+        "009ad747e41db053",
+        "010304b196f7ea95",
+        "028ddb8f1a635e5c",
+        "033c23f3f2b7f7dd",
+        "0d7e3ae8c2a3e679"
+      ],
+      "family": "other",
+      "gt_tokens": [
+        "\\vert"
+      ],
+      "id": "c28",
+      "n_papers": 29,
+      "n_records": 76,
+      "pred_tokens": [
+        "|"
+      ]
+    },
+    {
+      "example_ids": [
+        "01928a537ea10bd2",
+        "0411a941e0218b35",
+        "051eee3d8cc59ac4",
+        "08e96d6bc8e202a2",
+        "09ca5a319bf5545d"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "\\mbox"
+      ],
+      "id": "c29",
+      "n_papers": 37,
+      "n_records": 75,
+      "pred_tokens": [
+        "\\text"
+      ]
+    },
+    {
+      "example_ids": [
+        "00c031edbf330175",
+        "029637574ab803e2",
+        "063da48a6dc0adc0",
+        "09bfcd54ed4401f6",
+        "0c4a084e93e0bc96"
+      ],
+      "family": "other",
+      "gt_tokens": [
+        "|"
+      ],
+      "id": "c30",
+      "n_papers": 48,
+      "n_records": 70,
+      "pred_tokens": [
+        "\\mid"
+      ]
+    },
+    {
+      "example_ids": [
+        "03588c73a1f27737",
+        "03ec22ef4a3b7c08",
+        "09c5007097aaaefa",
+        "09e96161ba86ab53",
+        "134184d232f894e1"
+      ],
+      "family": "other",
+      "gt_tokens": [
+        "\\left",
+        "\\{"
+      ],
+      "id": "c31",
+      "n_papers": 39,
+      "n_records": 61,
+      "pred_tokens": []
+    },
+    {
+      "example_ids": [
+        "00bae81080ea3a6b",
+        "01928a537ea10bd2",
+        "0731f4fa4dd2d69e",
+        "0a9cbbee377a941d",
+        "0c4a084e93e0bc96"
+      ],
+      "family": "other",
+      "gt_tokens": [
+        "\\ast"
+      ],
+      "id": "c32",
+      "n_papers": 28,
+      "n_records": 61,
+      "pred_tokens": [
+        "*"
+      ]
+    },
+    {
+      "example_ids": [
+        "046261aaed81c19f",
+        "04be0d2c92c9d927",
+        "0c312dd8bd4985a6",
+        "0d46d272be0b91c0",
+        "0e1928880e11ddf2"
+      ],
+      "family": "glyph",
+      "gt_tokens": [
+        "\\begin",
+        "{",
+        "a",
+        "l",
+        "i",
+        "g",
+        "n",
+        "e",
+        "d",
+        "}"
+      ],
+      "id": "c33",
+      "n_papers": 35,
+      "n_records": 60,
+      "pred_tokens": []
+    },
+    {
+      "example_ids": [
+        "02a42764fb1313df",
+        "0982a443dd80f28e",
+        "0c1f30ddd440e7bd",
+        "1226531a30b3cd94",
+        "131a16d8ba373554"
+      ],
+      "family": "glyph",
+      "gt_tokens": [
+        "a",
+        "y"
+      ],
+      "id": "c34",
+      "n_papers": 33,
+      "n_records": 60,
+      "pred_tokens": [
+        "i",
+        "x"
+      ]
+    },
+    {
+      "example_ids": [
+        "02a42764fb1313df",
+        "0982a443dd80f28e",
+        "0c1f30ddd440e7bd",
+        "1226531a30b3cd94",
+        "131a16d8ba373554"
+      ],
+      "family": "glyph",
+      "gt_tokens": [
+        "r"
+      ],
+      "id": "c35",
+      "n_papers": 33,
+      "n_records": 60,
+      "pred_tokens": [
+        "t"
+      ]
+    },
+    {
+      "example_ids": [
+        "04ca19f437a6417e",
+        "0501b762d03a50e8",
+        "0556657d14d04311",
+        "1b1615720922674d",
+        "208f8c0b3066db2f"
+      ],
+      "family": "other",
+      "gt_tokens": [
+        "\\star"
+      ],
+      "id": "c36",
+      "n_papers": 16,
+      "n_records": 60,
+      "pred_tokens": [
+        "*"
+      ]
+    },
+    {
+      "example_ids": [
+        "03588c73a1f27737",
+        "03ec22ef4a3b7c08",
+        "09c5007097aaaefa",
+        "09e96161ba86ab53",
+        "134184d232f894e1"
+      ],
+      "family": "glyph",
+      "gt_tokens": [],
+      "id": "c37",
+      "n_papers": 36,
+      "n_records": 59,
+      "pred_tokens": [
+        "c"
+      ]
+    },
+    {
+      "example_ids": [
+        "005bcab0f880bbb2",
+        "0ccc4f7f2946d0b9",
+        "1627c9471fbdb1bb",
+        "204a85f65013eb64",
+        "225f6655c77d4408"
+      ],
+      "family": "style",
+      "gt_tokens": [
+        "\\dots"
+      ],
+      "id": "c38",
+      "n_papers": 33,
+      "n_records": 58,
+      "pred_tokens": [
+        "\\cdots"
+      ]
+    },
+    {
+      "example_ids": [
+        "0411a941e0218b35",
+        "0a1e2ced7af4814b",
+        "1498b3edc98f3942",
+        "1a6906f8be0e9be7",
+        "1eecdfa24db5b357"
+      ],
+      "family": "other",
+      "gt_tokens": [
+        "$",
+        "}"
+      ],
+      "id": "c39",
+      "n_papers": 34,
+      "n_records": 56,
+      "pred_tokens": []
+    },
+    {
+      "example_ids": [
+        "025c8a01eab53113",
+        "0a9cbbee377a941d",
+        "0f091225ad82cd62",
+        "0f79b9c243b78e2b",
+        "10c2ce809613246b"
+      ],
+      "family": "style",
+      "gt_tokens": [],
+      "id": "c40",
+      "n_papers": 42,
+      "n_records": 55,
+      "pred_tokens": [
+        "\\\\"
+      ]
+    }
+  ],
+  "d11": {
+    "classes": 6,
+    "error_rows": 3200,
+    "set_rows": 8000
+  },
+  "min_papers": 5,
+  "mining_version": "1",
+  "rare_class_supply": [
+    {
+      "available": 3,
+      "class": "prime_l",
+      "short": true,
+      "target": 533,
+      "total": 10
+    },
+    {
+      "available": 122,
+      "class": "dropped_prime",
+      "short": true,
+      "target": 533,
+      "total": 151
+    },
+    {
+      "available": 83,
+      "class": "greek_latin",
+      "short": true,
+      "target": 533,
+      "total": 107
+    },
+    {
+      "available": 1676,
+      "class": "decoration",
+      "short": false,
+      "target": 533,
+      "total": 1706
+    },
+    {
+      "available": 15,
+      "class": "i_1",
+      "short": true,
+      "target": 533,
+      "total": 20
+    },
+    {
+      "available": 6483,
+      "class": "other",
+      "short": false,
+      "target": 533,
+      "total": 6483
+    }
+  ],
+  "scored_sha256": "863508990ea8f39e1b5c4981bd930883b5999650633c85a60b52b06819df5278",
+  "top_n": 40
+}
