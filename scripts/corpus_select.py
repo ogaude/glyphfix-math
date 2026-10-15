@@ -100,6 +100,8 @@ def run(args: argparse.Namespace) -> int:
             print(f"missing input: {need}", file=sys.stderr)
             return 2
 
+    # is_frozen also holds for the repo benchmark and for any root holding the pinned records, so deleting the freeze file
+    # cannot unfreeze it: assert_benchmark_frozen then fails on the missing file and nothing is rewritten
     frozen = FZ.is_frozen(bench_root)
     if frozen:
         try:
@@ -186,7 +188,6 @@ def run(args: argparse.Namespace) -> int:
         write_jsonl(bench_root / "records.jsonl", bsel.selected)
         write_json(bench_root / "selection_manifest.json", bench_manifest)
         write_jsonl(bench_root / "excluded_selection.jsonl", bench_excluded)
-    write_json(bench_root / "leak_report.json", res.report)
 
     try:
         G.assert_side_clean(corpus_root)
@@ -195,6 +196,7 @@ def run(args: argparse.Namespace) -> int:
             f.unlink(missing_ok=True)  # never leave offending manifests on disk
         print(f"LEAK: {e}", file=sys.stderr)
         return 1
+    write_json(bench_root / "leak_report.json", res.report)  # only after the side scan, so a failed run leaves no passing-looking report
     short = {f: v for f, v in corpus_manifest["floor_report"].items() if v["short"]}
     short.update({f"benchmark:{f}": v for f, v in bench_manifest["floor_report"].items() if v["short"]})
     print(f"train {len(train)} dev {len(dev)} benchmark {len(bsel.selected)}; gate drops {leak_counts}; short floors {sorted(short)}")

@@ -216,6 +216,7 @@ def _findings(
             for _, bpaper in hit:
                 shared[(paper, bpaper)].add(canon)
         else:
+            # informational subset of the exact offenders above (kept under this key for report compatibility)
             report["short_collisions"].append({"corpus_id": rid, "bench_id": hit[0][0], "n_tokens": len(toks)})
 
     # near
