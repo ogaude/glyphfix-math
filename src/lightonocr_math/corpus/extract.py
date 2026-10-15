@@ -211,13 +211,15 @@ def _input_names(text: str) -> list[str]:
 
 
 def _resolve(root: Path, base_dir: Path, name: str) -> Path | None:
+    if "\x00" in name:
+        return None
     root_r = root.resolve()
     for d in (root, base_dir):
         for cand in ([name] if name.endswith(".tex") else [name + ".tex", name]):
             p = (d / cand)
             try:
                 r = p.resolve()
-            except OSError:
+            except (OSError, ValueError):
                 continue
             if r.is_file() and r.is_relative_to(root_r) and r.suffix == ".tex":
                 return r

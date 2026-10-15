@@ -227,3 +227,10 @@ def test_safe_extract_file_dir_collision_is_unsafe_archive(tmp_path):
     with pytest.raises(X.UnsafeArchive):
         X.safe_extract(src, "tar.gz", dest)
     assert not dest.exists()
+
+
+def test_input_with_nul_byte_does_not_crash(tmp_path):
+    (tmp_path / "main.tex").write_text("\\documentclass{article}\\begin{document}\\input{a\x00b}\\end{document}\n")
+    main = X.find_main(tmp_path)
+    assert main is not None
+    assert main in X.document_files(tmp_path, main)
