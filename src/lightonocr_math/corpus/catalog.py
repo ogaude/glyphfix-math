@@ -27,6 +27,7 @@ a later version posted after the catalog was built is only noticed by recheck().
 from __future__ import annotations
 
 import datetime as dt
+import math
 import os
 import re
 import time
@@ -81,6 +82,8 @@ def retry_after_seconds(headers, *, default: float = 30.0, cap: float = 600.0) -
         return min(max(float(default), 0.0), cap)
     try:
         v = float(raw)
+        if not math.isfinite(v):
+            v = float(default)
     except (TypeError, ValueError):
         try:
             when = email.utils.parsedate_to_datetime(str(raw))

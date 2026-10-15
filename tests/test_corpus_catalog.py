@@ -222,6 +222,8 @@ def test_retry_after_seconds_forms():
     assert C.retry_after_seconds(hdr()) == 30.0
     assert C.retry_after_seconds(hdr("99999")) == 600.0
     assert C.retry_after_seconds(hdr("garbage"), default=0.0) == 0.0
+    assert C.retry_after_seconds(hdr("nan")) == 30.0
+    assert C.retry_after_seconds(hdr("inf")) == 30.0
     future = email.utils.format_datetime(dt.datetime.now(dt.UTC) + dt.timedelta(seconds=120))
     assert 100 <= C.retry_after_seconds(hdr(future)) <= 120
     past = email.utils.format_datetime(dt.datetime.now(dt.UTC) - dt.timedelta(seconds=120))
