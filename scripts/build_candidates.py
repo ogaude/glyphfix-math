@@ -28,6 +28,8 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 
+from lightonocr_math.corpus.catalog import retry_after_seconds
+
 BASE = "https://oaipmh.arxiv.org/oai"
 UA = "lightonocr-math-research (contact@example.invalid)"
 SETS = ["math", "stat", "physics", "cs", "eess", "q-bio"]
@@ -78,7 +80,7 @@ def fetch(params: dict, key: str) -> bytes:
             data = urllib.request.urlopen(req, timeout=90).read()
         except urllib.error.HTTPError as e:
             if e.code == 503:  # arXiv asks to retry after a delay
-                time.sleep(int(e.headers.get("Retry-After", "30")))
+                time.sleep(retry_after_seconds(e.headers))
                 continue
             raise
         _check_page(data)  # never cache an error or truncated response

@@ -158,3 +158,26 @@ def test_cache_only_rebuild_reproduces_candidates(tmp_path, monkeypatch):
     out = tmp_path / "c.jsonl"
     bc.main(["--asof", "2026-10-13", "--cache", str(copy), "--out", str(out)])
     assert hashlib.sha256(out.read_bytes()).hexdigest() == hashlib.sha256(committed.read_bytes()).hexdigest()
+
+
+@pytest.mark.parametrize("value", ["nan", "inf", "soon", "Wed, 21 Oct 2099 07:28:00 GMT"])
+def test_503_with_odd_retry_after_does_not_crash(env, monkeypatch, value):
+    import urllib.error
+    from email.message import Message
+
+    sleeps: list[float] = []
+    monkeypatch.setattr(bc.time, "sleep", sleeps.append)
+    ok = FakeNet()
+    state = {"n": 0}
+
+    def net(req, timeout=None):
+        state["n"] += 1
+        if state["n"] == 1:
+            h = Message()
+            h["Retry-After"] = value
+            raise urllib.error.HTTPError(req.full_url, 503, "busy", h, None)
+        return ok(req, timeout)
+
+    _install(monkeypatch, net)
+    assert len(list(bc.harvest("math", DAY))) == 3
+    assert all(0 <= s <= 600 for s in sleeps)
