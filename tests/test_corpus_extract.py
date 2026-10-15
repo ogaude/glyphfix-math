@@ -84,6 +84,17 @@ def test_safe_extract_corrupt(tmp_path):
         X.safe_extract(b, "tar.gz", tmp_path / "o")
 
 
+def test_safe_extract_corrupt_gzip_stream(tmp_path):
+    import gzip
+
+    good = gzip.compress(b"x" * 100000)
+    b = tmp_path / "bad.gz"
+    b.write_bytes(good[:20] + b"\xff" * 40 + good[60:])
+    with pytest.raises(X.UnsafeArchive):
+        X.safe_extract(b, "gz", tmp_path / "o")
+    assert not (tmp_path / "o" / "main.tex").exists()
+
+
 def _w(root, name, text):
     p = root / name
     p.parent.mkdir(parents=True, exist_ok=True)

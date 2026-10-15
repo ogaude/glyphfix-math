@@ -86,7 +86,7 @@ def safe_extract(
         with tf:
             try:
                 members = tf.getmembers()
-            except (tarfile.TarError, OSError, EOFError) as e:
+            except (tarfile.TarError, OSError, EOFError, zlib.error) as e:
                 raise UnsafeArchive(f"unreadable archive: {e}") from e
             if len(members) > max_members:
                 raise UnsafeArchive(f"{len(members)} members exceeds the cap of {max_members}")
@@ -114,7 +114,7 @@ def safe_extract(
                     if written > max_bytes:
                         raise UnsafeArchive(f"decompressed size exceeds the cap of {max_bytes} bytes")
                     fout.write(chunk)
-        except (OSError, EOFError) as e:
+        except (OSError, EOFError, zlib.error) as e:
             out.unlink(missing_ok=True)
             raise UnsafeArchive(f"unreadable gzip: {e}") from e
         except UnsafeArchive:
