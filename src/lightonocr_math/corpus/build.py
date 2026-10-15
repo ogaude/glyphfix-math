@@ -136,6 +136,7 @@ def prepare_paper(p: PaperInput) -> PaperResult:
     if p.fetch_meta.get("status") != "ok" or kind not in _ARCHIVE_KINDS or not Path(p.src_bin).is_file():
         return paper_level(Exclusion.NO_SOURCE, "no_source", fetch_status=p.fetch_meta.get("status"), kind=kind)
     root = Path(p.work_dir) / "src"
+    shutil.rmtree(root, ignore_errors=True)  # a stale tree from a killed run or --keep-work must not leak into this one
     try:
         extract.safe_extract(Path(p.src_bin), kind, root)
     except extract.UnsafeArchive as e:

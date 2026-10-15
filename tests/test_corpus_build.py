@@ -241,3 +241,13 @@ def test_glyph_equal_tier_keeps_a_label_whose_bitmap_only_shifts(tmp_path, sandb
     p2 = _paper(tmp_path, TRAIN_ID, {"main.tex": _doc("\\begin{equation} x+y=z \\end{equation}\n")})
     (res2,) = build.build_chunk([p2], cache=tmp_path / "c2", out_roots={"corpus": tmp_path / "corpus", "benchmark": tmp_path / "bench"})
     assert res2.records == [] and [r["detail"]["cause"] for r in res2.excluded] == ["bitmap-differs"]
+
+
+def test_stale_work_tree_is_cleared(tmp_path):
+    p = _paper(tmp_path, TRAIN_ID, {"main.tex": _doc("\\begin{equation} x+y=z \\end{equation}\n")})
+    stale = p.work_dir / "src" / "stale.tex"
+    stale.parent.mkdir(parents=True)
+    stale.write_text(_doc("\\begin{equation} STALE \\end{equation}\n"))
+    res = build.prepare_paper(p)
+    assert not stale.exists()
+    assert res.summary["n_files"] == 1
