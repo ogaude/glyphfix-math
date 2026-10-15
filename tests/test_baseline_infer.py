@@ -72,7 +72,7 @@ def fake(tmp_path, monkeypatch):
 
 
 def _argv(tmp_path, rec, suite="benchmark", *extra):
-    return ["--suite", suite, "--records", str(rec), "--model", "m", "--out", str(tmp_path / "o.jsonl"), "--sidecar", str(tmp_path / "s.jsonl"), *extra]
+    return ["--suite", suite, "--records", str(rec), "--allow-unfrozen-records", "--model", "m", "--out", str(tmp_path / "o.jsonl"), "--sidecar", str(tmp_path / "s.jsonl"), *extra]
 
 
 def test_crop_run(tmp_path, fake):

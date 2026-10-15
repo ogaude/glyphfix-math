@@ -168,14 +168,26 @@ def _write(out: Path, sidecar: Path, preds: list[dict], side: list[dict]) -> Non
     write_jsonl(sidecar, side)
 
 
-def _assert_frozen_inputs(suite: str, records: Path) -> None:
-    """Fail closed when a benchmark/pages suite reads the repo's frozen records but the frozen digests do not hold."""
+def _assert_frozen_inputs(suite: str, records: Path, *, allow_unfrozen: bool = False) -> None:
+    """Fail closed for benchmark/pages suites unless the records are the frozen ones.
+
+    The records count as frozen when they are the repo's file or byte-identical to the pinned digest, whatever their
+    path; the freeze files are then verified too. Any other records file (a copy, an edit, a subset) would be reported
+    as the benchmark suite while not being it, so it needs the explicit allow_unfrozen override.
+    """
     bench = repo_root() / "data" / "benchmark"
-    if suite == "benchmark" and Path(records).resolve() == (bench / "records.jsonl").resolve():
-        freeze.assert_benchmark_frozen(bench)
-    elif suite == "pages" and Path(records).resolve() == (bench / "pages" / "pages.jsonl").resolve():
-        freeze.assert_benchmark_frozen(bench)
-        freeze.assert_pages_frozen(bench)
+    records = Path(records)
+    if suite == "benchmark":
+        if records.resolve() == (bench / "records.jsonl").resolve() or freeze.records_are_frozen(records):
+            freeze.assert_benchmark_frozen(bench)
+        elif not allow_unfrozen:
+            raise freeze.FreezeError(f"{records} is not the frozen benchmark records (digest differs); pass --allow-unfrozen-records to run on it anyway")
+    elif suite == "pages":
+        if records.resolve() == (bench / "pages" / "pages.jsonl").resolve() or freeze.pages_are_frozen(records):
+            freeze.assert_benchmark_frozen(bench)
+            freeze.assert_pages_frozen(bench)
+        elif not allow_unfrozen:
+            raise freeze.FreezeError(f"{records} is not the frozen pages.jsonl (digest differs); pass --allow-unfrozen-records to run on it anyway")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -188,12 +200,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--ids-file", type=Path, default=None)
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--resume", action="store_true")
+    ap.add_argument("--allow-unfrozen-records", action="store_true", help="run the benchmark/pages suite on records that are not the frozen ones (never for published results)")
     ap.add_argument("--host", default=DEFAULT_HOST)
     ap.add_argument("--timeout", type=float, default=300)
     a = ap.parse_args(argv)
 
     try:
-        _assert_frozen_inputs(a.suite, a.records)
+        _assert_frozen_inputs(a.suite, a.records, allow_unfrozen=a.allow_unfrozen_records)
     except splits.LeakageError as e:
         print(f"FROZEN: {e}", file=sys.stderr)
         return 1
