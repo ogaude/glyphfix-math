@@ -53,6 +53,9 @@ OK_LICENSES = {
 }
 CATALOG_VERSION = "1"
 MIN_INTERVAL_S = 3.1
+ALLOWED_HOST = urllib.parse.urlparse(BASE).hostname
+MAX_REDIRECTS = 3
+_REDIRECT_CODES = (301, 302, 303, 307, 308)
 _DAY_RE = re.compile(r"^math_(\d{4}-\d{2}-\d{2})_\d+\.xml$")
 
 
@@ -71,6 +74,31 @@ def _check_page(data: bytes) -> ET.Element:
         if code != "noRecordsMatch":
             raise OaiError(f"OAI error {code}: {(err.text or '').strip()}")
     return root
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *a, **k):  # noqa: ARG002
+        return None
+
+
+_NO_REDIRECT_OPENER = urllib.request.build_opener(_NoRedirect)
+
+
+def default_open(req, timeout=None):
+    """urlopen without automatic redirects: a 3xx surfaces as HTTPError so the client can pace and validate it."""
+    return _NO_REDIRECT_OPENER.open(req, timeout=timeout)
+
+
+def _check_redirect(base_url: str, err: urllib.error.HTTPError) -> str:
+    """Target of a 3xx answer; it must be https on ALLOWED_HOST (the OAI host), else OaiError."""
+    loc = err.headers.get("Location") if err.headers else None
+    if not loc:
+        raise OaiError(f"redirect {err.code} without Location from {base_url}") from err
+    target = urllib.parse.urljoin(base_url, loc)
+    parsed = urllib.parse.urlparse(target)
+    if parsed.scheme != "https" or parsed.hostname != ALLOWED_HOST:
+        raise OaiError(f"redirect from {base_url} to {target} leaves https://{ALLOWED_HOST}")
+    return target
 
 
 def retry_after_seconds(headers, *, default: float = 30.0, cap: float = 600.0) -> float:
@@ -100,7 +128,7 @@ class OaiClient:
         self,
         cache_dir: Path | str,
         min_interval_s: float = MIN_INTERVAL_S,
-        opener: Callable = urllib.request.urlopen,
+        opener: Callable = default_open,
         clock: Callable[[], float] = time.monotonic,
         sleep: Callable[[float], None] = time.sleep,
     ):
@@ -131,13 +159,25 @@ class OaiClient:
                 return data
             except OaiError:
                 f.unlink()
-        for _attempt in range(5):
-            self._pace()
+        url = BASE + "?" + urllib.parse.urlencode(params)
+        hops = 0
+        for _attempt in range(5 + MAX_REDIRECTS):
+            self._pace()  # every request, redirect hops included, goes through the limiter
             self.requests += 1
             try:
-                req = urllib.request.Request(BASE + "?" + urllib.parse.urlencode(params), headers={"User-Agent": UA})
+                req = urllib.request.Request(url, headers={"User-Agent": UA})
                 data = self._opener(req, timeout=90).read()
             except urllib.error.HTTPError as e:
+                if e.code in _REDIRECT_CODES:
+                    if hops >= MAX_REDIRECTS:
+                        e.close()
+                        raise OaiError(f"more than {MAX_REDIRECTS} redirects for {key}") from e
+                    hops += 1
+                    try:
+                        url = _check_redirect(url, e)
+                    finally:
+                        e.close()
+                    continue
                 if e.code == 503:
                     self._sleep(retry_after_seconds(e.headers))
                     continue

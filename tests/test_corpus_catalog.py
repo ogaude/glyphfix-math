@@ -3,6 +3,7 @@
 import datetime as dt
 import itertools
 import urllib.error
+import urllib.request
 from email.message import Message
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -228,3 +229,55 @@ def test_retry_after_seconds_forms():
     assert 100 <= C.retry_after_seconds(hdr(future)) <= 120
     past = email.utils.format_datetime(dt.datetime.now(dt.UTC) - dt.timedelta(seconds=120))
     assert C.retry_after_seconds(hdr(past)) == 0.0
+
+
+class RedirNet:
+    """Answers each call from a script: ('redir', code, location) raises a 3xx, ('ok',) returns the list page."""
+
+    def __init__(self, script):
+        self.script = list(script)
+        self.urls: list[str] = []
+
+    def __call__(self, req, timeout=None):
+        self.urls.append(req.full_url)
+        step = self.script.pop(0)
+        if step[0] == "redir":
+            h = Message()
+            if step[2] is not None:
+                h["Location"] = step[2]
+            raise urllib.error.HTTPError(req.full_url, step[1], "moved", h, None)
+        return _Resp((FIX / "arxivraw_listrecords.xml").read_bytes())
+
+
+def test_default_opener_does_not_follow_redirects():
+    assert cat.OaiClient(Path("x"))._opener is cat.default_open
+    h = Message()
+    h["Location"] = "https://oaipmh.arxiv.org/elsewhere"
+    req = urllib.request.Request("https://oaipmh.arxiv.org/oai")
+    assert cat._NoRedirect().redirect_request(req, None, 302, "Found", h, "https://oaipmh.arxiv.org/elsewhere") is None
+
+
+def test_redirect_hop_is_paced_and_validated(tmp_path):
+    net = RedirNet([("redir", 301, "/oai2?verb=x"), ("ok",)])
+    client, clock = _client(tmp_path, net)
+    client.get({"verb": "ListRecords"}, "k")
+    assert net.urls[1] == "https://oaipmh.arxiv.org/oai2?verb=x"
+    assert client.requests == 2
+    assert clock.sleeps and clock.sleeps[0] == pytest.approx(cat.MIN_INTERVAL_S)  # the hop waited for the limiter
+
+
+@pytest.mark.parametrize("loc", ["http://oaipmh.arxiv.org/oai", "https://evil.example.com/oai", "https://oaipmh.arxiv.org.evil.com/", None])
+def test_redirect_off_host_or_http_or_missing_location_refused(tmp_path, loc):
+    net = RedirNet([("redir", 302, loc), ("ok",)])
+    client, _ = _client(tmp_path, net)
+    with pytest.raises(cat.OaiError):
+        client.get({"verb": "ListRecords"}, "k")
+    assert len(net.urls) == 1  # the bad target is never requested
+
+
+def test_redirect_hops_capped(tmp_path):
+    net = RedirNet([("redir", 302, "/oai")] * (cat.MAX_REDIRECTS + 1) + [("ok",)])
+    client, _ = _client(tmp_path, net)
+    with pytest.raises(cat.OaiError, match="redirects"):
+        client.get({"verb": "ListRecords"}, "k")
+    assert len(net.urls) == cat.MAX_REDIRECTS + 1
