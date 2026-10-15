@@ -306,3 +306,31 @@ def test_pathological_equation_killed_is_isolated_and_not_cached(tmp_path, monke
     assert res[1].note.startswith(render.KILLED_NOTE)
     assert not render._entry(tmp_path, render.cache_key("BOOM"), ".json").exists()
     assert render._cache_get(tmp_path, render.cache_key("a")) is not None
+
+
+def test_unloadable_page_returns_none_not_exception(tmp_path, monkeypatch):
+    import pypdfium2 as pdfium
+
+    class BadDoc:
+        def __init__(self, path):
+            pass
+
+        def __len__(self):
+            return 2
+
+        def __getitem__(self, i):
+            raise pdfium.PdfiumError("Failed to load page.")
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(pdfium, "PdfDocument", BadDoc)
+    assert render._rasterize(tmp_path, 2) is None
+
+
+def test_unloadable_page_singleton_is_a_result_not_a_crash(tmp_path, monkeypatch):
+    _install(monkeypatch, healthy)
+    monkeypatch.setattr(render, "_rasterize", lambda workdir, expected: None)
+    res = render.render_many(["a", "b", "c"], cache=tmp_path, max_parallel=1)
+    assert [r.status for r in res] == ["compile-failed"] * 3
+    assert _jsons(tmp_path) == []

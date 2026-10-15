@@ -477,9 +477,15 @@ def _rasterize(workdir: Path, expected: int) -> list[np.ndarray] | None:
             return None
         pages = []
         for i in range(expected):
-            page = doc[i]
+            try:
+                page = doc[i]
+            except pdfium.PdfiumError:
+                # pdfium cannot load this page (e.g. a degenerate or oversized MediaBox): the group is unusable
+                return None
             try:
                 arr = np.asarray(page.render(scale=RENDER_DPI / 72, grayscale=True).to_numpy())
+            except pdfium.PdfiumError:
+                return None
             finally:
                 page.close()
             if arr.ndim == 3:
@@ -558,7 +564,7 @@ def _render_group_inner(
         finally:
             shutil.rmtree(workdir, ignore_errors=True)
         if pages is None:
-            err = "page count mismatch"
+            err = "page count mismatch or unloadable page"
     if pages is not None:
         for (key, _), arr in zip(items, pages, strict=True):
             crop = ink_crop(arr)
