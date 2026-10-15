@@ -146,3 +146,51 @@ def test_regression_suite_rejects_benchmark_paper(tmp_path, fake, monkeypatch):
     monkeypatch.setattr(bi.splits, "assert_disjoint", boom)
     with pytest.raises(splits.LeakageError):
         bi.main(_argv(tmp_path, rec, "regression"))
+
+
+def _first_paper(split):
+    with open(f"data/corpus/{split}/records.jsonl", encoding="utf-8") as fh:
+        return json.loads(fh.readline())["arxiv_id"]
+
+
+def _bench_paper():
+    return min(splits.frozen().benchmark)
+
+
+def test_mining_suite_accepts_train_only():
+    train = {"id": "a", "arxiv_id": _first_paper("train")}
+    assert bi.load_suite("mining", [train]) == [train]
+    dev = {"id": "b", "arxiv_id": _first_paper("dev")}
+    with pytest.raises(ValueError, match=_first_paper("dev")):
+        bi.load_suite("mining", [train, dev])
+    with pytest.raises(splits.LeakageError):
+        bi.load_suite("mining", [train, {"id": "c", "arxiv_id": _bench_paper()}])
+
+
+def test_dev_suite_accepts_dev_only():
+    dev = {"id": "b", "arxiv_id": _first_paper("dev")}
+    assert bi.load_suite("dev", [dev]) == [dev]
+    with pytest.raises(ValueError, match="not dev-split"):
+        bi.load_suite("dev", [dev, {"id": "a", "arxiv_id": _first_paper("train")}])
+
+
+@pytest.mark.parametrize(
+    ("path", "ignored"),
+    [
+        ("data/mining/stock_train.pred.jsonl", True),
+        ("data/train/runs/x/ckpt-1/a.bin", True),
+        ("data/models/r1/text-q8_0.gguf", True),
+        ("data/runs/a.pred.jsonl", True),
+        ("data/mining/taxonomy.json", False),
+        ("data/mining/labels.jsonl", False),
+        ("data/mining/MINING_MANIFEST.json", False),
+        ("data/mining/taxonomy_candidates.json", False),
+        ("data/models/REGISTRY.json", False),
+        ("data/train/sets/full/trainset.jsonl", False),
+    ],
+)
+def test_phase4_gitignore(path, ignored):
+    import subprocess
+
+    rc = subprocess.run(["git", "check-ignore", "--no-index", "-q", path], check=False).returncode
+    assert (rc == 0) is ignored

@@ -3,7 +3,9 @@
 Sends each record's image to POST /api/chat (empty prompt, one image, think false, temperature 0, seed 0),
 writes predictions, a raw sidecar and a run manifest. Crop suites resize the image on the client with the
 shared pixel policy before sending; page suites send the stored PNG. The benchmark and pages suites accept only
-benchmark papers, the regression and calib suites only train/dev papers.
+benchmark papers, the regression and calib suites only train/dev papers. The mining suite (used by
+scripts/mine_train.py) accepts train-split papers only; the dev suite (used by scripts/register_model.py gates)
+accepts dev-split papers only.
 
 Usage (from repo root):
   uv run python -m scripts.baseline_infer --suite benchmark --records data/benchmark/records.jsonl \
@@ -60,6 +62,8 @@ SUITES = {
     "regression": {"kind": "crop", "side": "training"},
     "calib": {"kind": "page", "side": "training"},
     "pages": {"kind": "page", "side": "benchmark"},
+    "mining": {"kind": "crop", "side": "training"},
+    "dev": {"kind": "crop", "side": "training"},
 }
 CHECKPOINT_EVERY = 25
 _FROM_RE = re.compile(r"^FROM\s+(\S+)", re.MULTILINE)
@@ -84,7 +88,20 @@ def load_suite(suite: str, rows: list[dict]) -> list[dict]:
             raise ValueError(f"suite {suite}: {len(bad)} paper(s) are not benchmark papers: {', '.join(bad[:10])}")
     else:
         splits.assert_disjoint(papers, context=f"baseline_infer:{suite}")
+        if suite == "mining":
+            _require_side(suite, papers, splits.load_train_ids, "train")
+        elif suite == "dev":
+            _require_side(suite, papers, splits.load_dev_ids, "dev")
     return rows
+
+
+def _require_side(suite: str, papers: list[str], loader, side: str) -> None:
+    """Raise ValueError unless every paper belongs to the `side` split."""
+    uniq = sorted(set(papers))
+    allowed = set(loader(uniq))
+    bad = [p for p in uniq if p not in allowed]
+    if bad:
+        raise ValueError(f"suite {suite}: {len(bad)} paper(s) are not {side}-split papers: {', '.join(bad[:10])}")
 
 
 def model_blobs(host: str, model: str) -> dict:
