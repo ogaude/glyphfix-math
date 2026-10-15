@@ -471,7 +471,10 @@ def _run_batch_reserved(latexes: Sequence[str], work_root: Path, timeout_s: int,
 def _rasterize(workdir: Path, expected: int) -> list[np.ndarray] | None:
     import pypdfium2 as pdfium
 
-    doc = pdfium.PdfDocument(str(workdir / "batch.pdf"))
+    try:
+        doc = pdfium.PdfDocument(str(workdir / "batch.pdf"))
+    except pdfium.PdfiumError:
+        return None  # an unreadable batch PDF is a group failure (bisected by the caller), not an abort
     try:
         if len(doc) != expected:
             return None

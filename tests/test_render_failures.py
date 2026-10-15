@@ -328,6 +328,11 @@ def test_unloadable_page_returns_none_not_exception(tmp_path, monkeypatch):
     assert render._rasterize(tmp_path, 2) is None
 
 
+def test_unopenable_pdf_returns_none_not_exception(tmp_path):
+    (tmp_path / "batch.pdf").write_bytes(b"this is not a pdf")
+    assert render._rasterize(tmp_path, 1) is None
+
+
 def test_unloadable_page_singleton_is_a_result_not_a_crash(tmp_path, monkeypatch):
     _install(monkeypatch, healthy)
     monkeypatch.setattr(render, "_rasterize", lambda workdir, expected: None)
