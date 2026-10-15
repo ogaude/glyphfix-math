@@ -133,11 +133,7 @@ def _utc_now() -> str:
 
 
 def _retry_after(err: urllib.error.HTTPError) -> float:
-    try:
-        v = float(err.headers.get("Retry-After", "")) if err.headers else 0.0
-    except (TypeError, ValueError):
-        v = 0.0
-    return min(max(v, 0.0), MAX_RETRY_AFTER_S)
+    return catalog.retry_after_seconds(err.headers, default=0.0, cap=MAX_RETRY_AFTER_S)
 
 
 def _intact(dir_: Path) -> dict | None:

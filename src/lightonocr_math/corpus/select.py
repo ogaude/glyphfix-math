@@ -32,6 +32,8 @@ from lightonocr_math.corpus.records import Exclusion, exclusion_row
 from lightonocr_math.ids import base_id
 
 SELECT_VERSION = "1"
+# planning notes stored next to the settings in SELECTION_CONFIG.json; they never change a selection
+ANNOTATION_KEYS = frozenset({"evidence", "fetch_counts", "usable_rate"})
 
 
 def _default_quotas() -> dict[str, int]:
@@ -60,6 +62,9 @@ class SelectionConfig:
     @classmethod
     def from_json(cls, path: Path | str) -> SelectionConfig:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
+        unknown = sorted(set(data) - set(cls.__dataclass_fields__) - ANNOTATION_KEYS)
+        if unknown:
+            raise ValueError(f"unknown key(s) in selection config {path}: {unknown}; allowed: {sorted(cls.__dataclass_fields__)}")
         known = {k: v for k, v in data.items() if k in cls.__dataclass_fields__}
         return cls(**known)
 

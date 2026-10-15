@@ -203,3 +203,26 @@ def test_cli_build_end_to_end_offline(tmp_path, monkeypatch):
     assert stats["n_math_candidates"] == 3
     assert stats["n_found_listrecords"] == 2 and stats["n_found_getrecord"] == 1
     assert stats["n_license_excluded"] == 1 and stats["n_missing"] == 0
+
+
+def test_retry_after_seconds_forms():
+    import datetime as dt
+    import email.utils
+    from email.message import Message
+
+    from lightonocr_math.corpus import catalog as C
+
+    def hdr(v=None):
+        m = Message()
+        if v is not None:
+            m["Retry-After"] = v
+        return m
+
+    assert C.retry_after_seconds(hdr("7")) == 7.0
+    assert C.retry_after_seconds(hdr()) == 30.0
+    assert C.retry_after_seconds(hdr("99999")) == 600.0
+    assert C.retry_after_seconds(hdr("garbage"), default=0.0) == 0.0
+    future = email.utils.format_datetime(dt.datetime.now(dt.UTC) + dt.timedelta(seconds=120))
+    assert 100 <= C.retry_after_seconds(hdr(future)) <= 120
+    past = email.utils.format_datetime(dt.datetime.now(dt.UTC) - dt.timedelta(seconds=120))
+    assert C.retry_after_seconds(hdr(past)) == 0.0

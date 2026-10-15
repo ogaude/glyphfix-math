@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from lightonocr_math.corpus import select as S
 
 
@@ -88,3 +90,20 @@ def test_config_roundtrip(tmp_path):
     cfg.to_json(p)
     assert S.SelectionConfig.from_json(p) == cfg
     assert S.SelectionConfig().cap == 30
+
+
+def test_config_unknown_key_raises_but_annotations_allowed(tmp_path):
+    p = tmp_path / "c.json"
+    p.write_text(json.dumps({"seed": 1, "quota": {"train": 5}}))
+    with pytest.raises(ValueError, match="quota"):
+        S.SelectionConfig.from_json(p)
+    p.write_text(json.dumps({"seed": 1, "evidence": {"note": "x"}, "fetch_counts": {"train": 3}, "usable_rate": 0.8}))
+    assert S.SelectionConfig.from_json(p).seed == 1
+
+
+def test_real_selection_config_still_loads():
+    from pathlib import Path
+
+    real = Path(__file__).resolve().parent.parent / "data" / "corpus" / "SELECTION_CONFIG.json"
+    if real.exists():
+        S.SelectionConfig.from_json(real)

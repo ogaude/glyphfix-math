@@ -72,6 +72,24 @@ def _check_page(data: bytes) -> ET.Element:
     return root
 
 
+def retry_after_seconds(headers, *, default: float = 30.0, cap: float = 600.0) -> float:
+    """Retry-After as seconds; accepts delta-seconds and an HTTP-date; anything else gives `default`; clamped to [0, cap]."""
+    import email.utils
+
+    raw = headers.get("Retry-After") if headers else None
+    if raw is None:
+        return min(max(float(default), 0.0), cap)
+    try:
+        v = float(raw)
+    except (TypeError, ValueError):
+        try:
+            when = email.utils.parsedate_to_datetime(str(raw))
+            v = (when - dt.datetime.now(when.tzinfo or dt.UTC)).total_seconds()
+        except (TypeError, ValueError, IndexError):
+            v = float(default)
+    return min(max(v, 0.0), cap)
+
+
 class OaiClient:
     """Paced, cached OAI-PMH GET. One request in flight, never closer than min_interval_s."""
 
@@ -118,7 +136,7 @@ class OaiClient:
                 data = self._opener(req, timeout=90).read()
             except urllib.error.HTTPError as e:
                 if e.code == 503:
-                    self._sleep(min(int(e.headers.get("Retry-After", "30")), 600))
+                    self._sleep(retry_after_seconds(e.headers))
                     continue
                 raise
             _check_page(data)
