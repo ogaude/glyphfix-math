@@ -209,3 +209,21 @@ def test_large_files_skipped_and_recorded(tmp_path, monkeypatch):
     skipped = []
     assert X.extract_display([f], tmp_path, skipped) == []
     assert skipped == [str(f)]
+
+
+def test_safe_extract_file_dir_collision_is_unsafe_archive(tmp_path):
+    import io
+    import tarfile
+
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tf:
+        for name in ("a", "a/b"):
+            ti = tarfile.TarInfo(name)
+            ti.size = 1
+            tf.addfile(ti, io.BytesIO(b"x"))
+    src = tmp_path / "src.bin"
+    src.write_bytes(buf.getvalue())
+    dest = tmp_path / "out"
+    with pytest.raises(X.UnsafeArchive):
+        X.safe_extract(src, "tar.gz", dest)
+    assert not dest.exists()

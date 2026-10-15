@@ -23,7 +23,9 @@ from __future__ import annotations
 
 import gzip
 import re
+import shutil
 import tarfile
+import zlib
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -95,7 +97,11 @@ def safe_extract(
                 if total > max_bytes:
                     raise UnsafeArchive(f"uncompressed size exceeds the cap of {max_bytes} bytes")
             dest.mkdir(parents=True, exist_ok=True)
-            tf.extractall(dest, filter="data")
+            try:
+                tf.extractall(dest, filter="data")
+            except (OSError, tarfile.TarError, EOFError, zlib.error) as e:
+                shutil.rmtree(dest, ignore_errors=True)
+                raise UnsafeArchive(f"extraction failed: {e}") from e
         return sorted(m.name for m in members if m.isreg())
     if kind == "gz":
         dest.mkdir(parents=True, exist_ok=True)
