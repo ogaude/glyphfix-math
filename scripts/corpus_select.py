@@ -10,7 +10,11 @@ and writes the manifests only after the gate passes:
   data/corpus/{train,dev}/records.jsonl, data/corpus/selection_manifest.json, data/corpus/excluded_selection.jsonl
   data/benchmark/records.jsonl, data/benchmark/selection_manifest.json, data/benchmark/excluded_selection.jsonl
   data/benchmark/leak_report.json   (all offender detail: it names benchmark ids, so it never goes on the corpus side)
-Exit codes: 0 ok, 1 leak or side-scan failure, 2 missing input.
+Frozen benchmark: when data/benchmark/BENCHMARK_FREEZE.json exists, its pinned digests are verified first and the
+benchmark-side records, manifest and exclusions are never rewritten. A selection that would differ from the frozen
+records is refused with exit 1 and nothing is written (a changed benchmark needs a new benchmark_version, a new root
+and a new stock baseline).
+Exit codes: 0 ok, 1 leak, side-scan or freeze failure, 2 missing input.
 """
 
 from __future__ import annotations
@@ -21,6 +25,7 @@ import sys
 from pathlib import Path
 
 from lightonocr_math import paths, splits
+from lightonocr_math.corpus import freeze as FZ
 from lightonocr_math.corpus import gate as G
 from lightonocr_math.corpus import select as S
 from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
@@ -73,6 +78,14 @@ def run(args: argparse.Namespace) -> int:
             print(f"missing input: {need}", file=sys.stderr)
             return 2
 
+    frozen = FZ.is_frozen(bench_root)
+    if frozen:
+        try:
+            FZ.assert_benchmark_frozen(bench_root)
+        except splits.LeakageError as e:
+            print(f"FROZEN: {e}", file=sys.stderr)
+            return 1
+
     corpus_by_paper, corpus_hashes, corpus_sum = _load_side(corpus_root)
     bench_by_paper, bench_hashes, bench_sum = _load_side(bench_root)
     drift_c, drift_b = _drift_rows(args.drift), _drift_rows(args.drift_benchmark)
@@ -106,6 +119,10 @@ def run(args: argparse.Namespace) -> int:
         print(f"LEAK: {e}", file=sys.stderr)
         return 1
 
+    if frozen and FZ.records_text_sha256(bsel.selected) != json.loads((bench_root / FZ.FREEZE_NAME).read_text(encoding="utf-8"))["records_sha256"]:
+        print("FROZEN: the benchmark selection differs from the frozen records.jsonl; nothing written", file=sys.stderr)
+        return 1
+
     train = [r for r in res.kept if r["split"] == "train"]
     dev = [r for r in res.kept if r["split"] == "dev"]
     corpus_excluded = drift_rows_c + tsel.dropped + dsel.dropped + res.dropped
@@ -135,9 +152,10 @@ def run(args: argparse.Namespace) -> int:
     write_jsonl(corpus_root / "dev" / "records.jsonl", dev)
     write_json(corpus_root / "selection_manifest.json", corpus_manifest)
     write_jsonl(corpus_root / "excluded_selection.jsonl", corpus_excluded)
-    write_jsonl(bench_root / "records.jsonl", bsel.selected)
-    write_json(bench_root / "selection_manifest.json", bench_manifest)
-    write_jsonl(bench_root / "excluded_selection.jsonl", bench_excluded)
+    if not frozen:
+        write_jsonl(bench_root / "records.jsonl", bsel.selected)
+        write_json(bench_root / "selection_manifest.json", bench_manifest)
+        write_jsonl(bench_root / "excluded_selection.jsonl", bench_excluded)
     write_json(bench_root / "leak_report.json", res.report)
 
     try:

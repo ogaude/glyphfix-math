@@ -35,6 +35,7 @@ from pathlib import Path
 from PIL import Image
 
 from lightonocr_math import guard, render, score, splits
+from lightonocr_math.corpus import freeze
 from lightonocr_math.paths import repo_root
 from lightonocr_math.pixels import PIXEL_POLICY, apply_policy
 from scripts.spikes.common import gpu_state, read_jsonl, sha256_file, strip_fences, write_json, write_jsonl
@@ -167,6 +168,16 @@ def _write(out: Path, sidecar: Path, preds: list[dict], side: list[dict]) -> Non
     write_jsonl(sidecar, side)
 
 
+def _assert_frozen_inputs(suite: str, records: Path) -> None:
+    """Fail closed when a benchmark/pages suite reads the repo's frozen records but the frozen digests do not hold."""
+    bench = repo_root() / "data" / "benchmark"
+    if suite == "benchmark" and Path(records).resolve() == (bench / "records.jsonl").resolve():
+        freeze.assert_benchmark_frozen(bench)
+    elif suite == "pages" and Path(records).resolve() == (bench / "pages" / "pages.jsonl").resolve():
+        freeze.assert_benchmark_frozen(bench)
+        freeze.assert_pages_frozen(bench)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--suite", required=True, choices=sorted(SUITES))
@@ -180,6 +191,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--host", default=DEFAULT_HOST)
     ap.add_argument("--timeout", type=float, default=300)
     a = ap.parse_args(argv)
+
+    try:
+        _assert_frozen_inputs(a.suite, a.records)
+    except splits.LeakageError as e:
+        print(f"FROZEN: {e}", file=sys.stderr)
+        return 1
 
     kind = SUITES[a.suite]["kind"]
     options = CROP_OPTIONS if kind == "crop" else PAGE_OPTIONS
