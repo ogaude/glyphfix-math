@@ -22,7 +22,7 @@ import sys
 import traceback
 from pathlib import Path
 
-PIN_RE = re.compile(r"^([A-Za-z0-9_.\-]+)==([^\s\\;]+)", re.M)
+PIN_RE = re.compile(r"^([A-Za-z0-9_.\-]+)==([^\s\\;]+)", re.MULTILINE)
 
 PROBE = r"""
 import json, logging, sys, io
@@ -74,7 +74,7 @@ def fla_check() -> dict:
         import fla  # noqa: F401
 
         out["import_ok"] = True
-    except Exception:
+    except Exception:  # noqa: BLE001 - the probe reports any import failure
         out["import_error"] = traceback.format_exc()[-2000:]
         return out
     try:
@@ -99,18 +99,18 @@ def fla_check() -> dict:
         out["kernel_ok"] = ok
         if not ok:
             out["kernel_error"] = "non-finite output or gradient"
-    except Exception:
+    except Exception:  # noqa: BLE001 - the probe reports any kernel failure
         out["kernel_error"] = traceback.format_exc()[-2000:]
     return out
 
 
 def tf_probe(arm: str) -> dict:
-    r = subprocess.run([sys.executable, "-c", PROBE, arm], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "-c", PROBE, arm], check=False, capture_output=True, text=True)
     if r.returncode != 0:
         return {"module": "error", "error": r.stderr[-2000:]}
     try:
         return json.loads(r.stdout.strip().splitlines()[-1])
-    except Exception:
+    except (ValueError, IndexError):
         return {"module": "error", "error": (r.stdout + r.stderr)[-2000:]}
 
 
@@ -118,10 +118,10 @@ def gpu_state() -> dict:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     from lightonocr_math import guard
 
-    r = subprocess.run(["rocm-smi", "--showmeminfo", "vram", "--json"], capture_output=True, text=True)
+    r = subprocess.run(["rocm-smi", "--showmeminfo", "vram", "--json"], check=False, capture_output=True, text=True)
     try:
         smi = json.loads(r.stdout)
-    except Exception:
+    except ValueError:
         smi = {"raw": r.stdout[-500:]}
     return {"rocm_smi": smi, "holders": guard.vram_holders(), "mem_available_bytes": guard.mem_available_bytes()}
 
@@ -162,7 +162,7 @@ def main(argv=None) -> int:
         res["fla"] = {"import_ok": False, "import_error": "skipped: no gfx12 GPU", "kernel_ok": False,
                       "kernel_error": "skipped: no gfx12 GPU"}
     res["transformers_delta_rule"] = {"on": tf_probe("on"), "off": tf_probe("off")}
-    r = subprocess.run([sys.executable, "-m", "bitsandbytes"], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "-m", "bitsandbytes"], check=False, capture_output=True, text=True)
     res["bitsandbytes"] = {"returncode": r.returncode, "tail": "\n".join((r.stdout + r.stderr).splitlines()[-40:])}
     res["ok"] = bool(t["cuda_available"] and t["bf16_matmul_ok"] and res["lock_match"])
 
