@@ -1,0 +1,70 @@
+{
+  "builder_version": "2",
+  "counts": {
+    "control_glyph": {
+      "'": 21,
+      "1": 21,
+      "I": 21,
+      "\\ell": 20,
+      "\\nu": 7,
+      "l": 20,
+      "v": 20,
+      "|": 20
+    },
+    "error_class": {
+      "decoration": 239,
+      "dropped_prime": 23,
+      "greek_latin": 15,
+      "i_1": 2,
+      "other": 239,
+      "prime_l": 1,
+      "symbol_swap": 81
+    },
+    "group": {
+      "control": 150,
+      "error": 600,
+      "replay": 750
+    },
+    "replay_flag": {
+      "decoration": 73,
+      "greek": 399,
+      "i_1": 5,
+      "plain": 224,
+      "prime": 49
+    }
+  },
+  "created": "2026-10-16T06:07:55Z",
+  "git_commit": "f1ee7bc348e370cb09100f49f59ec22ae9dabcac",
+  "licenses": {
+    "CC-BY-4.0": 1411,
+    "CC0-1.0": 89
+  },
+  "max_rows_per_paper": 8,
+  "n_papers": 567,
+  "n_rows": 1500,
+  "params": {
+    "control_frac": 0.1,
+    "max_per_paper": 30,
+    "max_target_tokens": 500,
+    "replay_frac": 0.5,
+    "subset_n": 1500,
+    "total": 8000
+  },
+  "parent_sha256": "4b5e5b3b01e3eeaf42d49531545a791f81fdc6cc905ade9c3cc215c55584e0b0",
+  "scorer_fingerprint": "6616416ed4841f410166a1daf0e6a0fb403689c98b9fc4884dbf7d7f49c4b7c2",
+  "scorer_version": "1.2.0",
+  "seed": 0,
+  "sources": {
+    "dev_records_sha256": "7cf6fba2fc594bbc4eb04ebbbbe8e91569379792dcf7f0d6dff11050e1b2b314",
+    "labels_sha256": "89166cc5a729ebefdaa77408f205d6e2361edf3c06aec38f83bfb796f90cc50e",
+    "regression_sha256": "e9dc0091aeb262bce131f2716825e1d61074895b20851c08aafe4e0463ef8583",
+    "taxonomy_sha256": "cf31d7ed26d0acc7498c2c1b9b10d5564f4903ff1889bbea9831ab82b09204d1",
+    "train_records_sha256": "a0fc99410c10655f0573b80758f434e1ddfa966006148c5cc6f33412d45c31f1"
+  },
+  "tokenizer": {
+    "counter": "qwen",
+    "model_id": "lightonai/LightOnOCR-3-4B",
+    "revision": "b71010f095dc3735de7ee6b9969bff8f8f50b39a"
+  },
+  "trainset_sha256": "8ec093301c4a2668f3b9a62451d2487968c838d3940f02ad6588a4ca7bed0276"
+}

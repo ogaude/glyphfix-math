@@ -1,0 +1,134 @@
+{
+  "allocation": {
+    "decoration": 1275,
+    "dropped_prime": 121,
+    "greek_latin": 81,
+    "i_1": 13,
+    "other": 1275,
+    "prime_l": 3,
+    "symbol_swap": 432
+  },
+  "builder_version": "2",
+  "counts": {
+    "control_glyph": {
+      "'": 110,
+      "1": 109,
+      "I": 110,
+      "\\ell": 109,
+      "\\nu": 35,
+      "l": 109,
+      "v": 109,
+      "|": 109
+    },
+    "error_class": {
+      "decoration": 1275,
+      "dropped_prime": 121,
+      "greek_latin": 81,
+      "i_1": 13,
+      "other": 1275,
+      "prime_l": 3,
+      "symbol_swap": 432
+    },
+    "group": {
+      "control": 800,
+      "error": 3200,
+      "replay": 4000
+    },
+    "replay_flag": {
+      "decoration": 391,
+      "greek": 2126,
+      "i_1": 27,
+      "plain": 1193,
+      "prime": 263
+    }
+  },
+  "created": "2026-10-16T06:07:54Z",
+  "dropped": {
+    "in_regression": 164,
+    "target_too_long": 83
+  },
+  "equal_share_target": 457,
+  "git_commit": "f1ee7bc348e370cb09100f49f59ec22ae9dabcac",
+  "licenses": {
+    "CC-BY-4.0": 7560,
+    "CC0-1.0": 440
+  },
+  "max_rows_per_paper": 28,
+  "n_papers": 767,
+  "n_rows": 8000,
+  "params": {
+    "control_frac": 0.1,
+    "max_per_paper": 30,
+    "max_target_tokens": 500,
+    "replay_frac": 0.5,
+    "total": 8000
+  },
+  "scorer_fingerprint": "6616416ed4841f410166a1daf0e6a0fb403689c98b9fc4884dbf7d7f49c4b7c2",
+  "scorer_version": "1.2.0",
+  "seed": 0,
+  "shortfalls": {
+    "dropped_prime": {
+      "got": 121,
+      "target": 457
+    },
+    "greek_latin": {
+      "got": 81,
+      "target": 457
+    },
+    "i_1": {
+      "got": 13,
+      "target": 457
+    },
+    "prime_l": {
+      "got": 3,
+      "target": 457
+    },
+    "symbol_swap": {
+      "got": 432,
+      "target": 457
+    }
+  },
+  "sources": {
+    "dev_records_sha256": "7cf6fba2fc594bbc4eb04ebbbbe8e91569379792dcf7f0d6dff11050e1b2b314",
+    "labels_sha256": "89166cc5a729ebefdaa77408f205d6e2361edf3c06aec38f83bfb796f90cc50e",
+    "regression_sha256": "e9dc0091aeb262bce131f2716825e1d61074895b20851c08aafe4e0463ef8583",
+    "taxonomy_sha256": "cf31d7ed26d0acc7498c2c1b9b10d5564f4903ff1889bbea9831ab82b09204d1",
+    "train_records_sha256": "a0fc99410c10655f0573b80758f434e1ddfa966006148c5cc6f33412d45c31f1"
+  },
+  "target_too_long": {
+    "by_control_glyph": {
+      "'": 0,
+      "1": 3,
+      "I": 0,
+      "\\ell": 0,
+      "\\nu": 0,
+      "\\upsilon": 0,
+      "l": 0,
+      "none": 0,
+      "v": 0,
+      "|": 0
+    },
+    "by_error_class": {
+      "decoration": 21,
+      "dropped_prime": 1,
+      "greek_latin": 2,
+      "i_1": 2,
+      "other": 45,
+      "prime_l": 0,
+      "symbol_swap": 9
+    },
+    "by_pool": {
+      "clean": 3,
+      "error": 80,
+      "other": 0
+    },
+    "max_target_tokens": 500,
+    "total": 83
+  },
+  "tokenizer": {
+    "counter": "qwen",
+    "model_id": "lightonai/LightOnOCR-3-4B",
+    "revision": "b71010f095dc3735de7ee6b9969bff8f8f50b39a"
+  },
+  "trainset_sha256": "4b5e5b3b01e3eeaf42d49531545a791f81fdc6cc905ade9c3cc215c55584e0b0"
+}
