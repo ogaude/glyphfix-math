@@ -1,0 +1,151 @@
+{
+  "accepted_clusters": [
+    {
+      "candidate_ids": [
+        "c24",
+        "c27",
+        "c28",
+        "c30",
+        "c32",
+        "c36"
+      ],
+      "family": "other",
+      "name": "symbol_swap",
+      "patterns": [
+        [
+          [
+            "\\coloneqq"
+          ],
+          [
+            ":",
+            "="
+          ]
+        ],
+        [
+          [
+            "|",
+            "|"
+          ],
+          [
+            "\\|"
+          ]
+        ],
+        [
+          [
+            "\\vert"
+          ],
+          [
+            "|"
+          ]
+        ],
+        [
+          [
+            "|"
+          ],
+          [
+            "\\mid"
+          ]
+        ],
+        [
+          [
+            "\\ast"
+          ],
+          [
+            "*"
+          ]
+        ],
+        [
+          [
+            "\\star"
+          ],
+          [
+            "*"
+          ]
+        ]
+      ]
+    }
+  ],
+  "candidates_sha256": "6b379a0660cc9d787801ed405cba1786f85034097624b3530642a6a2a73427d9",
+  "classes": [
+    "prime_l",
+    "dropped_prime",
+    "greek_latin",
+    "decoration",
+    "i_1",
+    "symbol_swap",
+    "other"
+  ],
+  "counts": {
+    "decoration": {
+      "available_for_training": 1676,
+      "total": 1706
+    },
+    "dropped_prime": {
+      "available_for_training": 122,
+      "total": 151
+    },
+    "greek_latin": {
+      "available_for_training": 83,
+      "total": 107
+    },
+    "i_1": {
+      "available_for_training": 15,
+      "total": 20
+    },
+    "other": {
+      "available_for_training": 6042,
+      "total": 6042
+    },
+    "prime_l": {
+      "available_for_training": 3,
+      "total": 10
+    },
+    "symbol_swap": {
+      "available_for_training": 441,
+      "total": 441
+    }
+  },
+  "error_rules_version": "1",
+  "mining_version": "1",
+  "rejected_candidate_ids": [
+    "c00",
+    "c01",
+    "c02",
+    "c03",
+    "c04",
+    "c05",
+    "c06",
+    "c07",
+    "c08",
+    "c09",
+    "c10",
+    "c11",
+    "c12",
+    "c13",
+    "c14",
+    "c15",
+    "c16",
+    "c17",
+    "c18",
+    "c19",
+    "c20",
+    "c21",
+    "c22",
+    "c23",
+    "c25",
+    "c26",
+    "c29",
+    "c31",
+    "c33",
+    "c34",
+    "c35",
+    "c37",
+    "c38",
+    "c39",
+    "c40"
+  ],
+  "reviewed": true,
+  "reviewed_at": "2026-10-16T05:38:45Z",
+  "reviewer": "ogaude",
+  "scored_sha256": "863508990ea8f39e1b5c4981bd930883b5999650633c85a60b52b06819df5278"
+}

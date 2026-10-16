@@ -1,0 +1,49 @@
+{
+  "carried_over": {
+    "ids_sha256": "d7a7c2cd41c76bc9566bc8cae7169352e84431e6f25136cace61536c6bcb3bfd",
+    "n": 2251,
+    "pool_manifest_sha256": "9af90ff921ba8eba70034e235fbbe58e335e215040d2cecbdae2ec363528a7f5"
+  },
+  "chunk_manifest_sha256": [
+    "c4867565438cf06df8c7e89cbbfd1c5de7eb898a9362bbe1d24d38a15a8c8f2a",
+    "9211864168c24ba1eeb67cd0c05b598ca5d33d8107c0785864d84192fe912603",
+    "0a351090e0533354a118454499dfec6a7a713af7aa85c336c5aa0a2ae2003eac",
+    "c76909f3860bcc54de9f79a65721cb8a49255e53cea4e9df9627aaef1c9be45d",
+    "b9579838769893060b4972b380c505189687d811a8b9d1416839e7015990bb61",
+    "260f8753166f492b63c73d024b33329e90bea175c9b03091892f0020a67549e0",
+    "64dcca7e0978c19a390beb35a9f26d5e1e17b9d83dab11e871643a8a290b0108"
+  ],
+  "created": "2026-10-15T19:36:04Z",
+  "error_rules_version": "1",
+  "git_commit": "cad706306237cc3c7e4318c718a563f5d0aca4e5",
+  "labels_sha256": "89166cc5a729ebefdaa77408f205d6e2361edf3c06aec38f83bfb796f90cc50e",
+  "mining_version": "1",
+  "model": "lighton-ocr3-q8-16k",
+  "model_digest": "9b84c5ce75a08d0ee9d76896801cce0d1480208c60db584e29c2fde3d93cfaa0",
+  "n_clean": 5481,
+  "n_error": 8477,
+  "n_gt_uncompilable": 0,
+  "n_pred_error": 0,
+  "n_records": 13958,
+  "options": {
+    "num_ctx": 8192,
+    "num_predict": 1024,
+    "seed": 0,
+    "temperature": 0
+  },
+  "pixel_policy": {
+    "factor": 32,
+    "max_px": 602112,
+    "min_px": 65536,
+    "resample": "bicubic",
+    "version": "1"
+  },
+  "predictions_sha256": "d16833e325a6b3376d59491aca67e4c176d7d4e76c70b47b032bc09a70218ed9",
+  "scored_sha256": "863508990ea8f39e1b5c4981bd930883b5999650633c85a60b52b06819df5278",
+  "scorer_fingerprint": "6616416ed4841f410166a1daf0e6a0fb403689c98b9fc4884dbf7d7f49c4b7c2",
+  "scorer_version": "1.2.0",
+  "sidecar_sha256": "75a16dcf2746a2e976d44c4b72e3515f0edb6583e6dcc4409a81f6f8a9803616",
+  "taxonomy_sha256": "cf31d7ed26d0acc7498c2c1b9b10d5564f4903ff1889bbea9831ab82b09204d1",
+  "template_sha256": "d5ddb788d5f3df12e32244954037eb535409d24eeb48c2429d7588af4e7b69a7",
+  "train_records_sha256": "a0fc99410c10655f0573b80758f434e1ddfa966006148c5cc6f33412d45c31f1"
+}
