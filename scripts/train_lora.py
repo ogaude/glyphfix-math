@@ -307,13 +307,15 @@ def cmd_eval(a: argparse.Namespace) -> int:
 def _setup_model(args: argparse.Namespace, fla: str):
     import peft
 
-    from lightonocr_math.train import infer, lora
+    from lightonocr_math.train import infer, lora, patch_embed
 
     model, processor = infer.load_base()
+    n_linear = patch_embed.linearize_patch_embed(model, require=True)
     model.config.use_cache = False
     model.enable_input_require_grads()
     pm = peft.get_peft_model(model, lora.lora_config(args.rank, args.alpha))
     info = lora.check_targets(pm)
+    info["patch_embed_linear"] = n_linear
     if info["n_wrapped"] != EXPECTED_WRAPPED:
         raise RuntimeError(f"expected {EXPECTED_WRAPPED} wrapped modules, got {info['n_wrapped']}")
     pm.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
@@ -422,7 +424,7 @@ def cmd_train(a: argparse.Namespace) -> int:
         opt_steps_done=result["opt_steps_done"], total_opt_steps=result["total_opt_steps"], eval_steps=result["eval_steps"],
         peak_alloc_gib=result["peak_alloc_gib"], mean_s_per_opt_step=result["mean_s_per_opt_step"], lora=lora_info,
         prompt_sha256=_sha256_text(prompt.prompt_text(processor)), gpu_before=before, gpu_after=_clean_state(gpu_state()), fla=fla,
-        base_model={"id": _model_id(), "revision": _revision()},
+        base_model={"id": _model_id(), "revision": _revision()}, patch_embed_linear=info["patch_embed_linear"],
     )  # fmt: skip
     run.write_manifest(run_dir, final_manifest)
     print(f"outcome {result['outcome']} {result['reason']}", flush=True)
@@ -477,7 +479,7 @@ def cmd_probe(a: argparse.Namespace) -> int:
     from lightonocr_math.train.collate import LabelMaskCollator, label_only_loss
 
     try:
-        pm, processor, _info = _setup_model(a, fla)
+        pm, processor, info = _setup_model(a, fla)
     except RuntimeError as e:
         print(f"FAIL: {e}", file=sys.stderr)
         return EXIT_FAIL
@@ -529,6 +531,7 @@ def cmd_probe(a: argparse.Namespace) -> int:
         "s_per_generate": round(med(gen_times), 3),
         "est_hours_per_epoch": round(len(rows) / a.batch_size * s_mixed / 3600, 2),
         "n_rows": len(rows), "opt_steps_per_epoch": round(steps_per_epoch, 1), "fla": fla,
+        "patch_embed_linear": info.get("patch_embed_linear"),
         "pass": peak_alloc <= PEAK_BUDGET_GIB,
     }  # fmt: skip
     write_json(Path(a.out), out)

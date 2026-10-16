@@ -18,8 +18,11 @@ MODEL_ID = "lightonai/LightOnOCR-3-4B"
 REVISION = "b71010f095dc3735de7ee6b9969bff8f8f50b39a"
 
 
-def load_base(path_or_id: str = MODEL_ID, *, device: str = "cuda", dtype: str = "bfloat16"):
-    """Return (model, processor) for the pinned checkpoint, bf16, sdpa attention."""
+def load_base(path_or_id: str = MODEL_ID, *, device: str = "cuda", dtype: str = "bfloat16", linear_patch_embed: bool = True):
+    """Return (model, processor) for the pinned checkpoint, bf16, sdpa attention.
+
+    The vision patch embed runs as a matmul (identical result, avoids the per-shape MIOpen Find).
+    """
     import torch
     from transformers import AutoModelForImageTextToText, AutoProcessor
 
@@ -30,6 +33,10 @@ def load_base(path_or_id: str = MODEL_ID, *, device: str = "cuda", dtype: str = 
     model = AutoModelForImageTextToText.from_pretrained(
         path_or_id, revision=rev, dtype=getattr(torch, dtype), attn_implementation="sdpa", local_files_only=offline
     ).to(device)
+    if linear_patch_embed:
+        from lightonocr_math.train.patch_embed import linearize_patch_embed
+
+        linearize_patch_embed(model, require=True)
     processor = AutoProcessor.from_pretrained(path_or_id, revision=rev, local_files_only=offline)
     return model, processor
 
