@@ -139,6 +139,60 @@ def test_undecided_missing_label_too_long_dropped(real_ids):
     assert body["dropped"]["missing_label"] == 1
 
 
+def test_default_cap_is_500_and_builder_version_2(real_ids):
+    assert ts.MAX_TARGET_TOKENS == 500
+    recs, labels = _world(real_ids[0])
+    _, body = ts.build(recs, labels, TAX, [], set(), token_len=_token_len, total=60)
+    assert body["params"]["max_target_tokens"] == 500
+    assert body["builder_version"] == "2"
+
+
+def test_cap_boundary_equal_kept_one_over_dropped(real_ids):
+    recs, labels = _world(real_ids[0])
+    cap = 20
+    # fenced target counts the two fence words plus the latex words
+    recs[0]["latex"] = " ".join(["w"] * (cap - 2))
+    recs[1]["latex"] = " ".join(["w"] * (cap - 1))
+    assert _token_len(ts.target_text(recs[0]["latex"])) == cap
+    _, body = ts.build(recs, labels, TAX, [], set(), token_len=_token_len, total=60, max_target_tokens=cap)
+    assert body["dropped"]["target_too_long"] == 1
+    assert body["target_too_long"]["total"] == 1
+    assert body["target_too_long"]["by_pool"] == {"error": 1, "clean": 0, "other": 0}
+
+
+def test_over_length_rows_refilled_and_broken_down(real_ids):
+    recs, labels = _world(real_ids[0], n_err=60, n_clean=200)
+    cap = 20
+    long_err = [recs[i] for i in (0, 3, 6)]  # CLASSES[0] rows
+    long_clean = [recs[60 + k] for k in (0, 3, 9)]  # control-glyph rows
+    long_neutral = recs[60 + 1]  # clean row without a glyph
+    for r in [*long_err, *long_clean, long_neutral]:
+        r["latex"] = r["latex"] + " " + " ".join(["w"] * 40)
+    long_ids = {r["id"] for r in [*long_err, *long_clean, long_neutral]}
+    rows, body = ts.build(recs, labels, TAX, [], set(), token_len=_token_len, total=60, max_target_tokens=cap)
+    assert not (long_ids & {r["id"] for r in rows})
+    assert body["counts"]["group"] == {"error": 24, "replay": 30, "control": 6}
+    t = body["target_too_long"]
+    assert t["max_target_tokens"] == cap and t["total"] == 7 == body["dropped"]["target_too_long"]
+    assert t["by_pool"] == {"error": 3, "clean": 4, "other": 0}
+    assert list(t["by_error_class"]) == CLASSES
+    assert t["by_error_class"] == {"prime_l": 3, "dropped_prime": 0, "decoration": 0, "other": 0}
+    assert list(t["by_control_glyph"]) == [*ts.CONTROL_GLYPHS, "none"]
+    expect = Counter(ts._first_glyph(r["latex"]) or "none" for r in [*long_clean, long_neutral])
+    assert t["by_control_glyph"] == {g: expect.get(g, 0) for g in [*ts.CONTROL_GLYPHS, "none"]}
+    assert sum(t["by_control_glyph"].values()) == 4
+
+
+def test_no_over_length_block_is_zero_filled(real_ids):
+    recs, labels = _world(real_ids[0])
+    _, body = ts.build(recs, labels, TAX, [], set(), token_len=_token_len, total=60)
+    t = body["target_too_long"]
+    assert t["total"] == 0 and "target_too_long" not in body["dropped"]
+    assert t["by_pool"] == {"error": 0, "clean": 0, "other": 0}
+    assert set(t["by_error_class"].values()) == {0} and list(t["by_error_class"]) == CLASSES
+    assert set(t["by_control_glyph"].values()) == {0}
+
+
 def test_deterministic_for_reversed_input(real_ids):
     papers = real_ids[0]
     recs, labels = _world(papers)

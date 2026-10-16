@@ -11,6 +11,8 @@ dev records (ids only), and writes OUT_DIR/trainset.jsonl plus TRAINSET_MANIFEST
 and of the set. A written set is immutable: a non-empty OUT_DIR is refused unless --force. The output directory is
 scanned with gate.assert_side_clean. subset draws a group-proportional subset of a built set and records the parent
 set's hash. devsubset writes sorted dev ids (one per line) and DEV_EVAL_MANIFEST.json next to them.
+--max-target-tokens (default trainset.MAX_TARGET_TOKENS, 500) drops rows whose fenced target is longer, before
+allocation; the manifest records the drops per pool, error class and control glyph under target_too_long.
 --token-counter qwen loads the pinned tokenizer offline; chars uses len(target) // 3 for tests and dry runs.
 Exit codes: 0 ok, 2 refused (unreviewed taxonomy, leakage, existing set) or missing input.
 """
@@ -43,9 +45,7 @@ class Refused(Exception):
 def _git_commit() -> str | None:
     try:
         return (
-            subprocess.run(
-                ["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=repo_root(), check=False
-            ).stdout.strip()
+            subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=repo_root(), check=False).stdout.strip()
             or None
         )
     except OSError:
@@ -96,6 +96,10 @@ def _print_summary(manifest: dict) -> None:
     print(f"  error_class: {c['error_class']}")
     print(f"  control_glyph: {c['control_glyph']}")
     print(f"  replay_flag: {c['replay_flag']}")
+    ttl = manifest.get("target_too_long")
+    if ttl:
+        print(f"  target_too_long (> {ttl['max_target_tokens']}): {ttl['total']} by_pool={ttl['by_pool']}")
+        print(f"    by_error_class: {ttl['by_error_class']}")
     if manifest.get("shortfalls"):
         print(f"  shortfalls: {manifest['shortfalls']}")
 

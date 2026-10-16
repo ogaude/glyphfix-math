@@ -10,8 +10,9 @@ Rules:
   * the taxonomy must be marked reviewed; build refuses otherwise
   * rows come from train papers only: a benchmark or quarantined paper raises splits.LeakageError, a dev paper, a dev
     record id, a regression id, a record with the same canonical LaTeX as a regression row, a record without a label,
-    a record whose render check is undecided and a record whose fenced target exceeds max_target_tokens are dropped
-    and counted by reason
+    a record whose render check is undecided and a record whose fenced target exceeds max_target_tokens (default 500)
+    are dropped and counted by reason; over-length drops are also broken down by pool, error class and control glyph
+    under "target_too_long". The length filter runs before allocation, so the groups refill from the remaining pool
   * composition: replay_frac clean replay + control_frac controls + the rest mined error rows, of `total` rows;
     error rows use distinct crops only and are balanced by water-filling toward an equal share per taxonomy class,
     classes short of the equal-share target are recorded as {class: {target, got}} under shortfalls
@@ -50,7 +51,7 @@ __all__ = [
     "target_text",
 ]
 
-BUILDER_VERSION = "1"
+BUILDER_VERSION = "2"
 CONTROL_GLYPHS = ("'", "I", "l", "\\ell", "1", "|", "v", "\\nu", "\\upsilon")
 FLAG_ORDER = ("prime", "greek", "decoration", "i_1", "plain")
 DEV_FLAG_ORDER = ("plain", "prime", "greek", "decoration", "i_1")
@@ -59,7 +60,7 @@ TOTAL = 8000
 REPLAY_FRAC = 0.50
 CONTROL_FRAC = 0.10
 MAX_PER_PAPER = 30
-MAX_TARGET_TOKENS = 900
+MAX_TARGET_TOKENS = 500
 
 _OUT_KEYS = ("id", "arxiv_id", "image", "latex", "width", "height", "license_spdx", "license_uri", "paper_version")
 
@@ -169,6 +170,9 @@ def build(
     label_by_id = {lb["id"]: lb for lb in labels}
 
     dropped: Counter = Counter()
+    long_pool: Counter = Counter()
+    long_class: Counter = Counter()
+    long_glyph: Counter = Counter()
     errors: dict[str, list[str]] = {c: [] for c in classes}
     clean: list[str] = []
     rec_by_id: dict[str, dict] = {}
@@ -187,6 +191,12 @@ def build(
             dropped["render_undecided"] += 1
         elif token_len(target_text(r["latex"])) > max_target_tokens:
             dropped["target_too_long"] += 1
+            pool = "error" if lb.get("error") else "clean" if lb.get("clean") else "other"
+            long_pool[pool] += 1
+            if pool == "error" and lb.get("mining_class") in errors:
+                long_class[lb["mining_class"]] += 1
+            elif pool == "clean":
+                long_glyph[_first_glyph(r["latex"]) or "none"] += 1
         elif lb.get("error"):
             if lb.get("mining_class") in errors:
                 errors[lb["mining_class"]].append(rid)
@@ -278,13 +288,23 @@ def build(
         builder_version=BUILDER_VERSION,
         seed=seed,
         params={
-            "total": total, "replay_frac": replay_frac, "control_frac": control_frac,
-            "max_per_paper": max_per_paper, "max_target_tokens": max_target_tokens,
+            "total": total,
+            "replay_frac": replay_frac,
+            "control_frac": control_frac,
+            "max_per_paper": max_per_paper,
+            "max_target_tokens": max_target_tokens,
         },
         equal_share_target=target,
         allocation=allocation,
         shortfalls=shortfalls,
         dropped=dict(sorted(dropped.items())),
+        target_too_long={
+            "max_target_tokens": max_target_tokens,
+            "total": dropped["target_too_long"],
+            "by_pool": {p: long_pool.get(p, 0) for p in ("error", "clean", "other")},
+            "by_error_class": {c: long_class.get(c, 0) for c in classes},
+            "by_control_glyph": {g: long_glyph.get(g, 0) for g in (*CONTROL_GLYPHS, "none")},
+        },
     )
     return rows, body
 

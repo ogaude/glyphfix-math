@@ -81,6 +81,22 @@ def test_build_writes_set_and_hashed_manifest(inputs, tmp_path):
     assert set(m["shortfalls"]) <= {*CLASSES, "control", "replay"}
 
 
+def test_build_records_cap_and_over_length_breakdown(inputs, tmp_path):
+    default = tmp_path / "default"
+    assert bt.main(_argv(inputs, default)) == 0
+    dm = json.loads((default / "TRAINSET_MANIFEST.json").read_text())
+    assert dm["params"]["max_target_tokens"] == 500 and dm["target_too_long"]["total"] == 0
+
+    out = tmp_path / "low"
+    assert bt.main(_argv(inputs, out, "--max-target-tokens", "6")) == 0
+    m = json.loads((out / "TRAINSET_MANIFEST.json").read_text())
+    assert m["params"]["max_target_tokens"] == 6
+    assert m["target_too_long"]["total"] == m["dropped"]["target_too_long"] > 0
+    assert m["target_too_long"]["max_target_tokens"] == 6
+    assert all(len(r["target_text"]) // 3 <= 6 for r in read_jsonl(out / "trainset.jsonl"))
+    assert m["n_rows"] > 0
+
+
 def test_build_refuses_unreviewed_taxonomy(inputs, tmp_path, capsys):
     write_json(inputs / "tax.json", {"reviewed": False, "classes": CLASSES})
     out = tmp_path / "set"
