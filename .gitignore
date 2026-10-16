@@ -25,6 +25,7 @@ data/mining/*
 !data/mining/labels.jsonl
 data/train/runs/
 data/train/dev_eval/
+data/train/dev_eval_conv/
 data/runs/
 data/models/*
 !data/models/REGISTRY.json
