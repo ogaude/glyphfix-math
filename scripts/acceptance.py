@@ -4,7 +4,8 @@ Subcommands:
   verify-env   check the Ollama engine, the stock model files and the server environment against the stored stock run
   precheck     dev pre-check on 100 fixed dev crops: determinism, stored-prediction equality and prompt token parity
   generate     the only path to benchmark predictions: lock-protected, resume-only generation of one arm
-  score, report, compare-results, register-verdict   (added with the scoring and report steps)
+  score        rescore all four arms with the frozen scorer and write results.json and flips.jsonl
+  report, compare-results, register-verdict   (added with the report step)
 
 Usage (from repo root, Ollama server running with no model loaded):
   uv run python -m scripts.acceptance verify-env
@@ -12,6 +13,7 @@ Usage (from repo root, Ollama server running with no model loaded):
   uv run python -m scripts.acceptance generate --arm tuned-crops
   uv run python -m scripts.acceptance generate --arm tuned-pages
   uv run python -m scripts.acceptance generate --arm tuned-crops --resume    # after an interrupted run only
+  uv run python -m scripts.acceptance score --mode benchmark
 
 Behaviour: generate refuses unless the constants are pinned, the two code files are committed and clean and unchanged
 since the pre-check, the pre-check passed, and the Ollama server environment equals the one the pre-check ran in.
@@ -31,11 +33,16 @@ import subprocess
 import sys
 import time
 import urllib.error
+from datetime import datetime
 from pathlib import Path
 
 from lightonocr_math import acceptance as accmod
-from lightonocr_math import guard
+from lightonocr_math import guard, paths, splits
+from lightonocr_math.corpus import freeze
+from lightonocr_math.guard import GuardError
 from lightonocr_math.paths import repo_root
+from lightonocr_math.render import RenderInfrastructureError
+from lightonocr_math.score import score_file
 from scripts.baseline_infer import model_blobs
 from scripts.spikes.common import gpu_state, read_jsonl, write_json
 from scripts.spikes.ollama_infer import DEFAULT_HOST, OllamaError, _get, _model_digest, _post
@@ -60,6 +67,10 @@ RECORDS = Path("data/benchmark/records.jsonl")
 PAGES = Path("data/benchmark/pages/pages.jsonl")
 PAGE_SHARDS = Path("data/benchmark/shards/records")
 ARM_NAMES = ("tuned-crops", "tuned-pages", "stock-crops", "stock-pages")
+BENCH_ROOT = Path("data/benchmark")
+PAGES_FREEZE_PATH = BENCH_ROOT / "pages" / "PAGES_FREEZE.json"
+BASELINE_DIR = BENCH_ROOT / "baseline"
+SCORE_ARMS = ("crops_stock", "crops_tuned", "pages_stock", "pages_tuned")
 
 
 class Refused(Exception):
@@ -512,6 +523,220 @@ def _generate(a: argparse.Namespace, spec: dict) -> int:
     return 0 if _finish(a.arm, spec, entry, lock, digest) else 1
 
 
+# ---------------------------------------------------------------------------------------------- score
+
+
+def manifest_of(pred: Path) -> Path:
+    """Manifest next to a prediction file: the path with .jsonl replaced by .manifest.json."""
+    s = str(pred)
+    return Path((s.removesuffix(".jsonl")) + ".manifest.json")
+
+
+def score_inputs(a: argparse.Namespace) -> dict[str, Path]:
+    """The file each arm is scored from; page arms are scored from their equation rows, not the page predictions."""
+    return {"crops_stock": a.crops_stock, "crops_tuned": a.crops_tuned, "pages_stock": a.pages_stock_rows, "pages_tuned": a.pages_tuned_rows}
+
+
+def pred_files(a: argparse.Namespace) -> dict[str, Path]:
+    return {"crops_stock": a.crops_stock, "crops_tuned": a.crops_tuned, "pages_stock": a.pages_stock_preds, "pages_tuned": a.pages_tuned_preds}
+
+
+def stats_files(a: argparse.Namespace) -> dict[str, Path]:
+    return {"pages_stock": a.pages_stock_stats, "pages_tuned": a.pages_tuned_stats}
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def _utc(stamp: str) -> datetime:
+    return datetime.fromisoformat(stamp)
+
+
+def _registry_entry(registry: Path, tag: str) -> dict | None:
+    for e in (_load(registry) or {}).get("entries", []):
+        if e.get("tag") == tag:
+            return e
+    return None
+
+
+def _code_freeze_checks(mode: str) -> dict:
+    """Pin, committed-clean and lock-blob checks of the two frozen code files (benchmark mode); the record for results.json."""
+    current = {"module": git_blob(FROZEN_CODE[0]), "cli": git_blob(FROZEN_CODE[1])}
+    commits = {p: list(file_commit(p)) for p in FROZEN_CODE}
+    record = {
+        "pinned_digest": accmod.constants_digest(),
+        "lock_blobs": None,
+        "current_blobs": current,
+        "commits": commits,
+        "pin_commit_time": commits[FROZEN_CODE[0]][1],
+        "lock_started": None,
+    }
+    if mode != "benchmark":
+        return record
+    try:
+        record["pinned_digest"] = accmod.assert_pinned()
+    except accmod.AcceptanceError as e:
+        raise Refused(str(e)) from e
+    for p in FROZEN_CODE:
+        if not is_committed_clean(p):
+            raise Refused(f"{p} is not committed and clean")
+    entry = ((_load(LOCK_PATH) or {}).get("arms") or {}).get("tuned-crops")
+    if not entry:
+        raise Refused(f"{LOCK_PATH} has no tuned-crops entry; predictions were not generated by the lock-protected command")
+    lock_blobs = {"module": entry.get("acceptance_module_blob"), "cli": entry.get("acceptance_cli_blob")}
+    record["lock_blobs"], record["lock_started"] = lock_blobs, entry.get("started")
+    for key, path in (("module", FROZEN_CODE[0]), ("cli", FROZEN_CODE[1])):
+        if lock_blobs[key] != current[key]:
+            raise Refused(f"{path} differs from the version that generated the predictions (blob {current[key]} != lock {lock_blobs[key]})")
+    pin_time, started = record["pin_commit_time"], entry.get("started")
+    if not pin_time or not started or _utc(started) < _utc(pin_time):
+        raise Refused(f"generation started ({started}) before the acceptance.py pin commit ({pin_time})")
+    return record
+
+
+def _ids_and_papers(path: Path) -> list[tuple[str, str]]:
+    return [(r["id"], r["paper_id"]) for r in read_jsonl(path)]
+
+
+def check_inputs(a: argparse.Namespace) -> dict:
+    """Refuse (Refused) unless inputs and code are fit to score; returns the comparability and code-freeze records."""
+    bench = a.mode == "benchmark"
+    scored, preds, stats = score_inputs(a), pred_files(a), stats_files(a)
+    manifests = {arm: manifest_of(p) for arm, p in preds.items()}
+    needed = [*scored.values(), *manifests.values(), *stats.values(), a.registry]
+    missing = [str(p) for p in needed if not Path(p).is_file()]
+    if missing:
+        raise Refused(f"missing input files: {', '.join(missing)}")
+    record: dict = {"code_freeze": _code_freeze_checks(a.mode)}
+
+    entry = _registry_entry(a.registry, a.tag)
+    if entry is None or not entry.get("ollama_digest"):
+        raise Refused(f"{a.registry} has no digest for {a.tag}")
+    loaded = {arm: _load(p) for arm, p in manifests.items()}
+    comparability = {}
+    for kind in ("crops", "pages"):
+        found = accmod.comparability_problems(loaded[f"{kind}_stock"], loaded[f"{kind}_tuned"], expected_tuned_digest=entry["ollama_digest"])
+        comparability[kind] = {"problems": found, "comparable": not found, "tuned_digest": entry["ollama_digest"]}
+        if found:
+            raise Refused(f"{kind} arms are not comparable: {'; '.join(found)}")
+    record["comparability"] = comparability
+    record["manifests"] = loaded
+    record["stats"] = {arm: _load(p) for arm, p in stats.items()}
+
+    env_check = _load(a.env_check) if a.env_check else None
+    record["env_check"] = env_check
+    if not bench:
+        return record
+    if env_check is None:
+        raise Refused(f"env check not found: {a.env_check}; run verify-env first")
+    if env_check.get("pass") is not True:
+        rerun = {"crops_stock": arm_spec("stock-crops")["out"], "pages_stock": arm_spec("stock-pages")["out"]}
+        rerun_rows = {"pages_stock": arm_spec("stock-pages")["rows"]}
+        rerun_stats = {"pages_stock": arm_spec("stock-pages")["stats"]}
+        ok = (
+            Path(a.crops_stock) == rerun["crops_stock"]
+            and Path(a.pages_stock_preds) == rerun["pages_stock"]
+            and Path(a.pages_stock_rows) == rerun_rows["pages_stock"]
+            and Path(a.pages_stock_stats) == rerun_stats["pages_stock"]
+        )
+        if not ok:
+            raise Refused("the environment check failed, so the stock arguments must point at the stock_rerun files in the acceptance directory (D-07)")
+    try:
+        freeze.assert_benchmark_frozen(BENCH_ROOT)
+        freeze.assert_pages_frozen(BENCH_ROOT)
+    except freeze.FreezeError as e:
+        raise Refused(f"freeze check failed: {e}") from e
+    pf = _load(PAGES_FREEZE_PATH) or {}
+    for arm, st in record["stats"].items():
+        if st.get("page_match_version") != pf.get("page_match_version") or st.get("threshold") != pf.get("match_threshold"):
+            raise Refused(f"{arm} match stats (version {st.get('page_match_version')}, threshold {st.get('threshold')}) differ from the freeze")
+    if pf.get("match_threshold") != 0.5 or pf.get("page_match_version") != PAGE_MATCH_VERSION:
+        raise Refused(f"{PAGES_FREEZE_PATH} does not pin match threshold 0.5 and page match version {PAGE_MATCH_VERSION}")
+    want = {"crops_stock": EXPECTED["crops"], "crops_tuned": EXPECTED["crops"], "pages_stock": EXPECTED["page_rows"], "pages_tuned": EXPECTED["page_rows"]}
+    for arm, path in scored.items():
+        n = _count_lines(path)
+        if n != want[arm]:
+            raise Refused(f"{arm}: {n} rows in {path}, expected {want[arm]}")
+    for arm, path in scored.items():
+        outside = sorted({pid for _i, pid in _ids_and_papers(path) if not splits.is_benchmark(pid)})
+        if outside:
+            raise Refused(f"{arm}: papers outside the benchmark split: {', '.join(outside[:10])}")
+    return record
+
+
+def _resolve_ref(value: str | None, default: Path | None, mode: str) -> Path | None:
+    """`none` turns a reference off; unset means the default in benchmark mode and off in dev mode."""
+    if value == "none":
+        return None
+    if value is None:
+        return default if mode == "benchmark" else None
+    return Path(value)
+
+
+def ref_drift(records: dict[str, dict], ref_dir: Path) -> list[str]:
+    """Ids whose render_identical differs from the reference score although ground truth and prediction text are equal."""
+    ref = {r["id"]: r for r in read_jsonl(Path(ref_dir) / "records.jsonl")}
+    bad = []
+    for i, r in sorted(records.items()):
+        o = ref.get(i)
+        if o is None or o.get("gt_latex") != r.get("gt_latex") or o.get("pred_latex") != r.get("pred_latex"):
+            continue
+        if o.get("render_identical") != r.get("render_identical"):
+            bad.append(i)
+    return bad
+
+
+def score_arms(a: argparse.Namespace) -> tuple[dict, dict, dict]:
+    """Rescore the four arms with the frozen scorer; (results by arm, records by arm and id, seconds by arm)."""
+    refs = {
+        "crops_stock": _resolve_ref(a.ref_score_crops_stock, BASELINE_DIR / "score", a.mode),
+        "pages_stock": _resolve_ref(a.ref_score_pages_stock, BASELINE_DIR / "pages_score", a.mode),
+        "crops_tuned": _resolve_ref(a.ref_score_crops_tuned, None, a.mode),
+        "pages_tuned": _resolve_ref(a.ref_score_pages_tuned, None, a.mode),
+    }
+    results, records, timings = {}, {}, {}
+    for arm, path in score_inputs(a).items():
+        t0 = time.monotonic()
+        out = Path(a.scores_dir) / arm
+        rp = score_file(path, out, render=True, B=10000, seed=0, cache=paths.cache_dir())
+        results[arm] = json.loads(Path(rp).read_text(encoding="utf-8"))
+        records[arm] = {r["id"]: r for r in read_jsonl(out / "records.jsonl")}
+        timings[f"score_{arm}"] = round(time.monotonic() - t0, 3)
+        if refs[arm] is not None:
+            drift = ref_drift(records[arm], refs[arm])
+            if drift:
+                raise RenderDrift(f"{arm}: render_identical differs from {refs[arm]} for {len(drift)} id(s): {', '.join(drift[:20])}")
+    return results, records, timings
+
+
+class RenderDrift(Exception):
+    """A rescored arm no longer matches its reference score; the render environment changed."""
+
+
+def cmd_score(a: argparse.Namespace) -> int:
+    try:
+        record = check_inputs(a)
+    except Refused as e:
+        print(f"REFUSED: {e}", file=sys.stderr)
+        return 2
+    try:
+        results, records, timings = score_arms(a)
+    except (RenderInfrastructureError, GuardError, RenderDrift) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 3
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+    for kind in ("crops", "pages"):
+        found = accmod.results_problems(results[f"{kind}_stock"], results[f"{kind}_tuned"])
+        if found:
+            print(f"REFUSED: {kind} scored runs are not comparable: {'; '.join(found)}", file=sys.stderr)
+            return 2
+    del record, records, timings
+    return 0
+
+
 # ------------------------------------------------------------------------------------------------ main
 
 
@@ -541,6 +766,26 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--resume", action="store_true")
     p.add_argument("--host", default=DEFAULT_HOST)
     p.set_defaults(func=cmd_generate)
+
+    p = sub.add_parser("score", help="rescore all arms with the frozen scorer and write results.json and flips.jsonl (D-18)")
+    p.add_argument("--mode", required=True, choices=("benchmark", "dev"))
+    p.add_argument("--crops-stock", type=Path, default=BASELINE_DIR / "stock_q8.pred.jsonl")
+    p.add_argument("--crops-tuned", type=Path, default=ACC_DIR / "tuned_q8.pred.jsonl")
+    p.add_argument("--pages-stock-preds", type=Path, default=BASELINE_DIR / "stock_q8_pages.pred.jsonl")
+    p.add_argument("--pages-tuned-preds", type=Path, default=ACC_DIR / "tuned_q8_pages.pred.jsonl")
+    p.add_argument("--pages-stock-rows", type=Path, default=BASELINE_DIR / "pages_rows.jsonl")
+    p.add_argument("--pages-tuned-rows", type=Path, default=ACC_DIR / "tuned_pages_rows.jsonl")
+    p.add_argument("--pages-stock-stats", type=Path, default=BASELINE_DIR / "pages_match_stats.json")
+    p.add_argument("--pages-tuned-stats", type=Path, default=ACC_DIR / "tuned_pages_match_stats.json")
+    for name in ("crops-stock", "pages-stock", "crops-tuned", "pages-tuned"):
+        p.add_argument(f"--ref-score-{name}", default=None, help="reference score dir; `none` turns it off (stock defaults apply in benchmark mode)")
+    p.add_argument("--scores-dir", type=Path, default=ACC_DIR / "scores")
+    p.add_argument("--evidence-dir", type=Path, default=EVIDENCE_DIR)
+    p.add_argument("--report", type=Path, default=REPORT_PATH)
+    p.add_argument("--env-check", type=Path, default=EVIDENCE_DIR / "env_check.json")
+    p.add_argument("--registry", type=Path, default=REGISTRY_PATH)
+    p.add_argument("--tag", default=TUNED_TAG)
+    p.set_defaults(func=cmd_score)
     return ap
 
 

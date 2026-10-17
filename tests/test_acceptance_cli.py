@@ -1,6 +1,7 @@
 """Acceptance CLI run side: environment check, pre-check and lock-protected generation (fakes only)."""
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -463,7 +464,7 @@ def write_rows(path, rows):
 
 
 def fake_score_file(pred_path, out_dir, *, render=True, B=10000, seed=0, cache=None):
-    rows = [json.loads(ln) for ln in open(pred_path) if ln.strip()]
+    rows = [json.loads(ln) for ln in Path(pred_path).read_text().splitlines() if ln.strip()]
     recs = []
     for r in rows:
         recs.append({
@@ -473,7 +474,7 @@ def fake_score_file(pred_path, out_dir, *, render=True, B=10000, seed=0, cache=N
         })
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "records.jsonl").write_text("".join(json.dumps(r) + "\n" for r in recs))
-    rate = lambda key: {"rate": sum(bool(r[key]) for r in recs) / len(recs), "den": len(recs)}  # noqa: E731
+    rate = lambda key: {"rate": sum(bool(r[key]) for r in recs) / len(recs), "den": len(recs)}
     res = {
         **VERSIONS, "render": {"image": "img"}, "per_class": {c: {"errors": sum(c in r["classes"] for r in recs), "denom": len(recs)} for c in GLYPH},
         "metrics": {"exact": rate("exact"), "render_identical": rate("render_identical"), "render_tolerant": rate("render_tolerant")},
@@ -721,7 +722,5 @@ def test_render_infrastructure_error_exits_3(sc, monkeypatch):
 
 
 def test_no_compare_runs_and_no_shell():
-    from pathlib import Path
-
     text = Path(acc.__file__).read_text()
     assert "compare_runs" not in text and "shell=True" not in text
