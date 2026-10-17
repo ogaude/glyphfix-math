@@ -227,7 +227,7 @@ def gen(env, tmp_path, monkeypatch):
     (acc.EVIDENCE_DIR / "precheck.json").write_text(json.dumps(good))
     (acc.EVIDENCE_DIR / "env_check.json").write_text(json.dumps({"pass": True}))
     calls = []
-    state = {"rc": 0, "digest": "tuneddig"}
+    state = {"rc": 0, "digest": None}
 
     def run_cmd(cmd):
         calls.append(cmd)
@@ -243,7 +243,7 @@ def gen(env, tmp_path, monkeypatch):
         n = 1 if key == "pred_text" else 2
         out.write_text("".join(json.dumps({"id": f"r{i}", key: "x"}) + "\n" for i in range(n)))
         out.with_name(out.stem + ".manifest.json").write_text(
-            json.dumps({"model_digest": state["digest"], "n_ok": n, "n_error": 0, "n_skipped_resume": 0})
+            json.dumps({"model_digest": state["digest"] or env.digests[cmd[cmd.index("--model") + 1]], "n_ok": n, "n_error": 0, "n_skipped_resume": 0})
         )
         return state["rc"]
 
@@ -307,11 +307,10 @@ def test_generate_writes_lock_then_runs(gen):
     assert cmd[:3] == [acc.sys.executable, "-m", "lightonocr_math.guard"] and "--vram-gb" in cmd and "--" in cmd
     assert cmd[cmd.index("--suite") + 1] == "benchmark" and cmd[cmd.index("--model") + 1] == acc.TUNED_TAG
     assert "--resume" not in cmd and "shell" not in cmd
-    assert (acc.ACC_DIR / "tuned_q8.run_env.json").is_file()
+    assert (acc.ACC_DIR / "tuned_q8.pred.run_env.json").is_file()
 
 
 def test_lock_is_written_before_subprocess(gen, monkeypatch):
-    calls, _ = gen
     seen = {}
     inner = acc.run_cmd
 
@@ -337,7 +336,7 @@ def test_resume_passes_through(gen, capsys):
     calls, state = gen
     state["rc"] = 1
     acc.main(["generate", "--arm", "tuned-crops"])
-    assert "--resume" in capsys.readouterr().out
+    assert "--resume" in capsys.readouterr().err
     state["rc"] = 0
     assert acc.main(["generate", "--arm", "tuned-crops", "--resume"]) == 0
     assert "--resume" in calls[-1]
@@ -414,7 +413,7 @@ def test_stock_arms_refused_while_env_check_passes(gen):
 
 
 def test_wrong_digest_in_manifest_leaves_incomplete(gen):
-    calls, state = gen
+    _, state = gen
     state["digest"] = "unexpected"
     assert acc.main(["generate", "--arm", "tuned-crops"]) == 1
     assert _lock()["arms"]["tuned-crops"]["completed"] is False
