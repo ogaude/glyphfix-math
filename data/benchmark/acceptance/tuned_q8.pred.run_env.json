@@ -1,0 +1,31 @@
+{
+  "after": {
+    "gpu": {
+      "holders": "rocm-smi pids:\n============================ ROCm System Management Interface ============================\n===================================== KFD Processes ======================================\nNo KFD PIDs currently running\n==========================================================================================\n================================== End of ROCm SMI Log ===================================\nollama ps:\nNAME    ID    SIZE    PROCESSOR    CONTEXT    RUNNER    UNTIL",
+      "mem_available_bytes": 25916035072,
+      "timestamp": "2026-10-17T09:37:17.039368+00:00",
+      "vram_free_bytes": 17027596288,
+      "vram_total_bytes": 17095983104,
+      "vram_used_bytes": 68386816
+    },
+    "mem_available_bytes": 25916035072,
+    "ps": []
+  },
+  "before": {
+    "gpu": {
+      "holders": "rocm-smi pids:\n============================ ROCm System Management Interface ============================\n===================================== KFD Processes ======================================\nNo KFD PIDs currently running\n==========================================================================================\n================================== End of ROCm SMI Log ===================================\nollama ps:\nNAME    ID    SIZE    PROCESSOR    CONTEXT    RUNNER    UNTIL",
+      "mem_available_bytes": 25369288704,
+      "timestamp": "2026-10-17T08:23:33.433320+00:00",
+      "vram_free_bytes": 17027596288,
+      "vram_total_bytes": 17095983104,
+      "vram_used_bytes": 68386816
+    },
+    "mem_available_bytes": 25369288704,
+    "ps": []
+  },
+  "exit_code": 0,
+  "server_env": {
+    "OLLAMA_HOST": "127.0.0.1:11434",
+    "OLLAMA_KEEP_ALIVE": "0"
+  }
+}
