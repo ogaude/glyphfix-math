@@ -18,6 +18,8 @@ list, "benchmark-rule" when only the hash rule says benchmark.
 Allowed paths, and why (candidates.jsonl is an exact match: candidates.jsonl.bak is scanned):
   data/splits/               the split artefacts legitimately hold benchmark ids
   data/candidates.jsonl      the candidate population the split was computed from
+  data/candidates_excluded_ids.txt  ids left out of that population (the hash rule maps some of them to benchmark,
+                             but they are in neither the frozen benchmark list nor any training file)
   data/candidates_cache/     raw metadata harvest for the same population
   .planning/                 prose documents
   data/benchmark/            benchmark-side corpus artifacts (catalog, records, pages, baseline); training code never reads it
@@ -47,7 +49,7 @@ from lightonocr_math.splits import FrozenSplit, frozen, is_benchmark
 SCAN_SUFFIXES = {".jsonl", ".json", ".csv", ".tsv", ".txt", ".parquet", ".arrow"}
 # Directory prefixes (startswith) and exact files (==): "data/candidates.jsonl.bak" must not inherit the exemption.
 ALLOW_PREFIXES = ("data/splits/", "data/candidates_cache/", ".planning/", "data/benchmark/")
-ALLOW_FILES = ("data/candidates.jsonl",)
+ALLOW_FILES = ("data/candidates.jsonl", "data/candidates_excluded_ids.txt")
 ID_KEYS = {"arxiv_id", "paper_id", "paper", "source_id", "arxiv"}
 MAX_JSON_BYTES = 200 * 1024 * 1024
 

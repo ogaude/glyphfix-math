@@ -1,9 +1,10 @@
 """Step 1 of the 1,000-paper corpus: candidate arXiv papers whose license allows redistribution.
 
 Harvests arXiv metadata over OAI-PMH (https://oaipmh.arxiv.org/oai, format `arXiv`, which carries the license),
-keeps only CC BY 4.0/3.0 and CC0 / public-domain papers, optionally drops papers already in a local
-data/external/arxiv_src if that directory is present (legacy data whose licenses were never checked; the directory
-was deleted on 2026-10-17), and writes data/candidates.jsonl. Nothing but metadata is downloaded.
+keeps only CC BY 4.0/3.0 and CC0 / public-domain papers, drops the ids listed in
+data/candidates_excluded_ids.txt (the 3 papers the frozen candidate population was built without) and, if a local
+data/external/arxiv_src exists, the papers in it (legacy data whose licenses were never checked; the directory was
+deleted on 2026-10-17), and writes data/candidates.jsonl. Nothing but metadata is downloaded.
 
 Sampling: one day per month over the last months, for each set in SETS. OAI datestamp = last modification,
 so a day mixes new and revised papers; that is fine, the license is the one of the latest version.
@@ -41,6 +42,8 @@ OK_LICENSES = {
 }
 NS = {"o": "http://www.openarchives.org/OAI/2.0/", "a": "http://arxiv.org/OAI/arXiv/"}
 CACHE = Path("data/candidates_cache")
+# ids the candidate population was frozen without (CC BY papers whose sources sat in the legacy data/external/arxiv_src)
+EXCLUDED_IDS_FILE = Path(__file__).resolve().parents[1] / "data" / "candidates_excluded_ids.txt"
 _last = [0.0]
 
 
@@ -167,9 +170,9 @@ def main(argv: list[str] | None = None) -> None:
     CACHE = Path(args.cache)
     CACHE.mkdir(parents=True, exist_ok=True)
     legacy = Path("data/external/arxiv_src")
-    known: set[str] = set()
+    known = {x.strip() for x in EXCLUDED_IDS_FILE.read_text().splitlines() if x.strip()}
     if legacy.is_dir():
-        known = {p.name.replace("_", "/", 1) if not p.name[0].isdigit() else p.name for p in legacy.iterdir()}
+        known |= {p.name.replace("_", "/", 1) if not p.name[0].isdigit() else p.name for p in legacy.iterdir()}
         known |= {p.name for p in legacy.iterdir()}
     days = sample_days(args.asof or dt.date.today(), args.months, args.day)
     seen: dict[str, dict] = {}

@@ -166,8 +166,8 @@ def test_sample_days_default_matches_real_cache():
 def test_cache_only_rebuild_reproduces_candidates(tmp_path, monkeypatch):
     cache = ROOT / "data" / "candidates_cache"
     committed = ROOT / "data" / "candidates.jsonl"
-    if not cache.exists() or not (ROOT / "data" / "external" / "arxiv_src").exists():
-        pytest.skip("cache or arxiv_src missing")
+    if not cache.exists():
+        pytest.skip("candidates cache missing")
     copy = tmp_path / "cache"
     shutil.copytree(cache, copy)
 
