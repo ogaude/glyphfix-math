@@ -425,3 +425,303 @@ def test_no_benchmark_data_touched(gen):
     acc.main(["generate", "--arm", "tuned-crops"])
     out = subprocess.run(["git", "status", "--porcelain", "data/benchmark"], capture_output=True, text=True, check=False).stdout
     assert out.strip() == ""
+
+
+# ------------------------------------------------------------------------------------------------ score
+
+PAPERS = [f"2601.0000{k}" for k in range(6)]
+GLYPH = ("prime_l", "dropped_prime", "greek_latin", "decoration", "i_1")
+VERSIONS = {
+    "scorer_version": "1.2.0", "scorer_fingerprint": "fp", "normalize_rules_version": "n1", "error_rules_version": "e1",
+    "preamble_sha256": "pre", "wrap_version": "w1", "split_rule_version": "s1", "split_digest": "sd", "render_dpi": 300,
+}
+MANIFEST = {
+    "suite": "benchmark", "options": {"temperature": 0}, "endpoint": "/api/chat", "think": False, "prompt": "", "prompt_sha256": "ps",
+    "template_sha256": "tpl", "pixel_policy": "pp", "ollama_version": "0.40.1", "records_sha256": "rs", "scorer_version": "1.2.0",
+    "scorer_fingerprint": "fp", "render_config": {"dpi": 300}, "split_rule": "s1", "gguf_blobs": {"projector": "pp", "text": "tt"},
+}
+
+
+def synth_rows(prefix, stock_ri, tuned_ri, *, tuned_exact=None, strip_ids=()):
+    """(stock rows, tuned rows) with scorer hints (_ri, _exact, _classes) read by the fake score_file."""
+    stock, tuned = [], []
+    for k, paper in enumerate(PAPERS):
+        for j in range(5):
+            rid = f"{prefix}{k}{j}"
+            gt = r"a\,b" if rid in strip_ids else f"x_{rid}"
+            base = {"id": rid, "paper_id": paper, "gt_latex": gt}
+            stock.append({**base, "pred_latex": f"s_{rid}", "_ri": stock_ri(k, j), "_exact": stock_ri(k, j), "_classes": [] if stock_ri(k, j) else ["prime_l"]})
+            te = tuned_ri(k, j) if tuned_exact is None else tuned_exact(k, j)
+            tuned.append({**base, "pred_latex": f"t_{rid}", "_ri": tuned_ri(k, j), "_exact": te, "_classes": [] if te else ["greek_latin"]})
+    return stock, tuned
+
+
+def write_rows(path, rows):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    return path
+
+
+def fake_score_file(pred_path, out_dir, *, render=True, B=10000, seed=0, cache=None):
+    rows = [json.loads(ln) for ln in open(pred_path) if ln.strip()]
+    recs = []
+    for r in rows:
+        recs.append({
+            "id": r["id"], "paper_id": r["paper_id"], "gt_latex": r["gt_latex"], "pred_latex": r["pred_latex"],
+            "exact": r["_exact"], "render_identical": r["_ri"], "render_tolerant": r.get("_rt", r["_ri"]),
+            "classes": r["_classes"], "present": list(GLYPH),
+        })
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "records.jsonl").write_text("".join(json.dumps(r) + "\n" for r in recs))
+    rate = lambda key: {"rate": sum(bool(r[key]) for r in recs) / len(recs), "den": len(recs)}  # noqa: E731
+    res = {
+        **VERSIONS, "render": {"image": "img"}, "per_class": {c: {"errors": sum(c in r["classes"] for r in recs), "denom": len(recs)} for c in GLYPH},
+        "metrics": {"exact": rate("exact"), "render_identical": rate("render_identical"), "render_tolerant": rate("render_tolerant")},
+    }
+    (out_dir / "results.json").write_text(json.dumps(res))
+    return out_dir / "results.json"
+
+
+class Score:
+    """Synthetic arms on disk plus the argument list of one score invocation."""
+
+    def __init__(self, tmp_path, monkeypatch, env):
+        self.tmp = tmp_path
+        self.env = env
+        self.calls = []
+        self.d = tmp_path / "in"
+        monkeypatch.setattr(acc, "EXPECTED", {"crops": 30, "pages": 6, "page_rows": 30})
+
+        def score_file(pred, out, **kw):
+            self.calls.append(str(out))
+            return fake_score_file(pred, out, **kw)
+
+        monkeypatch.setattr(acc, "score_file", score_file)
+        monkeypatch.setattr(acc.freeze, "assert_benchmark_frozen", lambda root: {})
+        monkeypatch.setattr(acc.freeze, "assert_pages_frozen", lambda root: {})
+        monkeypatch.setattr(acc.splits, "is_benchmark", lambda pid: True)
+        monkeypatch.setattr(acc.paths, "cache_dir", lambda: tmp_path / "cache")
+        pf = tmp_path / "PAGES_FREEZE.json"
+        pf.write_text(json.dumps({"match_threshold": 0.5, "page_match_version": "2"}))
+        monkeypatch.setattr(acc, "PAGES_FREEZE_PATH", pf)
+        self.build(lambda k, j: j == 0, lambda k, j: j < 4)
+
+    def build(self, stock_ri, tuned_ri, **kw):
+        d = self.d
+        cs, ct = synth_rows("c", stock_ri, tuned_ri, **kw)
+        ps, pt = synth_rows("p", stock_ri, tuned_ri)
+        self.files = {
+            "crops_stock": write_rows(d / "stock.pred.jsonl", cs), "crops_tuned": write_rows(d / "tuned.pred.jsonl", ct),
+            "pages_stock_rows": write_rows(d / "stock_pages_rows.jsonl", ps), "pages_tuned_rows": write_rows(d / "tuned_pages_rows.jsonl", pt),
+            "pages_stock_preds": write_rows(d / "stock_pages.pred.jsonl", [{"id": "pg"}]),
+            "pages_tuned_preds": write_rows(d / "tuned_pages.pred.jsonl", [{"id": "pg"}]),
+        }
+        self.manifests = {"stock": dict(MANIFEST, model_digest="stockdig"), "tuned": dict(MANIFEST, model_digest="tuneddig")}
+        for arm in ("stock", "tuned"):
+            for suffix, key in (("", "crops"), ("_pages", "pages")):
+                p = self.files[f"crops_{arm}" if key == "crops" else f"pages_{arm}_preds"]
+                m = dict(self.manifests[arm], n_error=0)
+                p.with_name(p.name.replace(".jsonl", ".manifest.json")).write_text(json.dumps(m))
+        for arm in ("stock", "tuned"):
+            (d / f"{arm}_stats.json").write_text(json.dumps({"page_match_version": "2", "threshold": 0.5, "match_rate": 0.95, "n_gt": 30, "n_matched": 29}))
+        (d / "env_check.json").write_text(json.dumps({"pass": True}))
+        (self.tmp / "evidence").mkdir(exist_ok=True)
+        (self.tmp / "acc").mkdir(exist_ok=True)
+        self.lock = {"arms": {"tuned-crops": {
+            "started": "2026-10-17T12:00:00Z", "acceptance_module_blob": "blob-mod", "acceptance_cli_blob": "blob-cli", "completed": True}}}
+        self.write_lock()
+
+    def write_lock(self):
+        acc.LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
+        acc.LOCK_PATH.write_text(json.dumps(self.lock))
+
+    def args(self, mode="benchmark", **over):
+        f = self.files
+        opts = {
+            "--crops-stock": f["crops_stock"], "--crops-tuned": f["crops_tuned"],
+            "--pages-stock-preds": f["pages_stock_preds"], "--pages-tuned-preds": f["pages_tuned_preds"],
+            "--pages-stock-rows": f["pages_stock_rows"], "--pages-tuned-rows": f["pages_tuned_rows"],
+            "--pages-stock-stats": self.d / "stock_stats.json", "--pages-tuned-stats": self.d / "tuned_stats.json",
+            "--ref-score-crops-stock": "none", "--ref-score-pages-stock": "none",
+            "--scores-dir": self.tmp / "scores", "--evidence-dir": self.tmp / "evidence", "--report": self.tmp / "report.md",
+            "--env-check": self.d / "env_check.json", "--registry": self.tmp / "REGISTRY.json",
+        }
+        opts.update({k if k.startswith("--") else "--" + k.replace("_", "-"): v for k, v in over.items()})
+        out = ["score", "--mode", mode]
+        for k, v in opts.items():
+            out += [k, str(v)]
+        return out
+
+    def run(self, mode="benchmark", **over):
+        return acc.main(self.args(mode, **over))
+
+
+@pytest.fixture
+def sc(env, tmp_path, monkeypatch):
+    return Score(tmp_path, monkeypatch, env)
+
+
+def test_score_help_lists_options(capsys):
+    with pytest.raises(SystemExit):
+        acc.main(["score", "--help"])
+    out = capsys.readouterr().out
+    for opt in ("--mode", "--scores-dir", "--evidence-dir", "--report", "--ref-score-crops-stock", "--ref-score-pages-tuned", "--env-check"):
+        assert opt in out
+
+
+def test_score_benchmark_scores_four_arms(sc):
+    assert sc.run() == 0
+    assert sorted(p.rsplit("/", 1)[1] for p in sc.calls) == ["crops_stock", "crops_tuned", "pages_stock", "pages_tuned"]
+    assert (sc.tmp / "scores" / "crops_tuned" / "results.json").is_file()
+
+
+def test_score_pages_arms_use_rows_files(sc, monkeypatch):
+    seen = []
+    monkeypatch.setattr(acc, "score_file", lambda pred, out, **kw: (seen.append((out.name, pred.name)), fake_score_file(pred, out, **kw))[1])
+    assert sc.run() == 0
+    assert dict(seen)["pages_stock"] == "stock_pages_rows.jsonl" and dict(seen)["pages_tuned"] == "tuned_pages_rows.jsonl"
+
+
+def test_refused_with_pin_none(sc, monkeypatch):
+    monkeypatch.setattr(accmod, "ACCEPTANCE_SHA256", None)
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_refused_on_dirty_cli(sc, monkeypatch):
+    monkeypatch.setattr(acc, "is_committed_clean", lambda p: p != "scripts/acceptance.py")
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_refused_on_cli_blob_differs_from_lock(sc, monkeypatch):
+    sc.lock["arms"]["tuned-crops"]["acceptance_cli_blob"] = "other"
+    sc.write_lock()
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_refused_on_module_blob_differs_from_lock(sc):
+    sc.lock["arms"]["tuned-crops"]["acceptance_module_blob"] = "other"
+    sc.write_lock()
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_refused_when_lock_started_before_pin_commit(sc):
+    sc.lock["arms"]["tuned-crops"]["started"] = "2026-10-16T23:59:59Z"
+    sc.write_lock()
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_refused_without_lock_entry(sc):
+    sc.lock = {"arms": {}}
+    sc.write_lock()
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_refused_on_non_benchmark_paper(sc, monkeypatch):
+    monkeypatch.setattr(acc.splits, "is_benchmark", lambda pid: pid != PAPERS[2])
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_refused_when_freeze_check_fails(sc, monkeypatch):
+    def bad(root):
+        raise acc.freeze.FreezeError("changed")
+
+    monkeypatch.setattr(acc.freeze, "assert_pages_frozen", bad)
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_refused_on_wrong_match_version(sc):
+    (sc.d / "tuned_stats.json").write_text(json.dumps({"page_match_version": "1", "threshold": 0.5}))
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_refused_on_comparability_problem(sc):
+    m = dict(MANIFEST, model_digest="tuneddig", prompt="other")
+    p = sc.files["crops_tuned"]
+    p.with_name("tuned.pred.manifest.json").write_text(json.dumps(m))
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_refused_on_wrong_tuned_digest(sc):
+    m = dict(MANIFEST, model_digest="unregistered")
+    sc.files["crops_tuned"].with_name("tuned.pred.manifest.json").write_text(json.dumps(m))
+    sc.files["pages_tuned_preds"].with_name("tuned_pages.pred.manifest.json").write_text(json.dumps(m))
+    assert sc.run() == 2
+
+
+def test_refused_on_wrong_row_counts(sc, monkeypatch):
+    monkeypatch.setattr(acc, "EXPECTED", {"crops": 31, "pages": 6, "page_rows": 30})
+    assert sc.run() == 2 and sc.calls == []
+    monkeypatch.setattr(acc, "EXPECTED", {"crops": 30, "pages": 6, "page_rows": 29})
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_refused_on_results_problem(sc, monkeypatch):
+    def drift(pred, out, **kw):
+        path = fake_score_file(pred, out, **kw)
+        if out.name == "crops_tuned":
+            res = json.loads(path.read_text())
+            res["scorer_version"] = "9"
+            path.write_text(json.dumps(res))
+        return path
+
+    monkeypatch.setattr(acc, "score_file", drift)
+    assert sc.run() == 2
+
+
+def test_benchmark_needs_env_check_and_stock_rerun_paths(sc):
+    (sc.d / "env_check.json").write_text(json.dumps({"pass": False}))
+    assert sc.run() == 2 and sc.calls == []
+    (sc.d / "env_check.json").unlink()
+    assert sc.run() == 2 and sc.calls == []
+
+
+def test_dev_mode_skips_pin_lock_freeze_and_paper_checks(sc, monkeypatch):
+    monkeypatch.setattr(accmod, "ACCEPTANCE_SHA256", None)
+    monkeypatch.setattr(acc, "is_committed_clean", lambda p: False)
+    monkeypatch.setattr(acc.splits, "is_benchmark", lambda pid: False)
+    sc.lock = {"arms": {}}
+    sc.write_lock()
+    (sc.d / "env_check.json").unlink()
+    monkeypatch.setattr(acc, "EXPECTED", {"crops": 1, "pages": 1, "page_rows": 1})
+    assert sc.run("dev") == 0 and len(sc.calls) == 4
+
+
+def test_dev_mode_still_checks_comparability(sc):
+    m = dict(MANIFEST, model_digest="unregistered")
+    sc.files["crops_tuned"].with_name("tuned.pred.manifest.json").write_text(json.dumps(m))
+    assert sc.run("dev") == 2
+
+
+def test_ref_drift_exits_3_with_ids(sc, capsys):
+    ref = sc.tmp / "ref"
+    rows = [json.loads(ln) for ln in sc.files["crops_stock"].read_text().splitlines()]
+    recs = [{"id": r["id"], "gt_latex": r["gt_latex"], "pred_latex": r["pred_latex"], "render_identical": r["_ri"]} for r in rows]
+    recs[3]["render_identical"] = not recs[3]["render_identical"]
+    write_rows(ref / "records.jsonl", recs)
+    assert sc.run(**{"ref-score-crops-stock": ref}) == 3
+    assert recs[3]["id"] in capsys.readouterr().err
+
+
+def test_ref_equal_passes_and_ignores_changed_predictions(sc):
+    ref = sc.tmp / "ref"
+    rows = [json.loads(ln) for ln in sc.files["crops_stock"].read_text().splitlines()]
+    recs = [{"id": r["id"], "gt_latex": r["gt_latex"], "pred_latex": r["pred_latex"], "render_identical": r["_ri"]} for r in rows]
+    recs[3]["pred_latex"] = "different prediction text"
+    recs[3]["render_identical"] = not recs[3]["render_identical"]
+    write_rows(ref / "records.jsonl", recs)
+    assert sc.run(**{"ref-score-crops-stock": ref}) == 0
+
+
+def test_render_infrastructure_error_exits_3(sc, monkeypatch):
+    def boom(pred, out, **kw):
+        raise acc.RenderInfrastructureError("docker down")
+
+    monkeypatch.setattr(acc, "score_file", boom)
+    assert sc.run() == 3
+
+
+def test_no_compare_runs_and_no_shell():
+    from pathlib import Path
+
+    text = Path(acc.__file__).read_text()
+    assert "compare_runs" not in text and "shell=True" not in text
