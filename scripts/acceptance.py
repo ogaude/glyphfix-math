@@ -113,13 +113,20 @@ def run_cmd(cmd: list[str]) -> int:
     return subprocess.run(cmd, check=False).returncode
 
 
+def _is_ollama_serve(cmdline: bytes) -> bool:
+    """True for the `ollama serve` process itself, not a shell whose command line merely mentions it."""
+    args = [a.decode("utf-8", "replace") for a in cmdline.split(b"\0") if a]
+    return len(args) >= 2 and Path(args[0]).name == "ollama" and args[1] == "serve"
+
+
 def read_server_env() -> dict | None:
     """OLLAMA_/HIP_/ROCR_/HSA_/GGML_/CUDA_/GPU_ variables of the running `ollama serve` process, None if unreadable."""
     try:
         pids = subprocess.run(["pgrep", "-f", "ollama serve"], capture_output=True, text=True, check=False).stdout.split()
-        if not pids:
+        serve = [p for p in pids if _is_ollama_serve(_read_proc(p, "cmdline"))]
+        if not serve:
             return None
-        raw = Path(f"/proc/{pids[0]}/environ").read_bytes()
+        raw = _read_proc(serve[0], "environ")
     except OSError:
         return None
     env = {}
@@ -128,6 +135,15 @@ def read_server_env() -> dict | None:
         if sep and key.startswith(ENV_PREFIXES):
             env[key] = val
     return env
+
+
+def _read_proc(pid: str, name: str) -> bytes:
+    try:
+        return Path(f"/proc/{pid}/{name}").read_bytes()
+    except OSError:
+        if name == "environ":
+            raise
+        return b""
 
 
 def env_sha(env: dict | None) -> str | None:

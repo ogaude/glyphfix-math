@@ -978,3 +978,10 @@ def test_help_lists_all_subcommands(capsys):
     out = capsys.readouterr().out
     for name in ("verify-env", "precheck", "generate", "score", "report", "compare-results", "register-verdict"):
         assert name in out
+
+
+def test_is_ollama_serve_ignores_shell_mentioning_it():
+    assert acc._is_ollama_serve(b"ollama\0serve\0")
+    assert acc._is_ollama_serve(b"/usr/bin/ollama\0serve\0")
+    assert not acc._is_ollama_serve(b"/usr/bin/zsh\0-c\0env OLLAMA_HOST=127.0.0.1 ollama serve\0")
+    assert not acc._is_ollama_serve(b"")
