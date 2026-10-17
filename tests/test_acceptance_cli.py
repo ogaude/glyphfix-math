@@ -724,3 +724,116 @@ def test_render_infrastructure_error_exits_3(sc, monkeypatch):
 def test_no_compare_runs_and_no_shell():
     text = Path(acc.__file__).read_text()
     assert "compare_runs" not in text and "shell=True" not in text
+
+
+# ------------------------------------------------------------------------------------- verdict assembly
+
+
+class Pair:
+    def __init__(self, identical):
+        self.identical = identical
+        self.tolerant = identical
+        self.gt_status = self.pred_status = "rendered"
+
+
+@pytest.fixture
+def rend(monkeypatch):
+    calls = []
+
+    def fake(gt, pred, **kw):
+        calls.append((list(gt), list(pred)))
+        return [Pair(True) for _ in gt]
+
+    monkeypatch.setattr(acc.render, "render_equivalence", fake)
+    return calls
+
+
+def _results(sc):
+    return json.loads((sc.tmp / "evidence" / "results.json").read_text())
+
+
+def test_score_writes_results_with_every_key(sc, rend):
+    reg = json.loads((sc.tmp / "REGISTRY.json").read_text())
+    reg["entries"][0]["scores"] = {"dev_full_ollama": {"stock": 0.39, "candidate": 0.65}}
+    (sc.tmp / "REGISTRY.json").write_text(json.dumps(reg))
+    assert sc.run() == 0
+    res = _results(sc)
+    assert {
+        "mode", "acceptance", "acceptance_sha256", "code_freeze", "git_commit", "inputs", "comparability", "env_check", "n_error", "headline",
+        "regression_listing", "secondary", "spacing", "per_class", "transfer", "page_match", "dev_reference", "timings", "verdict", "statements",
+    } <= res.keys()
+    assert res["mode"] == "benchmark" and res["acceptance_sha256"] == accmod.constants_digest() and res["git_commit"] == "headcommit"
+    assert set(res["code_freeze"]) == {"pinned_digest", "lock_blobs", "current_blobs", "commits", "pin_commit_time", "lock_started"}
+    assert res["code_freeze"]["lock_blobs"] == {"module": "blob-mod", "cli": "blob-cli"}
+    assert res["headline"]["r2w_ids"] == [] and len(res["headline"]["w2r_ids"]) == 18
+    assert res["verdict"] == "pass" and res["headline"]["pass"] is True
+    assert len(res["per_class"]) == 6
+    assert set(res["per_class"][0]) >= {"class", "stock_errors", "tuned_errors", "denom", "stock", "tuned", "paired", "claim"}
+    assert set(res["inputs"]) >= {"crops_stock_preds", "crops_stock_manifest", "pages_tuned_rows", "pages_tuned_stats"}
+    assert all(len(v["sha256"]) == 64 and v["path"] for v in res["inputs"].values())
+    assert set(res["secondary"]["crops"]["tuned"]) == {"exact", "render_tolerant", "glyph_error_mean"}
+    assert set(res["spacing"]) == {"crops", "pages"}
+    assert res["page_match"]["stock"]["rate"] == 0.95 and set(res["n_error"]) == set(acc.SCORE_ARMS)
+    assert res["dev_reference"] == {"stock": 0.39, "candidate": 0.65}
+    assert res["transfer"]["holds"] is True
+    assert res["statements"]["secondary"] == "secondary metrics cannot change the verdict"
+    assert set(res["timings"]) >= {"score_crops_stock", "assemble"}
+    assert res["comparability"]["crops"]["comparable"] is True
+
+
+def test_secondary_improvement_alone_cannot_rescue_headline(sc, rend):
+    # render-identical unchanged, normalized exact match much better for the tuned arm
+    sc.build(lambda k, j: j < 2, lambda k, j: j < 2, tuned_exact=lambda k, j: True)
+    assert sc.run() == 0
+    res = _results(sc)
+    assert res["verdict"] == "fail" and res["headline"]["pass"] is False
+    assert res["secondary"]["crops"]["tuned"]["exact"]["rate"] > res["secondary"]["crops"]["stock"]["exact"]["rate"]
+
+
+def test_regression_clause_fails_verdict(sc, rend):
+    sc.build(lambda k, j: j < 4, lambda k, j: j >= 1 and j < 4 or k == 5 and j == 4)
+    assert sc.run() == 0
+    res = _results(sc)
+    assert res["headline"]["regression"]["r2w"] > 0 and res["verdict"] == ("pass" if res["headline"]["pass"] else "fail")
+    assert res["verdict"] == "fail"
+
+
+def test_spacing_rerenders_only_changed_ids(sc, rend):
+    sc.build(lambda k, j: j == 0, lambda k, j: j < 4, strip_ids=("c00", "c11"))
+    assert sc.run() == 0
+    assert len(rend) == 2
+    (gt_s, pred_s), (gt_t, pred_t) = rend
+    assert gt_s == gt_t == ["a b", "a b"]
+    assert pred_s == ["s_c00", "s_c11"] and pred_t == ["t_c00", "t_c11"]
+    assert _results(sc)["spacing"]["crops"]["n_rerendered"] == 2
+
+
+def test_spacing_no_render_when_nothing_changes(sc, rend):
+    assert sc.run() == 0
+    assert rend == [] and _results(sc)["spacing"]["pages"]["n_rerendered"] == 0
+
+
+def test_flips_jsonl_rows(sc, rend):
+    sc.build(lambda k, j: j < 3, lambda k, j: j < 3 or j == 3 and k < 5 or k == 5 and j == 0 and False)
+    assert sc.run() == 0
+    res = _results(sc)
+    rows = [json.loads(ln) for ln in (sc.tmp / "evidence" / "flips.jsonl").read_text().splitlines()]
+    assert len(rows) == len(res["headline"]["r2w_ids"]) + len(res["headline"]["w2r_ids"]) > 0
+    assert {r["direction"] for r in rows} == {"wrong_to_right"}
+    assert set(rows[0]) == {"direction", "id", "paper_id", "classes", "control_glyph", "gt_latex", "stock_pred", "tuned_pred"}
+    assert rows[0]["classes"] == ["prime_l"] and rows[0]["control_glyph"] is True
+
+
+def test_flips_include_right_to_wrong_with_render_only_label(sc, rend):
+    sc.build(lambda k, j: j < 4, lambda k, j: j < 4 and not (k == 0 and j == 3), tuned_exact=lambda k, j: not (k == 0 and j == 3) or False)
+    assert sc.run() == 0
+    rows = [json.loads(ln) for ln in (sc.tmp / "evidence" / "flips.jsonl").read_text().splitlines()]
+    r2w = [r for r in rows if r["direction"] == "right_to_wrong"]
+    assert [r["id"] for r in r2w] == ["c03"] and r2w[0]["classes"] == ["greek_latin"]
+
+
+def test_results_json_written_once_before_report(sc, rend, monkeypatch):
+    assert sc.run() == 0
+    first = (sc.tmp / "evidence" / "results.json").read_text()
+    assert first == json.dumps(json.loads(first), sort_keys=True, indent=1, ensure_ascii=False) + "\n"
+    assert not (sc.tmp / "report.md").exists()
