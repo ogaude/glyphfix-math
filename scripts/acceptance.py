@@ -37,13 +37,14 @@ from datetime import datetime
 from pathlib import Path
 
 from lightonocr_math import acceptance as accmod
-from lightonocr_math import guard, paths, splits
+from lightonocr_math import guard, paths, render, splits
 from lightonocr_math.corpus import freeze
 from lightonocr_math.guard import GuardError
 from lightonocr_math.paths import repo_root
 from lightonocr_math.render import RenderInfrastructureError
 from lightonocr_math.score import score_file
 from scripts.baseline_infer import model_blobs
+from scripts.select_checkpoint import glyph_error_mean
 from scripts.spikes.common import gpu_state, read_jsonl, write_json
 from scripts.spikes.ollama_infer import DEFAULT_HOST, OllamaError, _get, _model_digest, _post
 from scripts.spikes.parity_report import modal_template_offset
@@ -733,8 +734,134 @@ def cmd_score(a: argparse.Namespace) -> int:
         if found:
             print(f"REFUSED: {kind} scored runs are not comparable: {'; '.join(found)}", file=sys.stderr)
             return 2
-    del record, records, timings
+    t0 = time.monotonic()
+    try:
+        out, flips = assemble(a, record, results, records, timings)
+    except RenderInfrastructureError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 3
+    timings["assemble"] = round(time.monotonic() - t0, 3)
+    timings["total"] = round(sum(timings.values()), 3)
+    write_results(a.evidence_dir, out, flips)
+    _print_summary(out)
     return 0
+
+
+def spacing_for(stock: dict[str, dict], tuned: dict[str, dict]) -> dict:
+    """Spacing-insensitive column: only ids that stripping changes are re-rendered, one batched call per arm."""
+    changed = accmod.spacing_changed_ids(stock, tuned)
+    rerendered: dict[str, dict] = {}
+    if changed:
+        gts = [accmod.spacing_strip(stock[i]["gt_latex"]) for i in changed]
+        for arm, rows in (("stock", stock), ("tuned", tuned)):
+            preds = [accmod.spacing_strip(rows[i].get("pred_latex") or "") for i in changed]
+            pairs = render.render_equivalence(gts, preds, cache=paths.cache_dir())
+            for i, pr in zip(changed, pairs, strict=True):
+                rerendered.setdefault(i, {})[arm] = pr.identical
+    return accmod.spacing_column(stock, tuned, rerendered)
+
+
+def _secondary(results: dict) -> dict:
+    return {
+        "exact": results["metrics"]["exact"],
+        "render_tolerant": results["metrics"].get("render_tolerant"),
+        "glyph_error_mean": glyph_error_mean(results["per_class"]),
+    }
+
+
+def _inputs(a: argparse.Namespace) -> dict:
+    files: dict[str, Path] = {}
+    for arm, p in pred_files(a).items():
+        files[f"{arm}_preds"] = p
+        files[f"{arm}_manifest"] = manifest_of(p)
+    for arm in ("pages_stock", "pages_tuned"):
+        files[f"{arm}_rows"] = score_inputs(a)[arm]
+        files[f"{arm}_stats"] = stats_files(a)[arm]
+    return {k: {"path": str(p), "sha256": _sha256(p)} for k, p in sorted(files.items())}
+
+
+def _flip_rows(listing: dict, headline: dict, stock: dict, tuned: dict) -> list[dict]:
+    """One row per right-to-wrong and wrong-to-right id; w2r rows carry the error classes the stock arm had."""
+    control = set(accmod.ACCEPTANCE["regression"]["control_glyph_classes"])
+    label = accmod.ACCEPTANCE["regression"]["empty_class_label"]
+    rows = [{"direction": "right_to_wrong", **{k: r[k] for k in ("id", "paper_id", "classes", "control_glyph", "gt_latex", "stock_pred", "tuned_pred")}} for r in listing["rows"]]
+    for i in headline["w2r_ids"]:
+        classes = list(stock[i].get("classes") or [])
+        rows.append(
+            {
+                "direction": "wrong_to_right",
+                "id": i,
+                "paper_id": stock[i].get("paper_id"),
+                "classes": classes or [label],
+                "control_glyph": bool(control & set(classes)),
+                "gt_latex": stock[i].get("gt_latex"),
+                "stock_pred": stock[i].get("pred_latex"),
+                "tuned_pred": tuned[i].get("pred_latex"),
+            }
+        )
+    return rows
+
+
+def assemble(a: argparse.Namespace, record: dict, results: dict, records: dict, timings: dict) -> tuple[dict, list[dict]]:
+    """The verdict and every number beside it, from the pure acceptance functions. Only the headline decides (D-03)."""
+    cs, ct, ps, pt = (records[k] for k in ("crops_stock", "crops_tuned", "pages_stock", "pages_tuned"))
+    headline = accmod.headline_verdict(cs, ct)
+    listing = accmod.regression_listing(cs, ct, headline["r2w_ids"])
+    transfer = accmod.transfer_verdict(ps, pt, headline_pass=headline["pass"])
+    entry = _registry_entry(a.registry, a.tag) or {}
+    verdict = "pass" if headline["pass"] else "fail"
+    manifests, stats = record["manifests"], record["stats"]
+    out = {
+        "mode": a.mode,
+        "acceptance": accmod.ACCEPTANCE,
+        "acceptance_sha256": accmod.constants_digest(),
+        "code_freeze": record["code_freeze"],
+        "git_commit": git_head(),
+        "tag": a.tag,
+        "inputs": _inputs(a),
+        "comparability": record["comparability"],
+        "env_check": record["env_check"],
+        "n_error": {arm: manifests[arm].get("n_error") for arm in SCORE_ARMS},
+        "n_error_scored": {arm: sum(1 for r in records[arm].values() if r.get("pred_error")) for arm in SCORE_ARMS},
+        "headline": headline,
+        "regression_listing": listing,
+        "secondary": {
+            kind: {arm: _secondary(results[f"{kind}_{arm}"]) for arm in ("stock", "tuned")} for kind in ("crops", "pages")
+        },
+        "spacing": {"crops": spacing_for(cs, ct), "pages": spacing_for(ps, pt)},
+        "per_class": accmod.per_class_table(cs, ct),
+        "transfer": transfer,
+        "page_match": {
+            arm: {k: stats[f"pages_{arm}"].get(k) for k in ("match_rate", "n_gt", "n_matched", "threshold", "page_match_version")}
+            | {"rate": stats[f"pages_{arm}"].get("match_rate")}
+            for arm in ("stock", "tuned")
+        },
+        "dev_reference": (entry.get("scores") or {}).get("dev_full_ollama"),
+        "timings": timings,
+        "verdict": verdict,
+        "statements": {
+            "verdict": "acceptance passed" if headline["pass"] else "acceptance not passed: " + "; ".join(headline["reasons"]),
+            "transfer": transfer["statement"],
+            "secondary": "secondary metrics cannot change the verdict",
+        },
+    }
+    return out, _flip_rows(listing, headline, cs, ct)
+
+
+def write_results(evidence_dir: Path, out: dict, flips: list[dict]) -> None:
+    """results.json (sorted keys) and flips.jsonl; written once, before any report is rendered."""
+    d = Path(evidence_dir)
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "flips.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n" for r in flips), encoding="utf-8")
+    (d / "results.json").write_text(json.dumps(out, sort_keys=True, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def _print_summary(out: dict) -> None:
+    h, t = out["headline"], out["transfer"]
+    print(f"verdict: {out['verdict']}  ({out['statements']['verdict']})")
+    print(f"headline: stock {h['stock_rate']:.4f} tuned {h['tuned_rate']:.4f} delta {h['delta']:+.4f} CI [{h['ci_low']:.4f}, {h['ci_high']:.4f}] n={h['n']}")
+    print(f"flips: right-to-wrong {len(h['r2w_ids'])}, wrong-to-right {len(h['w2r_ids'])}")
+    print(f"transfer: {t['statement']} (delta {t['delta']:+.4f}, CI low {t['ci_low']:.4f}, n={t['n']})")
 
 
 # ------------------------------------------------------------------------------------------------ main
