@@ -390,7 +390,7 @@ def test_spacing_changed_ids_and_column_reuse_frozen_values():
     stock = {
         "p0-a": _srow("p0-a", "p0", "x", "x", True),
         "p0-b": _srow("p0-b", "p0", "a\\,b", "ab", False),
-        "p1-a": _srow("p1-a", "p1", "y", "y\;", False),
+        "p1-a": _srow("p1-a", "p1", "y", "y\\;", False),
         "p1-b": _srow("p1-b", "p1", "z", "z", None),
     }
     tuned = {k: dict(v) for k, v in stock.items()}
@@ -398,7 +398,7 @@ def test_spacing_changed_ids_and_column_reuse_frozen_values():
     tuned["p1-b"]["render_identical"] = True
     assert a.spacing_changed_ids(stock, tuned) == ["p0-b", "p1-a"]
     rerendered = {"p0-b": {"stock": False, "tuned": True}, "p1-a": {"stock": True, "tuned": None}}
-    col = a.spacing_column(stock, tuned, rerendered, B=200)
+    col = a.spacing_column(stock, tuned, rerendered)
     assert col["decides"] is False
     assert col["n_rerendered"] == 1
     assert col["n_excluded"] == 2

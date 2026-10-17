@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 
 from lightonocr_math import stats
 from lightonocr_math.report import VERSION_KEYS
@@ -56,7 +57,7 @@ ACCEPTANCE = {
     },
     "spacing": {
         "commands": ["\\,", "\\;", "\\:", "\\!", "\\quad", "\\qquad"],
-        "pattern": "\\\\(?:qquad|quad|,|;|:|!)(?![A-Za-z])",
+        "pattern": "\\\\(?:(?:qquad|quad)(?![A-Za-z])|[,;:!])",
         "replacement": " ",
         "crops": "required",
         "pages": "computed",
@@ -262,3 +263,189 @@ def regression_listing(stock: dict[str, dict], tuned: dict[str, dict], r2w_ids, 
             }
         )
     return {"rows": rows, "by_class": by_class, "n_control_glyph": n_control}
+
+
+# -------------------------------------------------------------------------------------- page transfer
+
+
+def transfer_verdict(stock_rows: dict[str, dict], tuned_rows: dict[str, dict], *, headline_pass: bool, c: dict = ACCEPTANCE) -> dict:
+    """Page-level transfer: paired delta CI lower bound above the tolerance and a positive point estimate.
+
+    Unmatched equations arrive as rows whose render_identical is False; they stay in the pairing.
+    """
+    ids, ra, rb, excluded = paired_decided(stock_rows, tuned_rows)
+    h, t = c["headline"], c["transfer"]
+    papers = [str(stock_rows[i].get("paper_id", i)) for i in ids]
+    boot = stats.paired_bootstrap_delta(
+        papers,
+        [float(ra[i]) for i in ids],
+        [float(rb[i]) for i in ids],
+        [1.0] * len(ids),
+        B=h["bootstrap_B"],
+        seed=h["bootstrap_seed"],
+        ci=h["ci"],
+    )
+    flips = stats.flip_table(ra, rb)
+    ci_low, delta = boot["ci_low"], boot["delta"]
+    holds = bool(ci_low is not None and delta is not None and ci_low > t["pass_if_ci_low_gt"] + EPS and delta > t["pass_if_delta_gt"] + EPS)
+    if holds:
+        statement = "page-level transfer holds"
+    elif headline_pass:
+        statement = t["fail_statement"]
+    else:
+        statement = "page-level transfer not shown"
+    return {
+        "n": len(ids),
+        "n_papers": boot["n_papers"],
+        "stock_rate": boot["rate_a"],
+        "tuned_rate": boot["rate_b"],
+        "delta": delta,
+        "ci_low": ci_low,
+        "ci_high": boot["ci_high"],
+        "flip": {k: v for k, v in flips.items() if not k.endswith("_ids")},
+        "excluded": excluded,
+        "holds": holds,
+        "statement": statement,
+        "blocks_crop_verdict": t["blocks_crop_verdict"],
+    }
+
+
+# ------------------------------------------------------------------------------------------ per class
+
+
+def per_class_table(stock: dict[str, dict], tuned: dict[str, dict], c: dict = ACCEPTANCE) -> list[dict]:
+    """One row per error class over all common ids with one denominator shared by both arms.
+
+    A record is in a class denominator when the ground truth has the class present or either arm shows
+    the class as an error. Counts are string-tier scorer classes; the render-identical headline is separate.
+    The paired delta is tuned error rate minus stock error rate.
+    """
+    if set(stock) != set(tuned):
+        raise AcceptanceError("stock and tuned id sets differ")
+    ids = sorted(stock)
+    papers = [str(stock[i].get("paper_id", i)) for i in ids]
+    h, p = c["headline"], c["per_class"]
+    kw = {"B": h["bootstrap_B"], "seed": h["bootstrap_seed"], "ci": h["ci"]}
+    out = []
+    for cls in p["classes"]:
+        s_err = [1.0 if cls in (stock[i].get("classes") or ()) else 0.0 for i in ids]
+        t_err = [1.0 if cls in (tuned[i].get("classes") or ()) else 0.0 for i in ids]
+        den = [
+            1.0 if (cls in (stock[i].get("present") or ()) or cls in (tuned[i].get("present") or ()) or s_err[k] or t_err[k]) else 0.0
+            for k, i in enumerate(ids)
+        ]
+        stock_errors, tuned_errors = int(sum(s_err)), int(sum(t_err))
+        paired = stats.paired_bootstrap_delta(papers, s_err, t_err, den, **kw)
+        if stock_errors < p["min_stock_errors"]:
+            claim = p["few_events_statement"]
+        elif paired["ci_high"] is not None and paired["ci_high"] < 0:
+            claim = "fewer errors"
+        elif paired["ci_low"] is not None and paired["ci_low"] > 0:
+            claim = "more errors"
+        else:
+            claim = "no significant change"
+        out.append(
+            {
+                "class": cls,
+                "stock_errors": stock_errors,
+                "tuned_errors": tuned_errors,
+                "denom": int(sum(den)),
+                "stock": stats.cluster_bootstrap(papers, s_err, den, **kw),
+                "tuned": stats.cluster_bootstrap(papers, t_err, den, **kw),
+                "paired": paired,
+                "claim": claim,
+            }
+        )
+    return out
+
+
+# -------------------------------------------------------------------------------------------- spacing
+
+
+def spacing_strip(latex: str, c: dict = ACCEPTANCE) -> str:
+    """Replace the six spacing commands by one space; a control word followed by letters is left alone."""
+    return re.sub(c["spacing"]["pattern"], c["spacing"]["replacement"], latex)
+
+
+def spacing_changed_ids(*arms: dict[str, dict], c: dict = ACCEPTANCE) -> list[str]:
+    """Ids where stripping changes the ground truth or the prediction in any of the given arms."""
+    changed: set[str] = set()
+    for rows in arms:
+        for i, r in rows.items():
+            for key in ("gt_latex", "pred_latex"):
+                text = r.get(key) or ""
+                if spacing_strip(text, c) != text:
+                    changed.add(i)
+    return sorted(changed)
+
+
+def spacing_column(stock: dict[str, dict], tuned: dict[str, dict], rerendered: dict[str, dict], c: dict = ACCEPTANCE) -> dict:
+    """Spacing-insensitive render-identical rate; secondary, it never decides the verdict.
+
+    Unchanged ids reuse the frozen render_identical value (stripping changes nothing, so it is exact);
+    changed ids take the supplied re-rendered value. Ids undecided in either arm are excluded.
+    """
+    if set(stock) != set(tuned):
+        raise AcceptanceError("stock and tuned id sets differ")
+    changed = set(spacing_changed_ids(stock, tuned, c=c))
+    h = c["headline"]
+    ids, papers, sa, sb = [], [], [], []
+    n_rerendered = 0
+    for i in sorted(stock):
+        if i in changed:
+            x, y = (rerendered.get(i) or {}).get("stock"), (rerendered.get(i) or {}).get("tuned")
+        else:
+            x, y = stock[i].get("render_identical"), tuned[i].get("render_identical")
+        if x is None or y is None:
+            continue
+        n_rerendered += i in changed
+        ids.append(i)
+        papers.append(str(stock[i].get("paper_id", i)))
+        sa.append(float(bool(x)))
+        sb.append(float(bool(y)))
+    kw = {"B": h["bootstrap_B"], "seed": h["bootstrap_seed"], "ci": h["ci"]}
+    den = [1.0] * len(ids)
+    return {
+        "stock": stats.cluster_bootstrap(papers, sa, den, **kw),
+        "tuned": stats.cluster_bootstrap(papers, sb, den, **kw),
+        "paired": stats.paired_bootstrap_delta(papers, sa, sb, den, **kw),
+        "n_rerendered": n_rerendered,
+        "n_excluded": len(stock) - len(ids),
+        "decides": c["spacing"]["decides"],
+    }
+
+
+# ------------------------------------------------------------------------------------- sensitivity
+
+
+def sensitivity_summary(r2w_ids, w2r_ids, cpu_stock: dict, cpu_tuned: dict) -> dict:
+    """How many flips found on the GPU engine also hold on the CPU engine.
+
+    A right-to-wrong id holds when CPU stock is right and CPU tuned is wrong; a wrong-to-right id holds
+    when CPU stock is wrong and CPU tuned is right. Ids missing on the CPU are not run; a None on either
+    side is done but undecided.
+    """
+    summary: dict = {}
+    n_done = n_total = 0
+    for name, ids, held_pair in (("r2w", r2w_ids, (True, False)), ("w2r", w2r_ids, (False, True))):
+        row = {"total": len(ids), "done": 0, "held": 0, "reversed": 0, "both_right": 0, "both_wrong": 0, "undecided": 0}
+        for i in ids:
+            if i not in cpu_stock or i not in cpu_tuned:
+                continue
+            row["done"] += 1
+            x, y = cpu_stock[i], cpu_tuned[i]
+            if x is None or y is None:
+                row["undecided"] += 1
+            elif (x, y) == held_pair:
+                row["held"] += 1
+            elif x and y:
+                row["both_right"] += 1
+            elif not x and not y:
+                row["both_wrong"] += 1
+            else:
+                row["reversed"] += 1
+        summary[name] = row
+        n_done += row["done"]
+        n_total += row["total"]
+    summary.update(n_done=n_done, n_total=n_total, complete=n_done == n_total)
+    return summary
