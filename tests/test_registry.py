@@ -105,3 +105,65 @@ def test_append_entry_refuses_invalid(entry, tmp_path):
     with pytest.raises(ValueError, match="invalid registry entry"):
         r.append_entry(reg, entry)
     assert not reg.exists()
+
+
+def _scored():
+    return {
+        "status": "scored",
+        "verdict": "pass",
+        "transfer_holds": True,
+        "headline": {k: 0.5 for k in r.HEADLINE_KEYS},
+        "evidence": "e",
+        "results_sha256": "a" * 64,
+        "tuned_preds_sha256": {"crops": "b" * 64, "pages": "c" * 64},
+        "acceptance_sha256": "d" * 64,
+        "scored_at": "2026-10-20T00:00:00Z",
+    }
+
+
+def test_scored_block_validates(entry):
+    entry["benchmark"] = _scored()
+    assert r.validate(entry) == []
+
+
+@pytest.mark.parametrize("mutate", ["drop_key", "bad_verdict", "bad_headline", "bad_preds", "bad_status"])
+def test_invalid_scored_blocks_rejected(entry, mutate):
+    b = _scored()
+    if mutate == "drop_key":
+        del b["results_sha256"]
+    elif mutate == "bad_verdict":
+        b["verdict"] = "maybe"
+    elif mutate == "bad_headline":
+        del b["headline"]["ci_low"]
+    elif mutate == "bad_preds":
+        b["tuned_preds_sha256"] = {"crops": "x"}
+    else:
+        b["status"] = "done"
+    entry["benchmark"] = b
+    assert any(x.startswith("benchmark must be") for x in r.validate(entry))
+
+
+def test_update_benchmark_replaces_pending_once(entry, tmp_path):
+    reg = tmp_path / "REGISTRY.json"
+    r.append_entry(reg, entry)
+    r.update_benchmark(reg, entry["tag"], _scored())
+    got = r.load(reg)["entries"][0]
+    assert got["benchmark"]["verdict"] == "pass"
+    assert r.validate(got) == []
+    before = reg.read_bytes()
+    with pytest.raises(ValueError, match="benchmark already scored"):
+        r.update_benchmark(reg, entry["tag"], _scored())
+    assert reg.read_bytes() == before
+
+
+def test_update_benchmark_refusals_leave_file_unchanged(entry, tmp_path):
+    reg = tmp_path / "REGISTRY.json"
+    r.append_entry(reg, entry)
+    before = reg.read_bytes()
+    with pytest.raises(ValueError, match="not in registry"):
+        r.update_benchmark(reg, "nope:1", _scored())
+    bad = _scored()
+    bad["verdict"] = "maybe"
+    with pytest.raises(ValueError, match="invalid"):
+        r.update_benchmark(reg, entry["tag"], bad)
+    assert reg.read_bytes() == before
