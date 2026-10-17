@@ -259,3 +259,169 @@ def test_results_problems_version_keys_and_render_image():
     t["render"] = {"image": "img2"}
     text = "\n".join(a.results_problems(s, t))
     assert "split_digest" in text and "render image" in text
+
+
+# ----------------------------------------------------------------------------- page transfer
+
+
+def _stub_delta(monkeypatch, delta, ci_low):
+    def fake(papers, x, y, den, **kw):
+        return {
+            "delta": delta,
+            "ci_low": ci_low,
+            "ci_high": 0.2,
+            "rate_a": 0.5,
+            "rate_b": 0.5 + delta,
+            "den": float(len(x)),
+            "n_papers": len(set(papers)),
+        }
+
+    monkeypatch.setattr(a.stats, "paired_bootstrap_delta", fake)
+
+
+@pytest.mark.parametrize(
+    ("delta", "ci_low", "holds"),
+    [(0.05, -0.01, True), (0.0, -0.01, False), (0.02, -0.04, False), (0.02, -0.03, False), (0.02, -0.0299, True)],
+)
+def test_transfer_boundaries(monkeypatch, delta, ci_low, holds):
+    stock, tuned, _, _ = _arms(40, 2, 32)
+    _stub_delta(monkeypatch, delta, ci_low)
+    v = a.transfer_verdict(stock, tuned, headline_pass=True)
+    assert v["holds"] is holds
+    assert v["blocks_crop_verdict"] is False
+    if holds:
+        assert v["statement"] == "page-level transfer holds"
+    else:
+        assert v["statement"] == a.ACCEPTANCE["transfer"]["fail_statement"]
+
+
+def test_transfer_statement_when_headline_fails(monkeypatch):
+    stock, tuned, _, _ = _arms(40, 2, 32)
+    _stub_delta(monkeypatch, 0.0, -0.1)
+    v = a.transfer_verdict(stock, tuned, headline_pass=False)
+    assert v["statement"] == "page-level transfer not shown"
+
+
+def test_transfer_keeps_unmatched_equations_as_failures():
+    stock, tuned, _, _ = _arms(40, 0, 0)
+    for r in tuned.values():
+        r["render_identical"] = False
+        r["pred_latex"] = ""
+    v = a.transfer_verdict(stock, tuned, headline_pass=True)
+    assert v["n"] == 100
+    assert v["tuned_rate"] == 0.0 and v["holds"] is False
+
+
+# ----------------------------------------------------------------------------- per class
+
+
+def _crow(i, paper, classes=(), present=()):
+    return {"id": i, "paper_id": paper, "classes": list(classes), "present": list(present), "render_identical": not classes}
+
+
+def _class_arms(stock_errors: int, tuned_errors: int, cls="decoration", n=40):
+    stock, tuned = {}, {}
+    for k in range(n):
+        i, p = f"p{k % 10}-{k}", f"p{k % 10}"
+        stock[i] = _crow(i, p, [cls] if k < stock_errors else [], [cls] if k < n else [])
+        tuned[i] = _crow(i, p, [cls] if k < tuned_errors else [], [])
+    return stock, tuned
+
+
+def test_per_class_shared_denominator_includes_tuned_only_error():
+    stock = {"a-1": _crow("a-1", "a"), "b-1": _crow("b-1", "b"), "c-1": _crow("c-1", "c")}
+    tuned = {"a-1": _crow("a-1", "a", ["decoration"]), "b-1": _crow("b-1", "b"), "c-1": _crow("c-1", "c")}
+    rows = {r["class"]: r for r in a.per_class_table(stock, tuned)}
+    d = rows["decoration"]
+    assert d["denom"] == 1 and d["stock"]["den"] == 1.0 == d["tuned"]["den"] == d["paired"]["den"]
+    assert d["stock_errors"] == 0 and d["tuned_errors"] == 1
+    assert [r["class"] for r in a.per_class_table(stock, tuned)] == a.ACCEPTANCE["per_class"]["classes"]
+    assert set(d) == {"class", "stock_errors", "tuned_errors", "denom", "stock", "tuned", "paired", "claim"}
+
+
+def test_per_class_claim_boundaries():
+    stock, tuned = _class_arms(29, 0)
+    row = {r["class"]: r for r in a.per_class_table(stock, tuned)}["decoration"]
+    assert row["claim"] == "not enough events to claim"
+    stock, tuned = _class_arms(30, 0)
+    row = {r["class"]: r for r in a.per_class_table(stock, tuned)}["decoration"]
+    assert row["claim"] == "fewer errors"
+    stock, tuned = _class_arms(30, 30)
+    row = {r["class"]: r for r in a.per_class_table(stock, tuned)}["decoration"]
+    assert row["claim"] == "no significant change"
+
+
+def test_per_class_more_errors_claim():
+    stock, tuned = _class_arms(30, 0)
+    swapped = a.per_class_table(tuned, stock)
+    row = {r["class"]: r for r in swapped}["decoration"]
+    assert row["stock_errors"] == 0
+    assert row["claim"] == "not enough events to claim"
+    # enough stock errors in another direction: stock 30 errors, tuned 40 errors of 40
+    stock, tuned = _class_arms(30, 40)
+    row = {r["class"]: r for r in a.per_class_table(stock, tuned)}["decoration"]
+    assert row["claim"] == "more errors"
+
+
+def test_per_class_id_mismatch_raises():
+    stock, tuned = _class_arms(1, 1)
+    del tuned["p0-0"]
+    with pytest.raises(a.AcceptanceError):
+        a.per_class_table(stock, tuned)
+
+
+# ----------------------------------------------------------------------------- spacing
+
+
+def test_spacing_strip():
+    assert a.spacing_strip("\\alpha\\,x") == "\\alpha x"
+    assert a.spacing_strip("a\\quad b\\qquad c") == "a  b  c"
+    assert a.spacing_strip("\\quadx") == "\\quadx"
+    assert a.spacing_strip("a\\ b~c") == "a\\ b~c"
+    for cmd in a.ACCEPTANCE["spacing"]["commands"]:
+        assert cmd not in a.spacing_strip(f"x{cmd} y")
+
+
+def _srow(i, paper, gt, pred, ok):
+    return {"id": i, "paper_id": paper, "gt_latex": gt, "pred_latex": pred, "render_identical": ok}
+
+
+def test_spacing_changed_ids_and_column_reuse_frozen_values():
+    stock = {
+        "p0-a": _srow("p0-a", "p0", "x", "x", True),
+        "p0-b": _srow("p0-b", "p0", "a\\,b", "ab", False),
+        "p1-a": _srow("p1-a", "p1", "y", "y\;", False),
+        "p1-b": _srow("p1-b", "p1", "z", "z", None),
+    }
+    tuned = {k: dict(v) for k, v in stock.items()}
+    tuned["p0-b"]["pred_latex"] = "a b"
+    tuned["p1-b"]["render_identical"] = True
+    assert a.spacing_changed_ids(stock, tuned) == ["p0-b", "p1-a"]
+    rerendered = {"p0-b": {"stock": False, "tuned": True}, "p1-a": {"stock": True, "tuned": None}}
+    col = a.spacing_column(stock, tuned, rerendered, B=200)
+    assert col["decides"] is False
+    assert col["n_rerendered"] == 1
+    assert col["n_excluded"] == 2
+    assert col["stock"]["num"] == 1 and col["stock"]["den"] == 2
+    assert col["tuned"]["num"] == 2
+    assert col["paired"]["delta"] == pytest.approx(0.5)
+
+
+# ----------------------------------------------------------------------------- sensitivity
+
+
+def test_sensitivity_summary_directions():
+    r2w, w2r = ["a", "b", "c"], ["d", "e"]
+    cpu_stock = {"a": True, "b": True, "c": None, "d": False, "e": True}
+    cpu_tuned = {"a": False, "b": True, "c": True, "d": True, "e": True}
+    s = a.sensitivity_summary(r2w, w2r, cpu_stock, cpu_tuned)
+    assert s["r2w"] == {"total": 3, "done": 3, "held": 1, "reversed": 0, "both_right": 1, "both_wrong": 0, "undecided": 1}
+    assert s["w2r"]["held"] == 1 and s["w2r"]["both_right"] == 1
+    assert s["n_done"] == 5 and s["n_total"] == 5 and s["complete"] is True
+
+
+def test_sensitivity_summary_missing_ids_are_not_run():
+    s = a.sensitivity_summary(["a", "b"], ["c"], {"a": True}, {"a": True})
+    assert s["r2w"]["done"] == 1 and s["r2w"]["both_right"] == 1
+    assert s["w2r"]["done"] == 0
+    assert s["n_done"] == 1 and s["n_total"] == 3 and s["complete"] is False
