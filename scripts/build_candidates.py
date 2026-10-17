@@ -1,8 +1,9 @@
 """Step 1 of the 1,000-paper corpus: candidate arXiv papers whose license allows redistribution.
 
 Harvests arXiv metadata over OAI-PMH (https://oaipmh.arxiv.org/oai, format `arXiv`, which carries the license),
-keeps only CC BY 4.0/3.0 and CC0 / public-domain papers, drops papers already in data/external/arxiv_src
-(their licenses were never checked), and writes data/candidates.jsonl. Nothing but metadata is downloaded.
+keeps only CC BY 4.0/3.0 and CC0 / public-domain papers, optionally drops papers already in a local
+data/external/arxiv_src if that directory is present (legacy data whose licenses were never checked; the directory
+was deleted on 2026-10-17), and writes data/candidates.jsonl. Nothing but metadata is downloaded.
 
 Sampling: one day per month over the last months, for each set in SETS. OAI datestamp = last modification,
 so a day mixes new and revised papers; that is fine, the license is the one of the latest version.
@@ -165,8 +166,11 @@ def main(argv: list[str] | None = None) -> None:
     args = ap.parse_args(argv)
     CACHE = Path(args.cache)
     CACHE.mkdir(parents=True, exist_ok=True)
-    known = {p.name.replace("_", "/", 1) if not p.name[0].isdigit() else p.name for p in Path("data/external/arxiv_src").iterdir()}
-    known |= {p.name for p in Path("data/external/arxiv_src").iterdir()}
+    legacy = Path("data/external/arxiv_src")
+    known: set[str] = set()
+    if legacy.is_dir():
+        known = {p.name.replace("_", "/", 1) if not p.name[0].isdigit() else p.name for p in legacy.iterdir()}
+        known |= {p.name for p in legacy.iterdir()}
     days = sample_days(args.asof or dt.date.today(), args.months, args.day)
     seen: dict[str, dict] = {}
     total = Counter()

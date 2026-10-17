@@ -2,6 +2,7 @@
 
 import datetime as dt
 import hashlib
+import json
 import shutil
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -123,6 +124,27 @@ def test_complete_cached_chain_is_kept(env, monkeypatch):
     net = _install(monkeypatch, FakeNet())
     assert len(list(bc.harvest("math", DAY))) == 3
     assert net.urls == []
+
+
+def _run_main(env, tmp_path):
+    out = tmp_path / "c.jsonl"
+    bc.main(["--asof", "2025-01-10", "--months", "1", "--day", "10", "--cache", str(env), "--out", str(out)])
+    return [json.loads(line)["arxiv_id"] for line in out.read_text().splitlines()]
+
+
+def test_main_without_legacy_directory_excludes_nothing(env, monkeypatch, tmp_path):
+    _install(monkeypatch, FakeNet())
+    monkeypatch.chdir(tmp_path)  # no data/external/arxiv_src here
+    assert not (tmp_path / "data" / "external" / "arxiv_src").exists()
+    assert "9912.00001" in _run_main(env, tmp_path)
+
+
+def test_main_with_legacy_directory_still_excludes_its_papers(env, monkeypatch, tmp_path):
+    _install(monkeypatch, FakeNet())
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "data" / "external" / "arxiv_src" / "9912.00001").mkdir(parents=True)
+    ids = _run_main(env, tmp_path)
+    assert ids and "9912.00001" not in ids
 
 
 def test_sample_days_clamps_day_to_month_length():
