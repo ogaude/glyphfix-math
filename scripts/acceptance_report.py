@@ -51,8 +51,10 @@ def _headline(res: dict) -> list[str]:
         "",
         "Rule: pass if CI lower bound > 0, a paired bootstrap that resamples papers, not equations (D-02).",
         "",
-        (f"Paired outcomes: both right {h['flip']['both_right']}, both wrong {h['flip']['both_wrong']}, "
-        f"right-to-wrong {h['flip']['right_to_wrong']}, wrong-to-right {h['flip']['wrong_to_right']}."),
+        (
+            f"Paired outcomes: both right {h['flip']['both_right']}, both wrong {h['flip']['both_wrong']}, "
+            f"right-to-wrong {h['flip']['right_to_wrong']}, wrong-to-right {h['flip']['wrong_to_right']}."
+        ),
         "",
     ]
 
@@ -86,8 +88,10 @@ def _secondary(res: dict) -> list[str]:
         f"| glyph error mean | {_f(sec['stock'].get('glyph_error_mean'))} | {_f(sec['tuned'].get('glyph_error_mean'))} |",
         f"| spacing-insensitive render identical | {_rate(sp['stock'])} | {_rate(sp['tuned'])} |",
         "",
-        (f"Spacing column: paired delta {_d(sp['paired'].get('delta'))}, {sp['n_rerendered']} records re-rendered, "
-        f"{sp['n_excluded']} excluded as undecided (D-03)."),
+        (
+            f"Spacing column: paired delta {_d(sp['paired'].get('delta'))}, {sp['n_rerendered']} records re-rendered, "
+            f"{sp['n_excluded']} excluded as undecided (D-03)."
+        ),
         "",
     ]
     return rows
@@ -97,8 +101,10 @@ def _per_class(res: dict) -> list[str]:
     rows = [
         "## Per-class table",
         "",
-        ("Counts are string-tier scorer classes over all common ids; the render-identical headline is separate (D-14, D-20). "
-        "A class with fewer stock errors than the minimum is reported as: not enough events to claim."),
+        (
+            "Counts are string-tier scorer classes over all common ids; the render-identical headline is separate (D-14, D-20). "
+            "A class with fewer stock errors than the minimum is reported as: not enough events to claim."
+        ),
         "",
         "| class | stock errors | tuned errors | denominator | stock error rate | tuned error rate | paired delta (CI) | claim |",
         "|---|---|---|---|---|---|---|---|",
@@ -126,8 +132,10 @@ def _pages(res: dict) -> list[str]:
         f"| normalized exact | {_rate(sec['stock']['exact'])} | {_rate(sec['tuned']['exact'])} |",
         f"| spacing-insensitive render identical | {_rate(sp['stock'])} | {_rate(sp['tuned'])} |",
         "",
-        (f"Paired delta {_d(t['delta'])}, 95% CI {_ci(t['ci_low'], t['ci_high'])}, {t['n']} equations in {t['n_papers']} papers. "
-        "Unmatched equations count as failures for both arms."),
+        (
+            f"Paired delta {_d(t['delta'])}, 95% CI {_ci(t['ci_low'], t['ci_high'])}, {t['n']} equations in {t['n_papers']} papers. "
+            "Unmatched equations count as failures for both arms."
+        ),
         "",
         f"Transfer statement: {t['statement']}.",
         "",
@@ -144,8 +152,10 @@ def _r2w(res: dict) -> list[str]:
     else:
         by = ", ".join(f"{k} {v}" for k, v in sorted(lst["by_class"].items()))
         rows += [
-            (f"{len(lst['rows'])} records, by tuned error class: {by}. "
-            f"Control-glyph flagged (prime, Greek, decoration, I vs 1 classes): {lst['n_control_glyph']}."),
+            (
+                f"{len(lst['rows'])} records, by tuned error class: {by}. "
+                f"Control-glyph flagged (prime, Greek, decoration, I vs 1 classes): {lst['n_control_glyph']}."
+            ),
             "",
             "| id | classes | control glyph | ground truth | stock | tuned |",
             "|---|---|---|---|---|---|",
@@ -157,9 +167,11 @@ def _r2w(res: dict) -> list[str]:
             )
         rows.append("")
     rows += [
-        ("Near-tie caveat: greedy decoding is not stable across engines. The HF bf16 head rounds logits and takes the lowest token id on a tie, "
-        "while llama.cpp keeps f32 logits (PARITY_DIAGNOSIS.md, example c00db734), so a single flip can be a near-tie and not a learned error. "
-        "The paired paper-level statistics carry the verdict, not any single flip."),
+        (
+            "Near-tie caveat: greedy decoding is not stable across engines. The HF bf16 head rounds logits and takes the lowest token id on a tie, "
+            "while llama.cpp keeps f32 logits (PARITY_DIAGNOSIS.md, example c00db734), so a single flip can be a near-tie and not a learned error. "
+            "The paired paper-level statistics carry the verdict, not any single flip."
+        ),
         "",
     ]
     return rows
@@ -173,10 +185,12 @@ def _gain(res: dict) -> list[str]:
     return [
         "## Where the gain comes from (D-16, D-22)",
         "",
-        ("Phase 4 dev analysis (DEV_ANALYSIS.md), Ollama dev, 256 wrong-to-right crops: other 210 (82%), decoration 38 (15%), "
-        "symbol_swap 6, dropped_prime 2. The 20 right-to-wrong crops: other 17, decoration 3. "
-        "The gain is mostly the model learning corpus conventions (delimiter sizing, alignment wrappers, spacing), not the rare glyph classes. "
-        "The per-class table above shows the benchmark view of the same question."),
+        (
+            "Phase 4 dev analysis (DEV_ANALYSIS.md), Ollama dev, 256 wrong-to-right crops: other 210 (82%), decoration 38 (15%), "
+            "symbol_swap 6, dropped_prime 2. The 20 right-to-wrong crops: other 17, decoration 3. "
+            "The gain is mostly the model learning corpus conventions (delimiter sizing, alignment wrappers, spacing), not the rare glyph classes. "
+            "The per-class table above shows the benchmark view of the same question."
+        ),
         "",
     ]
 
@@ -193,8 +207,10 @@ def _dev(res: dict) -> list[str]:
         rows.append(f"No dev reference stored. Benchmark delta {_d(h['delta'])}.")
     rows += [
         "",
-        ("Selection caveat: the dev split guided the hyperparameter sweep and the checkpoint choice, so the dev gain is in-sample. "
-        "The benchmark is the only held-out claim."),
+        (
+            "Selection caveat: the dev split guided the hyperparameter sweep and the checkpoint choice, so the dev gain is in-sample. "
+            "The benchmark is the only held-out claim."
+        ),
         "",
     ]
     return rows
@@ -233,6 +249,8 @@ def _sensitivity(sens: dict | None) -> list[str]:
     rows = ["## Appendix: CPU llama-server sensitivity", ""]
     if not sens:
         return rows + ["CPU llama-server sensitivity run: not yet run; non-blocking (D-21).", ""]
+    if "summary" in sens:
+        sens = {**sens["summary"], **{k: v for k, v in sens.items() if k != "summary"}}
     r2w, w2r = sens["r2w"], sens["w2r"]
     rows += [
         f"Coverage: {sens['n_done']} of {sens['n_total']} flipped records run on CPU.",
