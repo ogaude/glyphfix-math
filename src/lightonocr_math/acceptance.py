@@ -75,7 +75,7 @@ ACCEPTANCE = {
 }
 
 # Set after the dev dry run, before any benchmark generation; never changed after the benchmark scoring commit.
-ACCEPTANCE_SHA256: str | None = None
+ACCEPTANCE_SHA256: str | None = "7b42234c9078a5b1005352395cfe00300536b749a56c99eb8a3ef447e02aabc2"
 
 EPS = 1e-9
 
