@@ -7,13 +7,14 @@ Usage:
 
 The registry file is {"schema_version": "1", "entries": [...]}. An entry links the adapter, the training
 set, the GGUF, the Ollama digest, the configuration and the dev and regression scores. validate checks the
-schema and the invariants (internal tag names, scorer fingerprint, all gates passed, benchmark pending);
+schema and the invariants (internal tag names, scorer fingerprint, all gates passed, benchmark pending or scored once);
 verify_hashes recomputes adapter, training set and GGUF sha256 from the paths in the entry. append_entry
 refuses an invalid entry or a duplicate tag and writes atomically. No torch import.
 """
 
 from __future__ import annotations
 
+import copy
 from pathlib import Path
 
 from lightonocr_math import score
@@ -21,6 +22,18 @@ from lightonocr_math.corpus._io import sha256_file, write_json
 
 REGISTRY_SCHEMA_VERSION = "1"
 BENCHMARK_PENDING = {"status": "pending-phase-5"}
+BENCHMARK_SCORED_KEYS = (
+    "status",
+    "verdict",
+    "transfer_holds",
+    "headline",
+    "evidence",
+    "results_sha256",
+    "tuned_preds_sha256",
+    "acceptance_sha256",
+    "scored_at",
+)
+HEADLINE_KEYS = ("stock_rate", "tuned_rate", "delta", "ci_low", "ci_high")
 ADAPTER_FILE = "adapter_model.safetensors"
 
 REQUIRED_KEYS = (
@@ -68,6 +81,25 @@ NESTED_KEYS = {
 }
 
 
+def benchmark_problems(block) -> list[str]:
+    """Empty for the pending block or a complete scored block; otherwise the 'benchmark must be' message."""
+    msg = f"benchmark must be {BENCHMARK_PENDING} or a scored block"
+    if block == BENCHMARK_PENDING:
+        return []
+    if not isinstance(block, dict) or block.get("status") != "scored":
+        return [msg]
+    if any(k not in block for k in BENCHMARK_SCORED_KEYS):
+        return [msg]
+    if block["verdict"] not in ("pass", "fail"):
+        return [msg]
+    head, preds = block["headline"], block["tuned_preds_sha256"]
+    if not isinstance(head, dict) or any(k not in head for k in HEADLINE_KEYS):
+        return [msg]
+    if not isinstance(preds, dict) or any(k not in preds for k in ("crops", "pages")):
+        return [msg]
+    return []
+
+
 def validate(entry: dict) -> list[str]:
     """Problems found in an entry; an empty list means the entry is complete and consistent."""
     problems: list[str] = []
@@ -90,8 +122,8 @@ def validate(entry: dict) -> list[str]:
     gates = entry.get("gates")
     if isinstance(gates, dict) and "pass" in gates and gates["pass"] is not True:
         problems.append("gates.pass is not True")
-    if "benchmark" in entry and entry["benchmark"] != BENCHMARK_PENDING:
-        problems.append(f"benchmark must be {BENCHMARK_PENDING}")
+    if "benchmark" in entry:
+        problems.extend(benchmark_problems(entry["benchmark"]))
     return problems
 
 
@@ -143,4 +175,23 @@ def append_entry(path: Path, entry: dict) -> None:
         raise ValueError(f"tag already registered: {entry['tag']}")
     reg["entries"].append(entry)
     reg["schema_version"] = REGISTRY_SCHEMA_VERSION
+    write_json(path, reg)
+
+
+def update_benchmark(path: Path, tag: str, block: dict) -> None:
+    """Replace the pending benchmark block of one entry with a scored block, once, atomically."""
+    reg = load(path)
+    for e in reg["entries"]:
+        if e.get("tag") == tag:
+            break
+    else:
+        raise ValueError(f"tag not in registry: {tag}")
+    if (e.get("benchmark") or {}).get("status") == "scored":
+        raise ValueError(f"benchmark already scored for {tag}")
+    updated = copy.deepcopy(e)
+    updated["benchmark"] = block
+    problems = validate(updated)
+    if problems:
+        raise ValueError("invalid benchmark block: " + "; ".join(problems))
+    e["benchmark"] = updated["benchmark"]
     write_json(path, reg)
