@@ -29,3 +29,6 @@ data/train/dev_eval_conv/
 data/runs/
 data/models/*
 !data/models/REGISTRY.json
+
+# private probes, never published
+data/probes/
