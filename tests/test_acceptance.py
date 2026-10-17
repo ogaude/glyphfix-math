@@ -168,7 +168,7 @@ def test_none_render_excluded_and_id_mismatch_raises():
 
 def test_regression_listing_flags_control_glyph_classes():
     stock, tuned, r2w, _ = _arms(40, 2, 32, tuned_classes=["decoration", "other"])
-    first = sorted(r2w)[0]
+    first = min(r2w)
     tuned[first]["classes"] = []
     listing = a.regression_listing(stock, tuned, r2w)
     rows = {r["id"]: r for r in listing["rows"]}
@@ -219,8 +219,19 @@ def _manifest():
 
 def test_comparability_ignores_per_arm_fields():
     s, t = _manifest(), _manifest()
-    t.update(model="tuned", model_digest="d-tuned", created="t1", wall_seconds=9, gpu_before=5, gpu_after=6,
-             git_commit="g1", n_ok=3, n_error=1, n_skipped_resume=2, model_loaded_before=True)
+    t.update(
+        model="tuned",
+        model_digest="d-tuned",
+        created="t1",
+        wall_seconds=9,
+        gpu_before=5,
+        gpu_after=6,
+        git_commit="g1",
+        n_ok=3,
+        n_error=1,
+        n_skipped_resume=2,
+        model_loaded_before=True,
+    )
     t["gguf_blobs"] = {"projector": "proj", "text": "text-b"}
     assert a.comparability_problems(s, t, expected_tuned_digest="d-tuned") == []
 
