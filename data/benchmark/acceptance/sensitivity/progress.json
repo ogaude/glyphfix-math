@@ -1,0 +1,49 @@
+{
+  "arms": [
+    "stock",
+    "tuned"
+  ],
+  "cpu_option": [
+    "-dev",
+    "none"
+  ],
+  "flags": [
+    "-m",
+    "<text>",
+    "--mmproj",
+    "<projector>",
+    "-c",
+    "8192",
+    "-np",
+    "1",
+    "--flash-attn",
+    "auto",
+    "-b",
+    "1024",
+    "-ub",
+    "1024",
+    "--context-shift",
+    "--keep",
+    "4",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "18095",
+    "-dev",
+    "none"
+  ],
+  "mode": "benchmark",
+  "n_done": 736,
+  "n_rows": {
+    "stock": 736,
+    "tuned": 736
+  },
+  "n_total": 736,
+  "seconds_per_record": {
+    "stock": 9.812589388074835,
+    "tuned": 9.548674328644001
+  },
+  "stopped_reason": "complete",
+  "vram_after": 68386816,
+  "vram_before": 68386816
+}

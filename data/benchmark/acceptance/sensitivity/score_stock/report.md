@@ -1,0 +1,47 @@
+# Evaluation report
+
+## Versions
+
+- scorer_version: 1.2.0
+- scorer_fingerprint: 6616416ed4841f410166a1daf0e6a0fb403689c98b9fc4884dbf7d7f49c4b7c2
+- normalize_rules_version: 3
+- error_rules_version: 1
+- preamble_sha256: 65f94732462b53dee104e2f8d1828eea267d3e9abfbbdd082f4796426bb00717
+- wrap_version: 1
+- split_rule_version: 1
+- split_digest: b0afe4144600ba3e7d19a6d37d85344a080fae84364aeff562c11e475ac3ab5e
+- render_dpi: 300
+- render image: texlive/texlive@sha256:0f4884ca7d287f47ab466d2dd405d4c901c576585363f628863a7ca7eea21301
+- bootstrap: seed 0, B 10000, CI 0.95 (paper-level cluster bootstrap)
+- predictions_sha256: ebdcf54207a01333d207f2e60bfe43820337f961bd1c8d9fea7800ecdfb69393
+- records: 736, ground truth not compilable (excluded from render tiers): 0
+- ground truth render status: rendered 736
+
+## Metrics
+
+| metric | rate | 95% CI | n | papers |
+|---|---|---|---|---|
+| normalized exact match | 0.302 | [0.247, 0.359] | 736 | 131 |
+| render identical | 0.102 | [0.077, 0.130] | 736 | 131 |
+| render tolerant (separate tier) | 0.105 | [0.080, 0.132] | 736 | 131 |
+
+## Per-class error rates
+
+| class | errors | denominator | rate | 95% CI |
+|---|---|---|---|---|
+| prime_l | 0 | 50 | 0.000 | [0.000, 0.000] |
+| dropped_prime | 6 | 50 | 0.120 | [0.042, 0.200] |
+| greek_latin | 5 | 688 | 0.007 | [0.001, 0.015] |
+| decoration | 89 | 272 | 0.327 | [0.238, 0.422] |
+| i_1 | 0 | 561 | 0.000 | [0.000, 0.000] |
+| other | 472 | 736 | 0.641 | [0.580, 0.701] |
+
+## Disagreements between tiers
+
+String differs but render identical (harmless), 27:
+
+0b61a9a78307c3e3, 2a524d411a0900f5, 3653b6d65abc9cc9, 4d1d1a5766b3f1a7, 543815fadc943a5e, 638d5e7e4fccf94e, 666cecbde5dde5b8, 6f917c2a9cd7bb44, 7615c8262c8d3819, 788fee36db46b3bc, 81308fcbf1978fe4, 8bf48c9a424e80a7, 8f240606c5c9ec0f, a3ca13eaad1a3137, a43a3e701df5c35f, a522c390f733bd90, b14938b742900ad6, bbe520389eb9facd, bf924bcef78ed9d8, c5dd20ebef239dfe, c96d302e6a0b9800, db7f66486f5e43dc, dc961f4bbfd2a701, ddb988b869c86bc4, e92b8d697666027b, f7560633e13aa6a5, fd1df86c3c5cfd4a
+
+String equal but render differs (bug flag), 174:
+
+0080d06e332e17aa, 01031e216e38d4d1, 07b484651da0247d, 07e23c5b57570e4e, 08817e959e25f9cb, 09089a85340f564d, 0ac2f364a8a59422, 0cad493394b62b07, 0cfb232755ba0568, 0d22be897595e47a, 13559c2dd726c5c0, 14c6dc998fc379d6, 1562bed94ad703a4, 156e3bbc42b4875e, 182e625e512af662, 1a02072be999be3a, 1b6eca90b5af887e, 1dcb4d2f2bd8b398, 1ec541a59750fd58, 1f53a55c610bd4e1, 2108891e4f999b00, 22e8866d2a892c6e, 23b77359896fc12f, 255f0bbf73e330ef, 259c9a314971c0fc, 2616fdcee806411a, 2781abc6e81cb4b7, 2841ac95fcb9db14, 28a912306dbbc7e6, 2aaae11b05ebd79b, 2aeb63d4b1121fae, 2b02039c7db11711, 2f8e0c4a47e7b4aa, 339a0041f808acb7, 3427e025f0d1293e, 37c92eba6620bb27, 399bf48c9d06e84b, 3ae28c28a9513a54, 3b8b5c144e1eb0d0, 3c3b4e9c9536ae43, 3e35edca08b6e279, 41631db0926b53fc, 41dfa918f39e4e0b, 421b556c7416a2e4, 42aed7bd63f12c95, 44abbdfaca179938, 44dc00a1a62b2db8, 45ce9afea659d996, 4edd7e7846be4f1e, 513c0e3ac1593f9a, 519056d0baf523cd, 53081c3def151c5a, 53f724e06e79b312, 54405b997d28d1df, 556c10bf2c05a302, 567f7dc71680dc02, 59b1986681458903, 5bf0535ff605a00a, 5e2d0f04e9cde2e9, 603eaac4a3c7d940, 61fa6caa84fcd196, 627dc990e03590c4, 63d9401c3a0dde57, 6813baa4e5d0f7f9, 6814bb91c291acaf, 68c798084f6d23de, 6a59cc2c22892296, 6c57c68de51845ca, 6d39dc2612b132b3, 6d805fe2ded25836, 6e324214391079d6, 6f22d25bb135747b, 71cdb0e696467277, 75a5d7f3419d07fa, 77481fbcb360e17f, 78262f9c87e83bd3, 78c159409f2fe978, 78c1cc9df3d836f3, 7a998d44affe1d0e, 7b02f625e8e15246, 7b9ed86058782b04, 7baad2bf0b72e81f, 7c823ddfaca0d511, 7cbd27094b3a3aa1, 7d99bbd50a38e252, 7deca8f327428440, 7f23e51c605418bb, 7f701c5efb645c93, 7fd00833bac2abc8, 81d02ba0627fab1f, 82366762fd4cf9ad, 88510d1e95b36eef, 8afad1af64f1ab9f, 8c93d9002b8c5946, 8c98acda75614a71, 8de1da56adc72840, 8ede81a05666aeed, 903c8b987982c7db, 906b464e563c5248, 924da9db0210ca2e, 939d567461f48e05, 95518b7b5922c93f, 97f8b5d91dd792e7, 9920479effcfb2bd, 99360035746039ed, 99c6bdc7ab50250c, 9bae018c099cc2a1, 9bd35921067605a4, 9bd7a0aac8ba3d89, 9e3c8e3e84961d52, a1b89a9835997821, a5ad61a3af513dd1, a5fdafabc955bb91, a7c2f970885e9a6f, a9aed1d86e438297, ad83fc3d6ac46045, aeded66f4339567c, b16ece71869695e4, b19aaa543af93281, b27a4bc8eb06278d, b324c7b6f72d58f1, b3ba2dfc308c1dba, b4a9a0c91387ea91, b9ec6ca446824653, bb505c2cfa933e7a, bcc41d7175ccb7f9, be17720beb190ee3, c006d05e95476bfd, c2493a06ce0cf7af, c3bce450aa4c9380, c9497b666a1c8d2f, c9d04be66483fb78, ceb256e9de7ac692, cf01e8bca6b24d90, cf02fa0d3abc237c, cfa06c1ee0630d1f, d10c0b7749f87ad5, d1d828f8421bb621, d20b4d9d70fce3e4, d331f3fc52120dcd, d9f2a564e8c7a8ac, da841ac6bfd6a6a4, dbf5ad63a232809b, dca764309bfb24f1, def9f08c43203fd0, e50f6469a46abe1f, e53e4f79d02102cb, e6ac80541dda81a0, e943a7920c56203b, e95dbebc4aa25304, eae68ec62ea1976f, ebe61fc2a4c4b5c2, ec6a7470c79b58c5, ed4b1010ea244eb2, ef8071ad3ef582b5, f012dd793a47a7b3, f176763c2e329bc7, f1baf7c2b1f91b2d, f2752670579f53d5, f3cfe7623ef46232, f4eb8d515fee3e47, f7b7a1a7cfc9c354, f7ff80a795928e7f, f86123f70c24925a, f938821757c7eb07, f94f4a5505f23ab2, f9c67dfc53c39f2b, f9f64c79edc5323f, faad3c2eccbd145c, fc739f81b5326861, fcf64edadc604b50, fe41194a99dbd8f9, feb68f594c49423f, ff3ce8438e0c6e92
