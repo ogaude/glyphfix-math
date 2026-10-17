@@ -27,6 +27,7 @@ Exit codes: 0 ok, 1 check failed, 2 bad input or refused, 3 render infrastructur
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import subprocess
@@ -43,6 +44,8 @@ from lightonocr_math.guard import GuardError
 from lightonocr_math.paths import repo_root
 from lightonocr_math.render import RenderInfrastructureError
 from lightonocr_math.score import score_file
+from lightonocr_math.train import registry as registry_mod
+from scripts.acceptance_report import render_acceptance_md
 from scripts.baseline_infer import model_blobs
 from scripts.select_checkpoint import glyph_error_mean
 from scripts.spikes.common import gpu_state, read_jsonl, write_json
@@ -744,6 +747,117 @@ def cmd_score(a: argparse.Namespace) -> int:
     timings["total"] = round(sum(timings.values()), 3)
     write_results(a.evidence_dir, out, flips)
     _print_summary(out)
+    sens = _load(Path(a.evidence_dir) / "sensitivity.json")
+    try:
+        text = render_acceptance_md(copy.deepcopy(out), sens)
+        _write_text(a.report, text)
+    except Exception as e:  # noqa: BLE001  results.json is already on disk; the report can be re-rendered with `report`
+        print(f"error: report not written: {e}", file=sys.stderr)
+        return 1
+    print(f"report: {a.report}")
+    return 0
+
+
+def _write_text(path: Path, text: str) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+# ------------------------------------------------------------------------------------ report, compare, register
+
+VOLATILE_KEYS = ("created", "timings", "git_commit", "scores_dir", "evidence_dir", "report_path")
+
+
+def cmd_report(a: argparse.Namespace) -> int:
+    results = _load(a.results)
+    if results is None:
+        print(f"REFUSED: cannot read {a.results}", file=sys.stderr)
+        return 2
+    sens = _load(a.sensitivity) if a.sensitivity else None
+    try:
+        text = render_acceptance_md(copy.deepcopy(results), sens)
+    except Exception as e:  # noqa: BLE001
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    _write_text(a.out, text)
+    print(f"report: {a.out}")
+    return 0
+
+
+def _diff(a, b, prefix: str = "") -> list[str]:
+    if isinstance(a, dict) and isinstance(b, dict):
+        out: list[str] = []
+        for k in sorted(set(a) | set(b)):
+            if k not in a or k not in b:
+                out.append(f"{prefix}{k}")
+            else:
+                out += _diff(a[k], b[k], f"{prefix}{k}.")
+        return out
+    return [] if a == b else [prefix.rstrip(".")]
+
+
+def _comparable(res: dict, scores_dir: str | None) -> dict:
+    out = {k: v for k, v in res.items() if k not in VOLATILE_KEYS}
+    base = str(scores_dir) if scores_dir else None
+    out["inputs"] = {
+        k: ({kk: vv for kk, vv in v.items() if not (kk == "path" and base and str(vv).startswith(base))} if isinstance(v, dict) else v)
+        for k, v in (res.get("inputs") or {}).items()
+    }
+    return out
+
+
+def cmd_compare_results(a: argparse.Namespace) -> int:
+    ra, rb = _load(a.a), _load(a.b)
+    if ra is None or rb is None:
+        print("REFUSED: cannot read both results files", file=sys.stderr)
+        return 2
+    diff = _diff(_comparable(ra, ra.get("scores_dir")), _comparable(rb, rb.get("scores_dir")))
+    if diff:
+        print("different: " + ", ".join(diff))
+        return 1
+    print("identical")
+    return 0
+
+
+def cmd_register_verdict(a: argparse.Namespace) -> int:
+    res = _load(a.results)
+    if res is None:
+        print(f"REFUSED: cannot read {a.results}", file=sys.stderr)
+        return 2
+    if res.get("mode") != "benchmark":
+        print(f"REFUSED: results mode is {res.get('mode')!r}, not benchmark", file=sys.stderr)
+        return 2
+    inputs = res.get("inputs") or {}
+    shas: dict[str, str] = {}
+    for key, name in (("crops", "crops_tuned_preds"), ("pages", "pages_tuned_preds")):
+        entry = inputs.get(name)
+        path = Path(entry["path"]) if entry else None
+        if path is None or not path.exists():
+            print(f"REFUSED: tuned {key} prediction file missing: {path}", file=sys.stderr)
+            return 2
+        shas[key] = _sha256(path)
+        if shas[key] != entry["sha256"]:
+            print(f"REFUSED: tuned {key} predictions differ from results.json (sha256 mismatch)", file=sys.stderr)
+            return 2
+    h = res["headline"]
+    block = {
+        "status": "scored",
+        "verdict": res["verdict"],
+        "transfer_holds": res["transfer"]["holds"],
+        "headline": {k: h[k] for k in registry_mod.HEADLINE_KEYS},
+        "evidence": str(Path(a.results).parent),
+        "results_sha256": _sha256(a.results),
+        "tuned_preds_sha256": shas,
+        "acceptance_sha256": res["acceptance_sha256"],
+        "scored_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+    }
+    try:
+        registry_mod.update_benchmark(Path(a.registry), a.tag, block)
+    except ValueError as e:
+        print(f"REFUSED: {e}", file=sys.stderr)
+        return 2
+    print(f"registered {res['verdict']} for {a.tag}")
     return 0
 
 
@@ -913,6 +1027,23 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--registry", type=Path, default=REGISTRY_PATH)
     p.add_argument("--tag", default=TUNED_TAG)
     p.set_defaults(func=cmd_score)
+
+    p = sub.add_parser("report", help="re-render ACCEPTANCE.md from results.json (and sensitivity.json)")
+    p.add_argument("--results", type=Path, default=EVIDENCE_DIR / "results.json")
+    p.add_argument("--sensitivity", type=Path, default=None)
+    p.add_argument("--out", type=Path, default=REPORT_PATH)
+    p.set_defaults(func=cmd_report)
+
+    p = sub.add_parser("compare-results", help="prove two scoring runs equal up to volatile keys")
+    p.add_argument("a", type=Path)
+    p.add_argument("b", type=Path)
+    p.set_defaults(func=cmd_compare_results)
+
+    p = sub.add_parser("register-verdict", help="write the scored benchmark block into the registry, once")
+    p.add_argument("--results", type=Path, default=EVIDENCE_DIR / "results.json")
+    p.add_argument("--registry", type=Path, default=REGISTRY_PATH)
+    p.add_argument("--tag", default=TUNED_TAG)
+    p.set_defaults(func=cmd_register_verdict)
     return ap
 
 

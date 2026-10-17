@@ -836,4 +836,145 @@ def test_results_json_written_once_before_report(sc, rend, monkeypatch):
     assert sc.run() == 0
     first = (sc.tmp / "evidence" / "results.json").read_text()
     assert first == json.dumps(json.loads(first), sort_keys=True, indent=1, ensure_ascii=False) + "\n"
-    assert not (sc.tmp / "report.md").exists()
+    assert (sc.tmp / "report.md").exists()
+    assert (sc.tmp / "evidence" / "results.json").read_text() == first
+
+
+def test_score_renders_report_after_results(sc, rend, monkeypatch):
+    seen = {}
+
+    def boom(results, sens=None):
+        seen["results_on_disk"] = (sc.tmp / "evidence" / "results.json").exists()
+        raise RuntimeError("renderer broke")
+
+    monkeypatch.setattr(acc, "render_acceptance_md", boom)
+    assert sc.run() == 1
+    assert seen["results_on_disk"] is True
+    assert (sc.tmp / "evidence" / "results.json").exists() and not (sc.tmp / "report.md").exists()
+
+
+def test_score_report_contains_verdict_and_reads_sensitivity(sc, rend):
+    (sc.tmp / "evidence").mkdir(parents=True, exist_ok=True)
+    (sc.tmp / "evidence" / "sensitivity.json").write_text(json.dumps({
+        "r2w": {"total": 1, "done": 1, "held": 1, "reversed": 0}, "w2r": {"total": 2, "done": 1, "held": 1, "reversed": 0},
+        "n_done": 2, "n_total": 3, "complete": False,
+    }))
+    assert sc.run() == 0
+    text = (sc.tmp / "report.md").read_text()
+    assert "Verdict: PASS" in text and "Coverage: 2 of 3" in text
+
+
+def test_report_subcommand_rerenders(sc, rend, tmp_path):
+    assert sc.run() == 0
+    out = tmp_path / "again.md"
+    assert acc.main(["report", "--results", str(sc.tmp / "evidence" / "results.json"), "--out", str(out)]) == 0
+    assert out.read_text() == (sc.tmp / "report.md").read_text()
+
+
+# ---------------------------------------------------------------------------------- compare-results
+
+
+def _two_runs(sc, rend, tmp_path):
+    assert sc.run() == 0
+    a = sc.tmp / "evidence" / "results.json"
+    b = tmp_path / "b.json"
+    b.write_text(a.read_text())
+    return a, b
+
+
+def test_compare_identical_up_to_volatile_keys(sc, rend, tmp_path, capsys):
+    a, b = _two_runs(sc, rend, tmp_path)
+    rb = json.loads(b.read_text())
+    rb["timings"] = {"total": 999.0}
+    rb["git_commit"] = "other"
+    rb["created"] = "later"
+    rb["evidence_dir"] = "elsewhere"
+    b.write_text(json.dumps(rb))
+    assert acc.main(["compare-results", str(a), str(b)]) == 0
+    assert "identical" in capsys.readouterr().out
+
+
+def test_compare_ignores_input_paths_under_scores_dir(sc, rend, tmp_path):
+    a, b = _two_runs(sc, rend, tmp_path)
+    ra, rb = json.loads(a.read_text()), json.loads(b.read_text())
+    ra["scores_dir"] = "/x/scores_a"
+    rb["scores_dir"] = "/y/scores_b"
+    for r, base in ((ra, "/x/scores_a"), (rb, "/y/scores_b")):
+        r["inputs"]["crops_tuned_preds"]["path"] = base + "/t.jsonl"
+    a.write_text(json.dumps(ra))
+    b.write_text(json.dumps(rb))
+    assert acc.main(["compare-results", str(a), str(b)]) == 0
+
+
+def test_compare_lists_differing_keys(sc, rend, tmp_path, capsys):
+    a, b = _two_runs(sc, rend, tmp_path)
+    rb = json.loads(b.read_text())
+    rb["headline"]["delta"] += 1e-12
+    b.write_text(json.dumps(rb))
+    assert acc.main(["compare-results", str(a), str(b)]) == 1
+    assert "headline.delta" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------------- register-verdict
+
+
+def _registry_entry_for_validate(path):
+    from lightonocr_math.train import registry as reg
+
+    entry = {k: "x" for k in reg.REQUIRED_KEYS}
+    entry.update(
+        scorer_fingerprint=reg.score.SCORER_FINGERPRINT, tag=acc.TUNED_TAG, candidate_tag="cand", benchmark=reg.BENCHMARK_PENDING,
+        adapter_config={k: 1 for k in reg.NESTED_KEYS["adapter_config"]}, base_model={k: "x" for k in reg.NESTED_KEYS["base_model"]},
+        versions={k: "x" for k in reg.NESTED_KEYS["versions"]}, sweep={k: "x" for k in reg.NESTED_KEYS["sweep"]},
+        selection={k: "x" for k in reg.NESTED_KEYS["selection"]}, scores={k: {} for k in reg.NESTED_KEYS["scores"]},
+        gates={"thresholds": {}, "results": {}, "pass": True},
+    )
+    path.write_text(json.dumps({"entries": [entry]}))
+    return reg
+
+
+def _reg_args(sc, tmp_path):
+    reg_path = tmp_path / "REG2.json"
+    reg = _registry_entry_for_validate(reg_path)
+    return reg, reg_path, ["register-verdict", "--results", str(sc.tmp / "evidence" / "results.json"), "--registry", str(reg_path)]
+
+
+def test_register_verdict_success_then_second_call_refused(sc, rend, tmp_path, capsys):
+    assert sc.run() == 0
+    reg, reg_path, args = _reg_args(sc, tmp_path)
+    assert acc.main(args) == 0
+    entry = json.loads(reg_path.read_text())["entries"][0]
+    block = entry["benchmark"]
+    assert set(block) == set(reg.BENCHMARK_SCORED_KEYS) and block["status"] == "scored" and block["verdict"] == "pass"
+    assert reg.benchmark_problems(block) == [] and reg.validate(entry) == []
+    assert set(block["tuned_preds_sha256"]) == {"crops", "pages"} and set(block["headline"]) == set(reg.HEADLINE_KEYS)
+    assert acc.main(args) == 2
+    assert "already scored" in capsys.readouterr().err
+
+
+def test_register_verdict_refuses_dev_mode(sc, rend, tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(acc, "git_blob", lambda p: BLOB[str(p)])
+    assert sc.run("dev") == 0
+    _, reg_path, args = _reg_args(sc, tmp_path)
+    assert acc.main(args) == 2
+    assert "not benchmark" in capsys.readouterr().err
+    assert json.loads(reg_path.read_text())["entries"][0]["benchmark"] == {"status": "pending-phase-5"}
+
+
+def test_register_verdict_refuses_sha_mismatch(sc, rend, tmp_path, capsys):
+    assert sc.run() == 0
+    res = json.loads((sc.tmp / "evidence" / "results.json").read_text())
+    p = Path(res["inputs"]["crops_tuned_preds"]["path"])
+    p.write_text(p.read_text() + "\n")
+    _, reg_path, args = _reg_args(sc, tmp_path)
+    assert acc.main(args) == 2
+    assert "sha256 mismatch" in capsys.readouterr().err
+    assert json.loads(reg_path.read_text())["entries"][0]["benchmark"] == {"status": "pending-phase-5"}
+
+
+def test_help_lists_all_subcommands(capsys):
+    with pytest.raises(SystemExit):
+        acc.main(["--help"])
+    out = capsys.readouterr().out
+    for name in ("verify-env", "precheck", "generate", "score", "report", "compare-results", "register-verdict"):
+        assert name in out
