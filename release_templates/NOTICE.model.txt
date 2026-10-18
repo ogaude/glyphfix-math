@@ -1,0 +1,24 @@
+@@MODEL_NAME@@
+Copyright 2026 @@COPYRIGHT_HOLDER@@
+
+This product contains a LoRA adapter trained on LightOnOCR-3-4B and a GGUF file in which that adapter is merged into
+the LightOnOCR-3-4B weights. The adapter, the merged weights and this packaging are licensed under the Apache
+License, Version 2.0 (see LICENSE).
+
+Third-party components
+
+1. LightOnOCR-3-4B, by LightOn. Licensed under the Apache License, Version 2.0.
+   https://huggingface.co/lightonai/LightOnOCR-3-4B, revision {{base_revision}}.
+   Used as the base model of the adapter and, merged with it, as the text model in text-q8_0.gguf.
+
+2. LightOnOCR-3-4B adopts the Qwen3.5 architecture by the Qwen team (Alibaba Cloud), Apache License, Version 2.0.
+   This notice is kept as a conservative third-party attribution for the architecture lineage.
+
+3. mmproj-stock-q8_0.gguf is the unchanged multimodal projector of LightOnOCR-3-4B in GGUF form, taken from
+   {{projector_source}}. Apache License, Version 2.0. It was not modified or retrained.
+
+4. The conversion to GGUF and the Q8_0 quantization used llama.cpp (MIT License) at commit {{llama_cpp_commit}}.
+   https://github.com/ggml-org/llama.cpp
+
+This project is not affiliated with, endorsed by, or sponsored by LightOn. LightOn and LightOnOCR are used only to
+identify the base model.
