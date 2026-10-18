@@ -14,12 +14,13 @@ from scripts.release import public_paths as pp
 ROOT = Path(__file__).resolve().parent.parent
 
 HISTORY = [
-    "src/lightonocr_math/acceptance.py", "scripts/acceptance.py", "scripts/release/common.py",
+    "src/lightonocr_math/acceptance.py", "scripts/acceptance.py",
     "scripts/release/freeze_amendment.py", "tests/test_freeze_amendment.py", "tests/test_acceptance.py",
     "pyproject.toml", "uv.lock", ".python-version", ".gitignore", "requirements/train.lock.txt",
     "requirements/export_pins.json",
 ]
 LATEST_ONLY = [
+    "scripts/release/common.py", "scripts/release/stage_results.py", "tests/test_release_check.py",
     "data/benchmark/records.jsonl", "data/benchmark/acceptance/RUN_LOCK.json",
     "data/train/sets/full/trainset.jsonl", "data/train/sets/sweep1500/trainset.jsonl", "data/mining/labels.jsonl",
     "data/mining/taxonomy.json", "data/models/REGISTRY.json", "data/splits/SHA256SUMS",

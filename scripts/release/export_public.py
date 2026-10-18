@@ -219,7 +219,7 @@ def export(
     scrub_path.write_text(json.dumps(scrub_map, indent=0, sort_keys=True), encoding="utf-8")
 
     tool = f"{sys.executable} -P -m scripts.release.export_public index-filter --spec {spec_path} --head-blobs {head_blobs_path} --scrub-map {scrub_path}"
-    sed = " ".join(f"-e {shlex.quote(f's|{p.pattern}|{r}|{"I" if p.flags & re.I else ""}g')}" for p, r in message_scrub)
+    sed = " ".join(f"-e {shlex.quote(f's|{p.pattern}|{r}|{"I" if p.flags & re.IGNORECASE else ""}g')}" for p, r in message_scrub)
     commit_filter = (
         f"export GIT_AUTHOR_EMAIL={identity_email} GIT_COMMITTER_EMAIL={identity_email}; "
         f'n=$(sed -E {sed} | git_commit_non_empty_tree "$@") && echo "$GIT_COMMIT $n" >> {map_path} && echo "$n"'
