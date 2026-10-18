@@ -168,3 +168,12 @@ def test_acceptance_evidence_is_allow_listed_but_train_data_is_not(env):
     _write(repo, "evidence/acceptance/x.json", json.dumps({"arxiv_id": new}))
     _write(repo, "data/train/x.jsonl", json.dumps({"arxiv_id": new}) + "\n")
     assert {lk.path for lk in scan_repo(repo, fs)} == {"data/train/x.jsonl"}
+
+
+def test_results_dir_is_allow_listed_but_train_data_is_not(env):
+    repo, fs, new, _ = env
+    assert "results/" in ALLOW_PREFIXES
+    _write(repo, "results/x.json", json.dumps({"arxiv_id": new}))
+    _write(repo, "ATTRIBUTION.jsonl", json.dumps({"arxiv_id": new}) + "\n")
+    _write(repo, "data/train/x.jsonl", json.dumps({"arxiv_id": new}) + "\n")
+    assert {lk.path for lk in scan_repo(repo, fs)} == {"data/train/x.jsonl"}

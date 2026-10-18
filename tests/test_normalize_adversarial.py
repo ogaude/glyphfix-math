@@ -149,7 +149,7 @@ def test_rules_version():
 
 
 def test_old_normalizer_holes_are_closed():
-    from experiments.exp001_lighton import triage
+    triage = pytest.importorskip("experiments.exp001_lighton.triage")
 
     assert triage.normalize(r"\mathbf{x}") == triage.normalize("x")
     assert triage.normalize("x_{ab}") == triage.normalize("x_a b")

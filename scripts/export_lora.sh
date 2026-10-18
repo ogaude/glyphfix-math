@@ -17,7 +17,7 @@ SRC=${2:-}
 [ -d "$SRC" ] || { echo "MERGED_DIR $SRC not found" >&2; exit 2; }
 
 LLAMA_CPP_DIR=${LLAMA_CPP_DIR:-$HOME/src/llama.cpp}
-PIN=$(python3 -c "import json;print(json.load(open('.planning/phases/02-feasibility-spikes/evidence/llama_cpp.json'))['commit'])")
+PIN=$(python3 -c "import json;print(json.load(open('requirements/export_pins.json'))['llama_cpp_commit'])")
 [ "$(git -C "$LLAMA_CPP_DIR" rev-parse HEAD)" = "$PIN" ] || { echo "llama.cpp is not at pinned commit $PIN" >&2; exit 3; }
 
 WORK=data/models/$RUN_ID
@@ -49,7 +49,7 @@ done
 [ -r "$PROJ_BLOB" ] || { echo "projector blob unreadable" >&2; exit 4; }
 
 PROJ_SHA=$(sha256sum "$PROJ_BLOB" | cut -d' ' -f1)
-WANT_PROJ=$(python3 -c "import json;print(json.load(open('.planning/phases/02-feasibility-spikes/evidence/roundtrip.json'))['projector_blob_sha256'])")
+WANT_PROJ=$(python3 -c "import json;print(json.load(open('requirements/export_pins.json'))['projector_blob_sha256'])")
 [ "$PROJ_SHA" = "$WANT_PROJ" ] || { echo "projector sha256 $PROJ_SHA differs from recorded $WANT_PROJ" >&2; exit 4; }
 
 ABS_TEXT=$(realpath "$WORK/text-q8_0.gguf")

@@ -14,7 +14,7 @@ case "$ARM" in u | m | uf16) ;; *) echo "ARM must be u, m or uf16" >&2; exit 2 ;
 [ -d "$SRC" ] || { echo "SRC_DIR $SRC not found" >&2; exit 2; }
 
 LLAMA_CPP_DIR=${LLAMA_CPP_DIR:-$HOME/src/llama.cpp}
-PIN=$(python3 -c "import json;print(json.load(open('.planning/phases/02-feasibility-spikes/evidence/llama_cpp.json'))['commit'])")
+PIN=$(python3 -c "import json;print(json.load(open('requirements/export_pins.json'))['llama_cpp_commit'])")
 [ "$(git -C "$LLAMA_CPP_DIR" rev-parse HEAD)" = "$PIN" ] || { echo "llama.cpp is not at pinned commit $PIN" >&2; exit 3; }
 
 WORK=data/spikes/export/$ARM

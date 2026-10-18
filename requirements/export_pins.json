@@ -1,0 +1,5 @@
+{
+  "llama_cpp_commit": "a17e94d229fc7fed1567a799baebd11b771fe5af",
+  "projector_blob_sha256": "fd5acde1a7a7439b3f9a720d3cead67378beeaabbecc57fe4b30a7f9b301b102",
+  "source": "copied from the Phase 2 spike evidence; equal to REGISTRY.json p4-full-1"
+}
