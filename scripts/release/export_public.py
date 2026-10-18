@@ -117,11 +117,13 @@ def _scrub_blobs(work: Path, spec, replacements) -> dict[str, str]:
         nl = buf.index(b"\n", pos)
         head = buf[pos:nl].decode().split()
         pos = nl + 1
-        if len(head) < 3 or head[1] != "blob":
-            continue
+        if len(head) < 3:
+            continue  # "<sha> missing"
         size = int(head[2])
         data = buf[pos : pos + size]
         pos += size + 1
+        if head[1] != "blob":
+            continue
         if b"\0" in data[:8000]:
             continue
         text = data.decode("utf-8", "surrogateescape")
