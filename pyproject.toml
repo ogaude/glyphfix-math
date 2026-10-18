@@ -17,6 +17,9 @@ dev = [
     "pytest>=9.1,<10",
     "ruff>=0.6",
 ]
+release = [
+    "datasets==5.1.0",
+]
 
 [build-system]
 requires = ["hatchling"]
