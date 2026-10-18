@@ -534,6 +534,12 @@ def check_results_overlay(cfg: Config) -> dict:
     for rel in _walk(res):
         if _is_text(rel) and ".planning" in _read(res / rel):
             problems.append(f"results/{rel} contains a .planning string")
+    byte_copies = {Path(src).name for src in cfg.phase4}
+    for rel in _walk(cfg.overlay):
+        if rel.startswith("results/") and Path(rel).name in byte_copies:
+            continue  # byte copies of development reports are compared with their source above
+        if _is_text(rel) and C.INTERNAL_LABEL.search(_read(cfg.overlay / rel)):
+            problems.append(f"{rel} contains an internal decision label such as (D-NN)")
     readme = res / "README.md"
     if not readme.is_file():
         problems.append("results/README.md is missing")
