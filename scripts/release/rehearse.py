@@ -89,6 +89,8 @@ class Rehearsal:
         (self.work / "cache" / "xdg").mkdir(parents=True, exist_ok=True)
         env["LIGHTONOCR_MATH_CACHE"] = str(self.work / "cache" / "render")
         env["XDG_CACHE_HOME"] = str(self.work / "cache" / "xdg")
+        # The development checkout's virtualenv must not leak into the clone through PATH.
+        env["PATH"] = os.pathsep.join(d for d in env.get("PATH", "").split(os.pathsep) if not re.search(r"/\.venv[^/]*/bin/?$", d))
         env["UV_CACHE_DIR"] = self.uv_cache  # package downloads are not part of what is being rehearsed
         self.env = env
 
