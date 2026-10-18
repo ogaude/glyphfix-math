@@ -203,3 +203,14 @@ def test_503_with_odd_retry_after_does_not_crash(env, monkeypatch, value):
     _install(monkeypatch, net)
     assert len(list(bc.harvest("math", DAY))) == 3
     assert all(0 <= s <= 600 for s in sleeps)
+
+
+def test_user_agent_contact_comes_from_the_environment(monkeypatch):
+    import importlib
+
+    monkeypatch.delenv(bc.CONTACT_ENV, raising=False)
+    assert importlib.reload(bc).UA == "lightonocr-math-research (contact@example.invalid)"
+    monkeypatch.setenv(bc.CONTACT_ENV, "reader@example.org")
+    assert importlib.reload(bc).UA == "lightonocr-math-research (reader@example.org)"
+    monkeypatch.delenv(bc.CONTACT_ENV)
+    importlib.reload(bc)

@@ -33,7 +33,9 @@ from pathlib import Path
 from lightonocr_math.corpus.catalog import retry_after_seconds
 
 BASE = "https://oaipmh.arxiv.org/oai"
-UA = "lightonocr-math-research (contact@example.invalid)"
+CONTACT_ENV = "LIGHTONOCR_MATH_CONTACT"
+# arXiv asks for a contact address in the User-Agent: set LIGHTONOCR_MATH_CONTACT to your own before harvesting.
+UA = f"lightonocr-math-research ({os.environ.get(CONTACT_ENV) or 'contact@example.invalid'})"
 SETS = ["math", "stat", "physics", "cs", "eess", "q-bio"]
 OK_LICENSES = {
     "http://creativecommons.org/licenses/by/4.0/": "CC-BY-4.0",
