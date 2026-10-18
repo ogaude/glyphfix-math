@@ -12,6 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _real_rows(name: str, n: int) -> list[dict]:
+    if not (ROOT / "data" / "corpus" / name / "records.jsonl").is_file():
+        pytest.skip("reserved train and dev rows are not part of the public repository")
     out, seen = [], set()
     with open(ROOT / "data" / "corpus" / name / "records.jsonl", encoding="utf-8") as fh:
         for line in fh:

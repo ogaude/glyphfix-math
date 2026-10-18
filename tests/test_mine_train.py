@@ -22,6 +22,9 @@ def _first_papers(split, n):
     return out
 
 
+if not Path("data/corpus/train/records.jsonl").is_file():
+    pytest.skip("reserved train and dev rows are not part of the public repository", allow_module_level=True)
+
 TRAIN = _first_papers("train", 6)
 DEV = _first_papers("dev", 1)[0]
 

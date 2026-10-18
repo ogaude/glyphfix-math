@@ -120,6 +120,8 @@ def rehearse(repo: Path, work: Path, skip_reproduce: bool = False) -> dict:
     work.mkdir(parents=True, exist_ok=True)
     h = Rehearsal(repo, work)
     subprocess.run(["git", "clone", "-q", "--no-local", str(h.repo), str(h.clone)], check=True)
+    # The release check requires a repository without remotes; the throwaway clone does not need its origin.
+    subprocess.run(["git", "-C", str(h.clone), "remote", "remove", "origin"], check=True)
     report: dict = {"public_head": h.git_lines("rev-parse", "HEAD")[0]}
     report["absent_inputs_ok"] = not any((h.clone / p).exists() for p in ABSENT_INPUTS)
     report["planning_paths_ok"] = h.git_lines("ls-files", ".planning", "docs") == []

@@ -11,6 +11,8 @@ CLASSES = ["prime_l", "decoration", "other"]
 
 
 def _arxiv_ids(name, n):
+    if not (ROOT / "data" / "corpus" / name / "records.jsonl").is_file():
+        pytest.skip("reserved train and dev rows are not part of the public repository")
     seen = []
     with open(ROOT / "data" / "corpus" / name / "records.jsonl", encoding="utf-8") as fh:
         for line in fh:

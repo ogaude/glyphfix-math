@@ -19,6 +19,8 @@ def _token_len(s):
 @pytest.fixture(scope="module")
 def real_ids():
     train, dev = [], []
+    if not (ROOT / "data" / "corpus" / "train" / "records.jsonl").is_file():
+        pytest.skip("reserved train and dev rows are not part of the public repository")
     for name, out in (("train", train), ("dev", dev)):
         seen = []
         with open(ROOT / "data" / "corpus" / name / "records.jsonl", encoding="utf-8") as fh:
