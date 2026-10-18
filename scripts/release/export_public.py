@@ -18,6 +18,8 @@ import argparse
 import hashlib
 import json
 import os
+import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -169,6 +171,7 @@ def export(
     spec_path: Path | None = None,
     identity_email: str | None = None,
     scrub=None,
+    message_scrub=None,
 ) -> dict:
     from scripts.release import common as C
 
@@ -177,6 +180,7 @@ def export(
     spec_path = Path(spec_path).resolve() if spec_path else public_paths.DEFAULT_SPEC.resolve()
     identity_email = identity_email or C.PUBLIC_IDENTITY_EMAIL
     scrub = C.SCRUB_REPLACEMENTS if scrub is None else scrub
+    message_scrub = C.MESSAGE_REPLACEMENTS if message_scrub is None else message_scrub
     published_results, amendment = Path(published_results), Path(amendment)
     if not published_results.is_absolute():
         published_results = source / published_results
@@ -215,9 +219,10 @@ def export(
     scrub_path.write_text(json.dumps(scrub_map, indent=0, sort_keys=True), encoding="utf-8")
 
     tool = f"{sys.executable} -P -m scripts.release.export_public index-filter --spec {spec_path} --head-blobs {head_blobs_path} --scrub-map {scrub_path}"
+    sed = " ".join(f"-e {shlex.quote(f's|{p.pattern}|{r}|{"I" if p.flags & re.I else ""}g')}" for p, r in message_scrub)
     commit_filter = (
         f"export GIT_AUTHOR_EMAIL={identity_email} GIT_COMMITTER_EMAIL={identity_email}; "
-        f'n=$(git_commit_non_empty_tree "$@") && echo "$GIT_COMMIT $n" >> {map_path} && echo "$n"'
+        f'n=$(sed -E {sed} | git_commit_non_empty_tree "$@") && echo "$GIT_COMMIT $n" >> {map_path} && echo "$n"'
     )
     env = {"FILTER_BRANCH_SQUELCH_WARNING": "1", "PYTHONPATH": str(TOOL_ROOT)}
     git(work, "filter-branch", "--index-filter", tool, "--commit-filter", commit_filter, "--", before["branch"], env=env)
@@ -239,6 +244,8 @@ def export(
     fmt = "%an%n%aI%n%cn%n%cI%n%B"
     for src, new in real.items():
         a = git(source, "show", "-s", f"--format={fmt}", src)
+        for pat, repl in message_scrub:
+            a = pat.sub(repl, a)
         b = git(work, "show", "-s", f"--format={fmt}", new)
         if a != b:
             raise ExportError(f"commit {src[:10]} changed identity names, dates or message in the rewrite")
