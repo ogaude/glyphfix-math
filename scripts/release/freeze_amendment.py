@@ -7,7 +7,11 @@ amended lock and registry, compares a fresh rescore with the published results
 and re-verifies the whole record from git objects.
 
   uv run python -m scripts.release.freeze_amendment preview [--out DIR]
+  uv run python -m scripts.release.freeze_amendment record --rerun DIR --approved TEXT --amendment-commit HASH
   uv run python -m scripts.release.freeze_amendment verify [--history PATH]
+
+The apply step of the amendment was done by hand (git mv, copy of the previewed files), checked
+against the preview blobs and hashes; `record` writes the evidence of it.
 """
 
 from __future__ import annotations
@@ -380,6 +384,108 @@ def cmd_preview(args: argparse.Namespace) -> int:
     print(f"preview written to {out}; new blob {new_blob}")
     return 0
 
+# --------------------------------------------------------------------- record
+
+def _lock_changes(before: dict, after: dict) -> list[dict]:
+    out = []
+    for arm in ARMS:
+        b, a = before["arms"][arm], after["arms"][arm]
+        for key in sorted(set(a) | set(b)):
+            if a.get(key) != b.get(key):
+                out.append({"arm": arm, "key": key, "old": b.get(key), "new": a.get(key)})
+    return out
+
+
+def cmd_record(args: argparse.Namespace) -> int:
+    work = Path(args.rerun)
+    published = json.loads((NEW_EVIDENCE_DIR / "results.json").read_text(encoding="utf-8"))
+    fresh = json.loads((work / "evidence/results.json").read_text(encoding="utf-8"))
+    new_blob = _blob_of(Path(FROZEN_CLI))
+    ac_hash = args.amendment_commit
+    ac_date = _git("log", "-1", "--format=%cI", ac_hash).strip()
+    amendment_commit = [ac_hash, ac_date]
+    am = {"old_blob": OLD_CLI_BLOB, "new_blob": new_blob, "old_commit": list(OLD_CLI_COMMIT), "amendment_commit": amendment_commit}
+    cmp = compare_published(published, fresh, amendment=am)
+    if cmp["compare"] != "identical_modulo_amendment" or cmp["differing_keys"] != list(AMENDED_KEYS):
+        raise AmendmentError(f"rerun is not identical modulo the amendment: {cmp}")
+    frozen_cmp = subprocess.run(
+        [sys.executable, "-m", "scripts.acceptance", "compare-results", str(NEW_EVIDENCE_DIR / "results.json"), str(work / "evidence/results.json")],
+        capture_output=True, text=True, check=False,
+    )
+    frozen_out = (frozen_cmp.stdout + frozen_cmp.stderr).strip()
+    seconds = int(Path(work / "end.txt").read_text()) - int(Path(work / "start.txt").read_text())
+
+    old_lock = json.loads(_git("show", f"{ac_hash}~1:{LOCK_PATH}"))
+    new_lock = json.loads(LOCK_PATH.read_text(encoding="utf-8"))
+    old_reg = _git("show", f"{ac_hash}~1:{REGISTRY_PATH}")
+    moved = []
+    for old, new in MOVES:
+        blob = _blob_of(Path(new))
+        # the old blob is the same object: the move is byte-identical
+        if _git("rev-parse", f"{ac_hash}~1:{old}").strip() != blob:
+            raise AmendmentError(f"{new}: blob differs from {old} before the move")
+        moved.append({"old": old, "new": new, "sha256": _sha256(Path(new)), "git_blob": blob})
+    old_text = _git("cat-file", "-p", OLD_CLI_BLOB)
+    proof = prove(old_text, Path(FROZEN_CLI).read_text(encoding="utf-8"))
+    rec = {
+        "schema": 1,
+        "kind": "path-constant-only",
+        "reason": "move Phase 5 acceptance evidence out of .planning so the public tree and history contain no .planning path (user decision 2026-10-17)",
+        "approved": args.approved,
+        "file": FROZEN_CLI,
+        "old_blob": OLD_CLI_BLOB,
+        "new_blob": new_blob,
+        "module_file": FROZEN_MODULE,
+        "module_blob": MODULE_BLOB,
+        "old_commit": list(OLD_CLI_COMMIT),
+        "amendment_commit": amendment_commit,
+        "replacements": [{"name": n, "old": o, "new": nw} for n, o, nw in REPLACEMENTS],
+        "proof": proof,
+        "moved": moved,
+        "run_lock": {
+            "path": str(LOCK_PATH),
+            "sha256_before": hashlib.sha256(_git("show", f"{ac_hash}~1:{LOCK_PATH}").encode()).hexdigest(),
+            "sha256_after": _sha256(LOCK_PATH),
+            "changes": _lock_changes(old_lock, new_lock),
+        },
+        "registry": {
+            "path": str(REGISTRY_PATH),
+            "sha256_before": hashlib.sha256(old_reg.encode()).hexdigest(),
+            "sha256_after": _sha256(REGISTRY_PATH),
+            "changes": [{
+                "key": f"entries[tag={REGISTRY_TAG}].benchmark.evidence",
+                "old": OLD_EVIDENCE,
+                "new": "evidence/acceptance",
+            }],
+        },
+        "non_frozen_edits": [
+            "scripts/acceptance_sensitivity.py", "scripts/acceptance_report.py", "tests/test_acceptance.py",
+            "README.md", "src/lightonocr_math/leakscan.py",
+        ],
+        "report_rerender_identical": True,
+        "rerun_equivalence": {
+            "command": "uv run python -m scripts.acceptance score --mode benchmark (cold render cache, CPU and Docker, no GPU)",
+            "score_exit": 0,
+            "cold_cache": True,
+            "seconds": seconds,
+            "compare": cmp["compare"],
+            "differing_keys": cmp["differing_keys"],
+            "frozen_compare_output": frozen_out,
+            "published_sha256": _sha256(NEW_EVIDENCE_DIR / "results.json"),
+            "fresh_sha256": _sha256(work / "evidence/results.json"),
+            "git_head": _git("rev-parse", "HEAD").strip(),
+            "render_image": "texlive/texlive:latest",
+        },
+        "effects": [
+            "scripts.acceptance compare-results stays strict and reports the three amended keys; the published-claim comparison is scripts.release.reproduce, which allows them only through this record",
+            "generate refuses for every arm: the precheck's recorded frozen_code blob no longer matches and both tuned arms are completed",
+            "results.json and its code_freeze record are unchanged; they describe the run as it was scored",
+        ],
+    }
+    write_json(AMENDMENT_PATH, rec)
+    print(f"wrote {AMENDMENT_PATH}")
+    return 0
+
 
 def cmd_verify(args: argparse.Namespace) -> int:
     cmap = None
@@ -399,6 +505,11 @@ def main(argv: list[str] | None = None) -> int:
     sp = sub.add_parser("preview")
     sp.add_argument("--out", default="data/runs/freeze-amendment/preview")
     sp.set_defaults(fn=cmd_preview)
+    sr = sub.add_parser("record")
+    sr.add_argument("--rerun", required=True)
+    sr.add_argument("--approved", required=True)
+    sr.add_argument("--amendment-commit", required=True)
+    sr.set_defaults(fn=cmd_record)
     sv = sub.add_parser("verify")
     sv.add_argument("--history", default=None)
     sv.set_defaults(fn=cmd_verify)

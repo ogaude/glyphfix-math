@@ -1,0 +1,172 @@
+{
+  "amendment_commit": [
+    "8bff9421db6ab8f95e69e527b7775f1356e7b25c",
+    "2026-10-18T18:34:42+02:00"
+  ],
+  "approved": "approved (user reply 2026-10-18 via AskUserQuestion to: Do you approve the freeze amendment: scripts/acceptance.py lines 58-59, RUN_LOCK.json blob, REGISTRY.json evidence path, 5 evidence files moved to evidence/acceptance/?)",
+  "effects": [
+    "scripts.acceptance compare-results stays strict and reports the three amended keys; the published-claim comparison is scripts.release.reproduce, which allows them only through this record",
+    "generate refuses for every arm: the precheck's recorded frozen_code blob no longer matches and both tuned arms are completed",
+    "results.json and its code_freeze record are unchanged; they describe the run as it was scored"
+  ],
+  "file": "scripts/acceptance.py",
+  "kind": "path-constant-only",
+  "module_blob": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac",
+  "module_file": "src/lightonocr_math/acceptance.py",
+  "moved": [
+    {
+      "git_blob": "e1a5a51b9f98d871d584e965abc4ac588fca6075",
+      "new": "evidence/acceptance/results.json",
+      "old": ".planning/phases/05-acceptance-evaluation/evidence/results.json",
+      "sha256": "f506e7b408338858f74e6d6a786d85d5faa475f35631ab220e0459f2435ecfa3"
+    },
+    {
+      "git_blob": "1e451315a4308d9f93aefc166adc80aca1e23047",
+      "new": "evidence/acceptance/flips.jsonl",
+      "old": ".planning/phases/05-acceptance-evaluation/evidence/flips.jsonl",
+      "sha256": "bcedfa4901add8866885861a61f21371fce48a02435244404f60e1d24d46e4bb"
+    },
+    {
+      "git_blob": "d8f176670d4dc9d3ac17597b9d6a93fcaa7a44a5",
+      "new": "evidence/acceptance/env_check.json",
+      "old": ".planning/phases/05-acceptance-evaluation/evidence/env_check.json",
+      "sha256": "a633a199d94a68d9befce91734c0864316c0da5e7e221a6a7839e75b58adbc8b"
+    },
+    {
+      "git_blob": "6de4fa2dc300a701332dd47b9c7a7cbdf1a4345d",
+      "new": "evidence/acceptance/sensitivity.json",
+      "old": ".planning/phases/05-acceptance-evaluation/evidence/sensitivity.json",
+      "sha256": "c5f6dff505a29da575a21400d3e38deb7da2a837bcefb8985d068956b5581889"
+    },
+    {
+      "git_blob": "5dce696ce4286773f89efc6cbbb5e908661ea26c",
+      "new": "evidence/acceptance/ACCEPTANCE.md",
+      "old": ".planning/phases/05-acceptance-evaluation/reports/ACCEPTANCE.md",
+      "sha256": "fac3b6325d09ab77afbee0c32435e976518bc761d2edd362e8d7723d51c7c980"
+    }
+  ],
+  "new_blob": "611504261674544c9296806ba3b6d51630bcf536",
+  "non_frozen_edits": [
+    "scripts/acceptance_sensitivity.py",
+    "scripts/acceptance_report.py",
+    "tests/test_acceptance.py",
+    "README.md",
+    "src/lightonocr_math/leakscan.py"
+  ],
+  "old_blob": "9eb9e4bb6fbc015eb402246f794ab7f36434e29b",
+  "old_commit": [
+    "83e897688a87fc2848b8ebd772ca595677500a29",
+    "2026-10-17T10:09:32+02:00"
+  ],
+  "proof": {
+    "ast_equal_after_substitution": true,
+    "changed_lines": [
+      58,
+      59
+    ],
+    "changed_tokens": 2,
+    "method": "byte-substitution+line-diff+tokenize+ast",
+    "python": "3.12.13 (main, Jun  2 2026, 22:27:15) [Clang 22.1.3 ]",
+    "replacements": [
+      {
+        "line": 58,
+        "name": "EVIDENCE_DIR",
+        "new": "evidence/acceptance",
+        "old": ".planning/phases/05-acceptance-evaluation/evidence"
+      },
+      {
+        "line": 59,
+        "name": "REPORT_PATH",
+        "new": "evidence/acceptance/ACCEPTANCE.md",
+        "old": ".planning/phases/05-acceptance-evaluation/reports/ACCEPTANCE.md"
+      }
+    ]
+  },
+  "reason": "move Phase 5 acceptance evidence out of .planning so the public tree and history contain no .planning path (user decision 2026-10-17)",
+  "registry": {
+    "changes": [
+      {
+        "key": "entries[tag=mathocr-lora-q8:p4-full-1].benchmark.evidence",
+        "new": "evidence/acceptance",
+        "old": ".planning/phases/05-acceptance-evaluation/evidence"
+      }
+    ],
+    "path": "data/models/REGISTRY.json",
+    "sha256_after": "c30002398bbb285dc9e9483b8968224cf53186330c76d459c1a1527de7f67a50",
+    "sha256_before": "ad7007a07a2dbf55dccafa4a03c03b3778819c56530e9d5cbea92479aa902f74"
+  },
+  "replacements": [
+    {
+      "name": "EVIDENCE_DIR",
+      "new": "evidence/acceptance",
+      "old": ".planning/phases/05-acceptance-evaluation/evidence"
+    },
+    {
+      "name": "REPORT_PATH",
+      "new": "evidence/acceptance/ACCEPTANCE.md",
+      "old": ".planning/phases/05-acceptance-evaluation/reports/ACCEPTANCE.md"
+    }
+  ],
+  "report_rerender_identical": true,
+  "rerun_equivalence": {
+    "cold_cache": true,
+    "command": "uv run python -m scripts.acceptance score --mode benchmark (cold render cache, CPU and Docker, no GPU)",
+    "compare": "identical_modulo_amendment",
+    "differing_keys": [
+      "code_freeze.commits.scripts/acceptance.py",
+      "code_freeze.current_blobs.cli",
+      "code_freeze.lock_blobs.cli"
+    ],
+    "fresh_sha256": "ee93d3b8c2f903994ebf40ed490633843b6f844db4e9317167b47be1e06357e7",
+    "frozen_compare_output": "different: code_freeze.commits.scripts/acceptance.py, code_freeze.current_blobs.cli, code_freeze.lock_blobs.cli",
+    "git_head": "8bff9421db6ab8f95e69e527b7775f1356e7b25c",
+    "published_sha256": "f506e7b408338858f74e6d6a786d85d5faa475f35631ab220e0459f2435ecfa3",
+    "render_image": "texlive/texlive:latest",
+    "score_exit": 0,
+    "seconds": 208
+  },
+  "run_lock": {
+    "changes": [
+      {
+        "arm": "tuned-crops",
+        "key": "acceptance_cli_blob",
+        "new": "611504261674544c9296806ba3b6d51630bcf536",
+        "old": "9eb9e4bb6fbc015eb402246f794ab7f36434e29b"
+      },
+      {
+        "arm": "tuned-crops",
+        "key": "acceptance_cli_blob_generated",
+        "new": "9eb9e4bb6fbc015eb402246f794ab7f36434e29b",
+        "old": null
+      },
+      {
+        "arm": "tuned-crops",
+        "key": "freeze_amendment",
+        "new": "evidence/acceptance/FREEZE_AMENDMENT.json",
+        "old": null
+      },
+      {
+        "arm": "tuned-pages",
+        "key": "acceptance_cli_blob",
+        "new": "611504261674544c9296806ba3b6d51630bcf536",
+        "old": "9eb9e4bb6fbc015eb402246f794ab7f36434e29b"
+      },
+      {
+        "arm": "tuned-pages",
+        "key": "acceptance_cli_blob_generated",
+        "new": "9eb9e4bb6fbc015eb402246f794ab7f36434e29b",
+        "old": null
+      },
+      {
+        "arm": "tuned-pages",
+        "key": "freeze_amendment",
+        "new": "evidence/acceptance/FREEZE_AMENDMENT.json",
+        "old": null
+      }
+    ],
+    "path": "data/benchmark/acceptance/RUN_LOCK.json",
+    "sha256_after": "d17ef655e2cf4b5bc79a8873fadba600646ce45fac7766d4902f144b968f63a4",
+    "sha256_before": "81b1a2a79056783aef28c7b43e29440915703d44ac89f191c1b7129e491a3453"
+  },
+  "schema": 1
+}

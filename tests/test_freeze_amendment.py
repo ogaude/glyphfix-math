@@ -235,5 +235,4 @@ def test_verify_uses_default_commit_map(tmp_path, monkeypatch):
 
 
 def test_verify_real_repository():
-    pytest.skip("temporary: the amendment is not recorded yet") if not (ROOT / fa.AMENDMENT_PATH).is_file() else None
     assert fa.verify_amendment(ROOT) == []
