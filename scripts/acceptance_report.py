@@ -5,7 +5,7 @@ from __future__ import annotations
 RERUN = "uv run python -m scripts.acceptance score --mode benchmark --scores-dir <dir> --evidence-dir <dir> --report <file>"
 RESUME = (
     "uv run python -m scripts.acceptance_sensitivity run --mode benchmark "
-    "--results .planning/phases/05-acceptance-evaluation/evidence/results.json "
+    "--results evidence/acceptance/results.json "
     "--records data/benchmark/records.jsonl --resume"
 )
 D04 = (

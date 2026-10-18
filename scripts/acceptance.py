@@ -55,8 +55,8 @@ from scripts.spikes.parity_report import modal_template_offset
 TUNED_TAG = "mathocr-lora-q8:p4-full-1"
 STOCK_TAG = "lighton-ocr3-q8-16k"
 ACC_DIR = Path("data/benchmark/acceptance")
-EVIDENCE_DIR = Path(".planning/phases/05-acceptance-evaluation/evidence")
-REPORT_PATH = Path(".planning/phases/05-acceptance-evaluation/reports/ACCEPTANCE.md")
+EVIDENCE_DIR = Path("evidence/acceptance")
+REPORT_PATH = Path("evidence/acceptance/ACCEPTANCE.md")
 LOCK_PATH = ACC_DIR / "RUN_LOCK.json"
 REGISTRY_PATH = Path("data/models/REGISTRY.json")
 FROZEN_CODE = ("src/lightonocr_math/acceptance.py", "scripts/acceptance.py")

@@ -160,3 +160,11 @@ def test_corpus_dir_is_still_scanned(env):
     _write(repo, f"data/corpus/images/{safe_id(new)}/a.png", "x")
     paths_hit = {lk.path for lk in scan_repo(repo, fs)}
     assert paths_hit == {"data/corpus/x.jsonl", f"data/corpus/images/{safe_id(new)}/a.png"}
+
+
+def test_acceptance_evidence_is_allow_listed_but_train_data_is_not(env):
+    repo, fs, new, _ = env
+    assert "evidence/acceptance/" in ALLOW_PREFIXES
+    _write(repo, "evidence/acceptance/x.json", json.dumps({"arxiv_id": new}))
+    _write(repo, "data/train/x.jsonl", json.dumps({"arxiv_id": new}) + "\n")
+    assert {lk.path for lk in scan_repo(repo, fs)} == {"data/train/x.jsonl"}

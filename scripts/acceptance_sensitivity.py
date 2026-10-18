@@ -6,7 +6,7 @@ CPU for the stock and the tuned model, scores both CPU prediction sets and repor
 writes results.json or any other verdict file.
 
 Usage (from repo root; nothing else may be using the CPU heavily, 8 GiB RAM must be free):
-  uv run python -m scripts.acceptance_sensitivity run --mode benchmark --results .planning/phases/05-acceptance-evaluation/evidence/results.json
+  uv run python -m scripts.acceptance_sensitivity run --mode benchmark --results evidence/acceptance/results.json
   uv run python -m scripts.acceptance_sensitivity run --mode benchmark --results ... --resume --max-hours 6
   uv run python -m scripts.acceptance_sensitivity run --mode dev --ids-file data/runs/p5-precheck/precheck_ids.txt --limit 5 --out-dir data/runs/p5-sens-dev
   uv run python -m scripts.acceptance_sensitivity summarize --results ...
@@ -43,7 +43,7 @@ RAM_NEEDED = 8 * guard.GIB
 DEFAULT_BINARY = "/usr/lib/ollama/llama-server"
 DEFAULT_PORT = 18081
 ARMS = ("stock", "tuned")
-EVIDENCE = Path(".planning/phases/05-acceptance-evaluation/evidence")
+EVIDENCE = Path("evidence/acceptance")
 
 
 def _now() -> float:

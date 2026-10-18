@@ -1,0 +1,2169 @@
+{
+ "acceptance": {
+  "decides": [
+   "render_identical"
+  ],
+  "engine": {
+   "ollama_version": "0.40.1",
+   "same_engine_both_arms": true
+  },
+  "generation": {
+   "lock": true,
+   "n_error": "scored-as-failure",
+   "policy": "resume-only"
+  },
+  "headline": {
+   "also_report": [
+    "mcnemar_exact"
+   ],
+   "bootstrap_B": 10000,
+   "bootstrap_seed": 0,
+   "ci": 0.95,
+   "metric": "render_identical",
+   "pass_if_ci_low_gt": 0.0,
+   "test": "paired_paper_cluster_bootstrap"
+  },
+  "per_class": {
+   "classes": [
+    "prime_l",
+    "dropped_prime",
+    "greek_latin",
+    "decoration",
+    "i_1",
+    "other"
+   ],
+   "denominator": "gt_present_or_either_arm_error",
+   "few_events_statement": "not enough events to claim",
+   "ids": "all_common_ids",
+   "min_stock_errors": 30
+  },
+  "regression": {
+   "control_glyph_classes": [
+    "prime_l",
+    "dropped_prime",
+    "greek_latin",
+    "decoration",
+    "i_1"
+   ],
+   "control_glyph_rule": "tuned_error_classes_intersect",
+   "empty_class_label": "render-only",
+   "max_r2w_over_stock_right": 0.06,
+   "max_r2w_over_w2r": 0.2
+  },
+  "secondary": [
+   "exact",
+   "render_tolerant",
+   "glyph_error_mean",
+   "spacing_insensitive_render_identical"
+  ],
+  "sensitivity": {
+   "blocking": false,
+   "chunk": 50,
+   "engine": "llama-server-cpu",
+   "order": "r2w-then-w2r-sorted-by-id",
+   "scope": "all-flips-both-arms"
+  },
+  "spacing": {
+   "commands": [
+    "\\,",
+    "\\;",
+    "\\:",
+    "\\!",
+    "\\quad",
+    "\\qquad"
+   ],
+   "crops": "required",
+   "decides": false,
+   "pages": "computed",
+   "pattern": "\\\\(?:(?:qquad|quad)(?![A-Za-z])|[,;:!])",
+   "replacement": " "
+  },
+  "transfer": {
+   "blocks_crop_verdict": false,
+   "fail_statement": "crop-level win, page-level transfer not shown",
+   "pass_if_ci_low_gt": -0.03,
+   "pass_if_delta_gt": 0.0,
+   "unmatched_equations": "failure"
+  },
+  "version": "1"
+ },
+ "acceptance_sha256": "7b42234c9078a5b1005352395cfe00300536b749a56c99eb8a3ef447e02aabc2",
+ "code_freeze": {
+  "commits": {
+   "scripts/acceptance.py": [
+    "83e897688a87fc2848b8ebd772ca595677500a29",
+    "2026-10-17T10:09:32+02:00"
+   ],
+   "src/lightonocr_math/acceptance.py": [
+    "0a3aff0e66504ff2b8d69f40c61cda7221c28c9d",
+    "2026-10-17T09:59:12+02:00"
+   ]
+  },
+  "current_blobs": {
+   "cli": "9eb9e4bb6fbc015eb402246f794ab7f36434e29b",
+   "module": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac"
+  },
+  "lock_blobs": {
+   "cli": "9eb9e4bb6fbc015eb402246f794ab7f36434e29b",
+   "module": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac"
+  },
+  "lock_started": "2026-10-17T08:23:33Z",
+  "pin_commit_time": "2026-10-17T09:59:12+02:00",
+  "pinned_digest": "7b42234c9078a5b1005352395cfe00300536b749a56c99eb8a3ef447e02aabc2"
+ },
+ "comparability": {
+  "crops": {
+   "comparable": true,
+   "problems": [],
+   "tuned_digest": "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737"
+  },
+  "pages": {
+   "comparable": true,
+   "problems": [],
+   "tuned_digest": "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737"
+  }
+ },
+ "dev_reference": {
+  "candidate": 0.6490280777537797,
+  "ci": [
+   0.21452385327844753,
+   0.2949039353114432
+  ],
+  "delta": 0.2548596112311015,
+  "stock": 0.3941684665226782
+ },
+ "env_check": {
+  "checks": {
+   "ollama_version": {
+    "actual": "0.40.1",
+    "expected": "0.40.1",
+    "ok": true
+   },
+   "projector_blob": {
+    "actual": "fd5acde1a7a7439b3f9a720d3cead67378beeaabbecc57fe4b30a7f9b301b102",
+    "expected": "fd5acde1a7a7439b3f9a720d3cead67378beeaabbecc57fe4b30a7f9b301b102",
+    "ok": true
+   },
+   "stock_digest": {
+    "actual": "9b84c5ce75a08d0ee9d76896801cce0d1480208c60db584e29c2fde3d93cfaa0",
+    "expected": "9b84c5ce75a08d0ee9d76896801cce0d1480208c60db584e29c2fde3d93cfaa0",
+    "ok": true
+   },
+   "stock_params": {
+    "actual": {
+     "num_ctx": 32768,
+     "num_predict": 24576
+    },
+    "expected": {
+     "num_ctx": 32768,
+     "num_predict": 24576
+    },
+    "ok": true
+   },
+   "template_sha256": {
+    "actual": "d5ddb788d5f3df12e32244954037eb535409d24eeb48c2429d7588af4e7b69a7",
+    "expected": "d5ddb788d5f3df12e32244954037eb535409d24eeb48c2429d7588af4e7b69a7",
+    "ok": true
+   },
+   "text_blob": {
+    "actual": "103d473ee394028b772371a3b98428c384494703d3589b2e2afb5f8491b2146c",
+    "expected": "103d473ee394028b772371a3b98428c384494703d3589b2e2afb5f8491b2146c",
+    "ok": true
+   },
+   "tuned_digest": {
+    "actual": "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737",
+    "expected": "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737",
+    "ok": true
+   }
+  },
+  "pass": true,
+  "readiness": {
+   "frozen_code": {
+    "scripts/acceptance.py": {
+     "blob": "9eb9e4bb6fbc015eb402246f794ab7f36434e29b",
+     "clean": true
+    },
+    "src/lightonocr_math/acceptance.py": {
+     "blob": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac",
+     "clean": true
+    }
+   },
+   "gpu": {
+    "holders": "rocm-smi pids:\n============================ ROCm System Management Interface ============================\n===================================== KFD Processes ======================================\nNo KFD PIDs currently running\n==========================================================================================\n================================== End of ROCm SMI Log ===================================\nollama ps:\nNAME    ID    SIZE    PROCESSOR    CONTEXT    RUNNER    UNTIL",
+    "mem_available_bytes": 25330065408,
+    "timestamp": "2026-10-17T08:20:34.081198+00:00",
+    "vram_free_bytes": 17027596288,
+    "vram_total_bytes": 17095983104,
+    "vram_used_bytes": 68386816
+   },
+   "mem_available_bytes": 25330065408,
+   "ollama_ps": [],
+   "pin": {
+    "acceptance_sha256": "7b42234c9078a5b1005352395cfe00300536b749a56c99eb8a3ef447e02aabc2",
+    "clean": true,
+    "commit": "0a3aff0e66504ff2b8d69f40c61cda7221c28c9d",
+    "commit_time": "2026-10-17T09:59:12+02:00",
+    "digest_now": "7b42234c9078a5b1005352395cfe00300536b749a56c99eb8a3ef447e02aabc2"
+   },
+   "server_env": {
+    "OLLAMA_HOST": "127.0.0.1:11434",
+    "OLLAMA_KEEP_ALIVE": "0"
+   },
+   "server_env_sha256": "6fd9c3c0bec9c0cb92455f8d9dd2a8531111b4da0be5b7f303856e44eea3c346"
+  }
+ },
+ "git_commit": "9cf2e65d387a24710b0a9c0fc7f5fcea6703a303",
+ "headline": {
+  "ci_high": 0.2545726017170586,
+  "ci_low": 0.1983146619432267,
+  "delta": 0.22619047619047622,
+  "excluded": {
+   "stock_none": 0,
+   "tuned_none": 0
+  },
+  "flip": {
+   "both_right": 1081,
+   "both_wrong": 871,
+   "mcnemar_p": 8.663134853316847e-129,
+   "n": 2688,
+   "right_to_wrong": 64,
+   "wrong_to_right": 672
+  },
+  "n": 2688,
+  "n_papers": 150,
+  "pass": true,
+  "r2w_ids": [
+   "0b0833917031f48b",
+   "0b61a9a78307c3e3",
+   "0e5aa9699dbb841e",
+   "0f11d6bccde326a2",
+   "170e7b2a14ab4407",
+   "1f5eaadb39dde87c",
+   "234152363d0c8040",
+   "2a524d411a0900f5",
+   "2a7b83613031942d",
+   "2ee70ee0db39bc50",
+   "3653b6d65abc9cc9",
+   "398dbf95eab3c81a",
+   "3a55890759007789",
+   "41294c91154ec529",
+   "4d1d1a5766b3f1a7",
+   "520ecddb63c93489",
+   "543815fadc943a5e",
+   "638d5e7e4fccf94e",
+   "6a6dae63a4eb6954",
+   "6b21482f50ffca6c",
+   "6f8d2ea5febc3a5a",
+   "6f917c2a9cd7bb44",
+   "721fa1cf96877159",
+   "7615c8262c8d3819",
+   "7619c78ea86d0542",
+   "788fee36db46b3bc",
+   "81308fcbf1978fe4",
+   "8aee28be7d890b5d",
+   "8bf48c9a424e80a7",
+   "8f240606c5c9ec0f",
+   "97e5de92949fa787",
+   "a3072c6f7d7466f2",
+   "a3ca13eaad1a3137",
+   "a43a3e701df5c35f",
+   "a522c390f733bd90",
+   "ab772b95faa8bbb6",
+   "b14938b742900ad6",
+   "b2ff12e3c8190618",
+   "b559cade5a1422e0",
+   "b87c25057214fbc5",
+   "bbe520389eb9facd",
+   "bc31105408b64d22",
+   "bce64273cf55d5bd",
+   "bf924bcef78ed9d8",
+   "c5dd20ebef239dfe",
+   "c96d302e6a0b9800",
+   "cb787af37df71ed2",
+   "db7f66486f5e43dc",
+   "dc0e43575b0472c6",
+   "dc961f4bbfd2a701",
+   "ddb988b869c86bc4",
+   "e3003fc2cd27b791",
+   "e4ebca6d2979fb0d",
+   "e561a8bca8c6f59e",
+   "e629aa660be91f9c",
+   "e92b8d697666027b",
+   "e97b66aaf962f8e8",
+   "ebd12c084915a5f4",
+   "f4e124975798b5b1",
+   "f59a474d2535ee8f",
+   "f7560633e13aa6a5",
+   "fa0c1f9e07116e38",
+   "fb772bc2fe53132f",
+   "fd1df86c3c5cfd4a"
+  ],
+  "reasons": [],
+  "regression": {
+   "max_by_ratio": 134.4,
+   "max_by_share": 68.7,
+   "r2w": 64,
+   "ratio_ok": true,
+   "share_ok": true,
+   "stock_right": 1145,
+   "w2r": 672
+  },
+  "regression_ok": true,
+  "significant": true,
+  "stock_rate": 0.4259672619047619,
+  "stock_right": 1145,
+  "tuned_rate": 0.6521577380952381,
+  "w2r_ids": [
+   "0027bf75f4ba0aca",
+   "002b19b9d9bb75d5",
+   "0080d06e332e17aa",
+   "00b02053454dcba5",
+   "00cdc2245ee49385",
+   "01031e216e38d4d1",
+   "01b81bf325e99395",
+   "01cdfcbffbee6584",
+   "02a53188b4a01628",
+   "02f055a5c9461840",
+   "033a5c11dea9da55",
+   "04dd9007ddfb5600",
+   "059068dde1e0c259",
+   "05a23dcd44f6e472",
+   "0741c94f61eb97f3",
+   "07663bb886f2cff5",
+   "07b484651da0247d",
+   "07e23c5b57570e4e",
+   "08247cac9bb01236",
+   "085450821f739938",
+   "08817e959e25f9cb",
+   "09089a85340f564d",
+   "096458a7a49fc822",
+   "0ac2f364a8a59422",
+   "0b388a0042bb5578",
+   "0bfbeba7077c27ed",
+   "0c5077bdf20104bc",
+   "0cad493394b62b07",
+   "0cfb232755ba0568",
+   "0d22be897595e47a",
+   "0d5ffaf5c301612f",
+   "0dc96d882ad22625",
+   "0dfdefcd0b4830a4",
+   "0e91df82c8f8008d",
+   "0eab0833ef71ce6e",
+   "0f5042482f3f53f2",
+   "0f56333468fe605d",
+   "103698f62d1c4c89",
+   "108cd933c606febc",
+   "10f34b26d21da763",
+   "11bd813a96999215",
+   "11de65dcdc9577a1",
+   "11f92ad2ee3fec44",
+   "12400aa415b68db8",
+   "12d59029689feaaf",
+   "12e83aecec2b2d5b",
+   "12ec91e5d1ac2380",
+   "13559c2dd726c5c0",
+   "137cf347a68206bd",
+   "137fe89ef151bbef",
+   "143c8ee195b7db2d",
+   "14c6dc998fc379d6",
+   "1559313a783fb939",
+   "1562bed94ad703a4",
+   "156e3bbc42b4875e",
+   "1578c1fdc185d7c0",
+   "16959e28163e9cae",
+   "17a1811492e13cc5",
+   "17b7c3914c56aca5",
+   "17d78f45f28e1178",
+   "182e625e512af662",
+   "18395b29fe0f19ef",
+   "188a8c111ee15b14",
+   "192f26cda868674a",
+   "193199d9dee4b0af",
+   "195393ebe54181f2",
+   "1a02072be999be3a",
+   "1a4156e6fafd4a5f",
+   "1ac5e46419f79cec",
+   "1b6eca90b5af887e",
+   "1b6ff276b6019190",
+   "1ba0d85e5279385a",
+   "1bdf39d411723478",
+   "1dcb4d2f2bd8b398",
+   "1ec541a59750fd58",
+   "1ed6f7ade572ecce",
+   "1edf2aeb5c947ddc",
+   "1f20188eaa66c5f7",
+   "1f53a55c610bd4e1",
+   "1f7d5c2a8cd30122",
+   "1f83342dad22fd3d",
+   "1f997677a084868e",
+   "1fd16f633b2356ef",
+   "200c2de466104777",
+   "20ad0cb628e2cfe8",
+   "20fa8847777a88da",
+   "2108891e4f999b00",
+   "2123601457d480ab",
+   "21b52badb20f9c04",
+   "222c963c8b8ca649",
+   "226056646731d1aa",
+   "22b0ee21ad76c77e",
+   "22e8866d2a892c6e",
+   "2384aacb74b5fbb7",
+   "23b77359896fc12f",
+   "2478ce8dc381dfdf",
+   "2483abacbae86fd2",
+   "249ff03e1eeeab15",
+   "255f0bbf73e330ef",
+   "259c9a314971c0fc",
+   "2616fdcee806411a",
+   "267e691be115f032",
+   "26f35aaaf20d920b",
+   "270aeffad4163300",
+   "2725c7ae425e4b10",
+   "2781abc6e81cb4b7",
+   "27f0d1fe1623203b",
+   "2830d318622901ea",
+   "2841ac95fcb9db14",
+   "28a912306dbbc7e6",
+   "28cd5e48b1976daa",
+   "28f1e1c89f2b9026",
+   "291b2fcb332a5a78",
+   "29b51b31a577a685",
+   "29ca6a8a6fa42bb3",
+   "29d9c163783015d0",
+   "2a62da66600c85f7",
+   "2aaae11b05ebd79b",
+   "2ad307df4810c104",
+   "2aeb63d4b1121fae",
+   "2b02039c7db11711",
+   "2b4a2e6e9d77b9fe",
+   "2be499d90814d1d2",
+   "2c5b09774b1501c6",
+   "2c99cb370d993864",
+   "2cb8a3fb712901ea",
+   "2e3f2cad5cc386b0",
+   "2e824be1684c4e2a",
+   "2f827298aac91a11",
+   "2f8e0c4a47e7b4aa",
+   "3073ecf6c3eb7c3a",
+   "308bd48f4e097138",
+   "30ad93d93caae4a6",
+   "30dcbaa458763507",
+   "312d70417e4536b4",
+   "312f547ddda7581a",
+   "32d8dbe1f7dc54b5",
+   "332fdb406c29b0ed",
+   "339a0041f808acb7",
+   "33d19fd8981d6add",
+   "340a8f194f364943",
+   "3427e025f0d1293e",
+   "348bb7d373a60a21",
+   "358c5a41a92b2708",
+   "35df3a4dcbd69499",
+   "363df5930a6dce75",
+   "36f752cd2e98dfe4",
+   "3791e776a2a92e2d",
+   "37c92eba6620bb27",
+   "380d2c9bbb06c9fb",
+   "38444346803fbae8",
+   "395856786a909427",
+   "399bf48c9d06e84b",
+   "3a0f182fa15cd120",
+   "3a3592a62cacdde3",
+   "3a7ba626b9060910",
+   "3ac7cc056bbf5987",
+   "3ae28c28a9513a54",
+   "3b8b5c144e1eb0d0",
+   "3b928e65c9dec8fc",
+   "3c3b4e9c9536ae43",
+   "3c5815cda6594796",
+   "3d76a63d8327112a",
+   "3d9091577814f9ad",
+   "3e2f66c05c25e043",
+   "3e35edca08b6e279",
+   "3f287333029a0314",
+   "3f39e4389c321323",
+   "3f7ac52932fe5538",
+   "3fb758f8f7f6ab72",
+   "3ff55707fef6b60d",
+   "40c4df028461cf76",
+   "40f289883dacd403",
+   "411c5ee4187648de",
+   "41631db0926b53fc",
+   "41dfa918f39e4e0b",
+   "41e93f0194249f92",
+   "421b556c7416a2e4",
+   "427f02f29367840e",
+   "428a5f5f8bedcf56",
+   "429b165d12d735bd",
+   "42aed7bd63f12c95",
+   "438088f0eca49e5c",
+   "4381bab73b6a334d",
+   "43ae77c39b36d7a4",
+   "4416874958602991",
+   "44abbdfaca179938",
+   "44dc00a1a62b2db8",
+   "45224c3b41eb8f16",
+   "458090327f7deb81",
+   "45a0db2f4a1c0666",
+   "45ce9afea659d996",
+   "45ea120866a042df",
+   "470bf8a75f74f332",
+   "47a76df0dcb927d4",
+   "47afeb09096b0e01",
+   "48682e9afd2220a5",
+   "48870ab42465f80b",
+   "49181fb20151c014",
+   "49a38c1a7d0e270d",
+   "4a79e04ec334b923",
+   "4b50a224d70c5ee2",
+   "4b5b5c9134675eac",
+   "4d4dda74b725ed5c",
+   "4d7a1d56f4320076",
+   "4d93b82b1c8f43c6",
+   "4e02b648fdaa9f56",
+   "4e3ee823f3fdd711",
+   "4edd7e7846be4f1e",
+   "4f2ec34c9d12bcbb",
+   "5018a16c2b64f6c1",
+   "513c0e3ac1593f9a",
+   "51644213eab27d01",
+   "519056d0baf523cd",
+   "529af55299c784d7",
+   "52bc0ae5e053a619",
+   "52e3ceee21a49e26",
+   "53081c3def151c5a",
+   "5318618a34809460",
+   "534b36fa13deb3a0",
+   "53f724e06e79b312",
+   "54405b997d28d1df",
+   "5452f25b5c150d68",
+   "54537bb166a97460",
+   "5458b8f24fece35a",
+   "54701942696bfbd1",
+   "54cf3cf821335079",
+   "54efc96144971ce5",
+   "556c10bf2c05a302",
+   "55e5fd8b8350d19e",
+   "567f7dc71680dc02",
+   "5695f040c9344034",
+   "569f3667e7c217a8",
+   "56e9cc3a268ac0ef",
+   "56f57b92dbdc9b85",
+   "56fdf1f5a5cbb3f5",
+   "57bdc981988d4635",
+   "58ac2818207842c7",
+   "58b72f2991c4d272",
+   "58ec14ccc6198d92",
+   "58f0a7b28cd6dacf",
+   "5914af60f7c94b04",
+   "593c5ca9046181cb",
+   "59b1986681458903",
+   "59c5b2b96b6fe05a",
+   "5b8a85f96e4f3f9e",
+   "5bf0535ff605a00a",
+   "5c6d20b01ae69268",
+   "5cb77f0def397258",
+   "5cbeb389ec0b1ddb",
+   "5dda29fb9dc304ba",
+   "5e2d0f04e9cde2e9",
+   "5e428cfb4229cb19",
+   "5e4e8010b560c9ec",
+   "5e561198ff45edb3",
+   "60003d737b129544",
+   "603eaac4a3c7d940",
+   "60e0a1220f3de051",
+   "61fa6caa84fcd196",
+   "627dc990e03590c4",
+   "6313c540b6ddcf58",
+   "6364b259fdf95ae4",
+   "63d9401c3a0dde57",
+   "64d1d07f706fba4f",
+   "64d46a74cbd10b76",
+   "657efb21e6712d7b",
+   "666cecbde5dde5b8",
+   "6694436793ebfdbd",
+   "669b85d70fdf2185",
+   "673fda65f3c75095",
+   "6813baa4e5d0f7f9",
+   "6814bb91c291acaf",
+   "68b09cc75174ad13",
+   "68c68326e1dc64a1",
+   "68c798084f6d23de",
+   "699e998379bd7570",
+   "6a1a4806f0688bf3",
+   "6a4ebff7f8d4053d",
+   "6a59cc2c22892296",
+   "6aa18d3e84fdc2c1",
+   "6ab8440c544a573e",
+   "6b0cd09bc307ba61",
+   "6bc893331c9916c7",
+   "6c08b160e4279c1a",
+   "6c388de4168dcffe",
+   "6c57c68de51845ca",
+   "6c95bfae81454b57",
+   "6d13c3c381290ed3",
+   "6d1ac00a836f2955",
+   "6d39dc2612b132b3",
+   "6d700ed38309c796",
+   "6d805fe2ded25836",
+   "6dd0e8aee7ac5def",
+   "6e324214391079d6",
+   "6e5d66c8a30baa79",
+   "6f11be8feafdc31b",
+   "6f22d25bb135747b",
+   "6fcdd13e2234cc4c",
+   "705c98097af4f3c1",
+   "70c1779fa7805bf4",
+   "71cdb0e696467277",
+   "72851ba557df29a2",
+   "729bd067e43ae1ca",
+   "72aa750c5f87ee12",
+   "72fe8e87849abb9d",
+   "73adc651d160cd19",
+   "748c019b44275945",
+   "75a5d7f3419d07fa",
+   "76368711dd2fee5e",
+   "7735a6dea68c6a92",
+   "77481fbcb360e17f",
+   "77e96a02a38daf7c",
+   "78262f9c87e83bd3",
+   "7876a359789c104b",
+   "78c159409f2fe978",
+   "78c1cc9df3d836f3",
+   "7a998d44affe1d0e",
+   "7b02f625e8e15246",
+   "7b248e4e7c839f5b",
+   "7b9ed86058782b04",
+   "7baad2bf0b72e81f",
+   "7c5f87ac3d81dd1e",
+   "7c63c5253f81eb2e",
+   "7c823ddfaca0d511",
+   "7cbd27094b3a3aa1",
+   "7d738b4e4069db0d",
+   "7d99bbd50a38e252",
+   "7deca8f327428440",
+   "7e345d5b5a38d226",
+   "7ed64f2311b9552d",
+   "7f23e51c605418bb",
+   "7f701c5efb645c93",
+   "7f72bd1e0114745e",
+   "7fd00833bac2abc8",
+   "7fe7f69cc36678d7",
+   "805588e481be8c0e",
+   "80e44f97b6ac7cc7",
+   "817c0c1ca9b5f523",
+   "81d02ba0627fab1f",
+   "8210795bd445cd83",
+   "8235f464fb92cdac",
+   "82366762fd4cf9ad",
+   "82c56c0b105e0f1b",
+   "831832b8306575b6",
+   "8334dc34d7c76e53",
+   "8372c344c55c3f0c",
+   "8424e5e5e48206f9",
+   "858a93cdf0c94587",
+   "8629dc964a221f1e",
+   "864cdc4849b42d73",
+   "869931cc7d7a1306",
+   "869d02569c6ff529",
+   "8710fac32aa1bdae",
+   "871f69513cfcc35a",
+   "873b652c0106f2d0",
+   "87861467389dd906",
+   "87bea66a47b405a4",
+   "87ed5f64da46ab27",
+   "87f4d7a9f0af179c",
+   "87f7d7eca63dad4c",
+   "88510d1e95b36eef",
+   "8a0219bfe8c2eb87",
+   "8a0f1f3f8917ae5b",
+   "8a11b6b033241ae9",
+   "8a23d82ec9ca5383",
+   "8a305e1616ce3a99",
+   "8add90cdfa5a0566",
+   "8afad1af64f1ab9f",
+   "8b5341ae05f119ed",
+   "8c93d9002b8c5946",
+   "8c98acda75614a71",
+   "8d34f742fc4841bd",
+   "8d682ea18412fa9a",
+   "8dabe90f204b02b5",
+   "8de1da56adc72840",
+   "8e33f93f2ed9aecc",
+   "8e44255d3c969c2c",
+   "8e52e30afec26148",
+   "8ede81a05666aeed",
+   "8f2825937c46de56",
+   "903c8b987982c7db",
+   "905f70d8008f71a1",
+   "906b464e563c5248",
+   "90717e0ed0daacfd",
+   "9080ab1b0255674d",
+   "91762c3dace89949",
+   "924da9db0210ca2e",
+   "929be85dcfc70edb",
+   "9326ed184f5efb8b",
+   "939233890bc9a04b",
+   "939d567461f48e05",
+   "941020e86c4a4679",
+   "9503a79d5395a305",
+   "950f3b6e0b78376c",
+   "95409ad9d4591c94",
+   "95518b7b5922c93f",
+   "96474fceab696b74",
+   "96a59bd3e7805bd5",
+   "96c17b408fd8d3d0",
+   "96f0091e89776ab1",
+   "97323b054926ee4c",
+   "97f8b5d91dd792e7",
+   "98351b885af94642",
+   "9861c0b44da7cdb4",
+   "9920479effcfb2bd",
+   "99360035746039ed",
+   "993b9f7eb3ca0167",
+   "9975df695807c070",
+   "99c6bdc7ab50250c",
+   "9a2c9e1a645f4721",
+   "9a6c4ff027f90db7",
+   "9a8fc31264a6cede",
+   "9afb074c6df23c90",
+   "9ba2a9af98ea9525",
+   "9bae018c099cc2a1",
+   "9bd35921067605a4",
+   "9bd7a0aac8ba3d89",
+   "9c47d588bb91ee09",
+   "9d321a9835424df5",
+   "9e3c8e3e84961d52",
+   "9f498ec3477c75a4",
+   "9f6f10c80dc03db2",
+   "9fbdada5ca6428d0",
+   "a006d77a9ad41e0d",
+   "a0785f68157956d3",
+   "a1045022e370325d",
+   "a1b89a9835997821",
+   "a1d2d777ddbb051c",
+   "a211d054f140e483",
+   "a23e084ca4facfbb",
+   "a25738f03dbdb43e",
+   "a32ab59512494c7d",
+   "a383afbd40755d17",
+   "a436c23af8925d01",
+   "a56bad42058fc5a2",
+   "a5ad61a3af513dd1",
+   "a5bb0aa82b97af2f",
+   "a5fdafabc955bb91",
+   "a69516a2f3673e56",
+   "a6c8678c13c6b7df",
+   "a79ee2587ce3b9b8",
+   "a7c2f970885e9a6f",
+   "a7e017e3ca91fffc",
+   "a8b88717e17f4967",
+   "a9aed1d86e438297",
+   "a9baff1f5b7695fc",
+   "a9ec49d74541ef0a",
+   "aa8fa4958fbdea27",
+   "aac07a851423dc1f",
+   "ab93db4e0899ed82",
+   "abed41ca827d9951",
+   "ac431d003be66d7d",
+   "ac8785cb56e65dc1",
+   "ac97b7b74792ce21",
+   "ad6e009798c227b3",
+   "ad83fc3d6ac46045",
+   "adad0b1943398202",
+   "aeded66f4339567c",
+   "af0c9cb34b907991",
+   "afd059c4f1e7a61d",
+   "b05696ef3b29305d",
+   "b070457e352d24f3",
+   "b16ece71869695e4",
+   "b1833c6558f2ce72",
+   "b19808ac5ee62fb0",
+   "b19aaa543af93281",
+   "b1abefc815d31cbb",
+   "b27a4bc8eb06278d",
+   "b2831838475946f0",
+   "b324c7b6f72d58f1",
+   "b36eb2171761cab4",
+   "b3ba2dfc308c1dba",
+   "b409f3d5503e7a3a",
+   "b4a9a0c91387ea91",
+   "b4beef1261789ae6",
+   "b50ba4b587fcf2a3",
+   "b5873cc6eeec0853",
+   "b5f8d028b7c7ffae",
+   "b5ff8a1efc8c7777",
+   "b6075b36516c2221",
+   "b63a89073ad17a88",
+   "b65885381179c0cd",
+   "b71a0fedb445c67f",
+   "b752c65b9f264d70",
+   "b784de2c188974cc",
+   "b794207ecab2d3ec",
+   "b7ac73ad5504df40",
+   "b7d917fdcecdcd72",
+   "b7fdb357c6a05f05",
+   "b83ad66a5ba860ec",
+   "b8c09d146838d4f2",
+   "b8d5e34ac6ec1845",
+   "b9906fb64d6cae12",
+   "b9a848e22e560a3c",
+   "b9ec6ca446824653",
+   "ba5403fb33fb10ac",
+   "bb505c2cfa933e7a",
+   "bb93d1ed2de02a31",
+   "bbd8eaad42151205",
+   "bc0d631c7f10707f",
+   "bc68a66d7517aca2",
+   "bcc41d7175ccb7f9",
+   "bcfc283b020bbd77",
+   "bd166470a34cff0c",
+   "bd3d9000f0a77bed",
+   "bd42e88884e39d2c",
+   "be17720beb190ee3",
+   "bebc17a98aeacd3a",
+   "c006d05e95476bfd",
+   "c072a7980dbbde41",
+   "c0cd69261ae28875",
+   "c182ac1447ea8276",
+   "c18605af27152cce",
+   "c21027445d399d47",
+   "c2493a06ce0cf7af",
+   "c27122d746920716",
+   "c2a9ef5670238940",
+   "c2e59b1fd5c1771d",
+   "c3644946e8790cf3",
+   "c3bce450aa4c9380",
+   "c40eecfa774609f0",
+   "c4407a6b6ce55a7a",
+   "c47a67bcbc19205d",
+   "c4a02d8ce7271ce5",
+   "c4e4f9d943756ef2",
+   "c4e9504ec1ba95ce",
+   "c61eef87e8831a43",
+   "c6c4f47958cd6ea1",
+   "c79f3d92fa75d508",
+   "c7d6c7177716848f",
+   "c89071827b4f7ff1",
+   "c9497b666a1c8d2f",
+   "c98d6d91737c5c4f",
+   "c9d04be66483fb78",
+   "ca1a85497130f5c5",
+   "ca6fe79741b9091e",
+   "cc2acf611873fc9a",
+   "cd7217d4f66e32f7",
+   "cdea90202d4c85dc",
+   "ceaef641376a9770",
+   "ceb256e9de7ac692",
+   "cf01e8bca6b24d90",
+   "cf02fa0d3abc237c",
+   "cfa06c1ee0630d1f",
+   "cfb6834f69c70971",
+   "d04d233e485188b7",
+   "d10c0b7749f87ad5",
+   "d10c58572e4f9261",
+   "d1ab8ac99a4828b3",
+   "d1d828f8421bb621",
+   "d20b4d9d70fce3e4",
+   "d249c5959e80b031",
+   "d331f3fc52120dcd",
+   "d3ea17be7ed000fc",
+   "d40af278de026771",
+   "d430ca1ea4cb0e8f",
+   "d4fba0579c7306e7",
+   "d5aee316603c33d5",
+   "d6ccc4150d8e6faa",
+   "d78d863b64135441",
+   "d7d1867dce5aae41",
+   "d81703a4c05027b9",
+   "d82bfdf4d5243464",
+   "d87b2bccf71ae6e5",
+   "d920b7bf0ce6450b",
+   "d9610c39dbd56d20",
+   "d9f2a564e8c7a8ac",
+   "da841ac6bfd6a6a4",
+   "dabe6eba46077f28",
+   "db7bc7de13785326",
+   "dbf5ad63a232809b",
+   "dc977104acb5c3d9",
+   "dca764309bfb24f1",
+   "de6c334ebb9d31f5",
+   "def9f08c43203fd0",
+   "df524d286a671c29",
+   "df6b0e11ba6c8c64",
+   "dfa0a2f28f255c43",
+   "dfdfe0ee10f245f1",
+   "e0650ced876f6c01",
+   "e06d91d2502d7ebf",
+   "e152c31eb333edb4",
+   "e24e27648c6f337c",
+   "e2599689de933c11",
+   "e2afd26f51597b8c",
+   "e35be272285b6525",
+   "e36ac2d57083a993",
+   "e3af47432b660543",
+   "e3b59354809ae791",
+   "e3bbf49fc3d3dbde",
+   "e412fbfd312b45e1",
+   "e445aafc09b3b58d",
+   "e50f6469a46abe1f",
+   "e53e4f79d02102cb",
+   "e57885a3c0719684",
+   "e599dc58cfe8d017",
+   "e628aa4695f8848e",
+   "e644f8462d65cc7b",
+   "e6ac80541dda81a0",
+   "e72ec009fe7f1665",
+   "e82ff09b0c6a9d15",
+   "e85516cbfef5d4c1",
+   "e87525a40473b830",
+   "e8bbf5cbc94c303c",
+   "e943a7920c56203b",
+   "e95dbebc4aa25304",
+   "eae68ec62ea1976f",
+   "eb5fd6a73e1ff7bd",
+   "eb7a6c1127f809a5",
+   "ebcc69a3d88dec60",
+   "ebe61fc2a4c4b5c2",
+   "ec2d1f9f9e922f55",
+   "ec6a7470c79b58c5",
+   "ecc2ef2eaeea2227",
+   "ecd39d02b5a3120e",
+   "ed4854f69b8b1020",
+   "ed4b1010ea244eb2",
+   "edee0a05a690ad58",
+   "ee445c0f6302658b",
+   "ef55ff22c3556ed6",
+   "ef8071ad3ef582b5",
+   "efe3da3ce26898c6",
+   "f012dd793a47a7b3",
+   "f0556aeae750d2cb",
+   "f0cf15696d0adf14",
+   "f13cdfdbeba06a9f",
+   "f14c9498b0072107",
+   "f176763c2e329bc7",
+   "f1baf7c2b1f91b2d",
+   "f1e15ae0ad0d3021",
+   "f1fc079baa403263",
+   "f2742efa2ee176f3",
+   "f2752670579f53d5",
+   "f2a191e8469b204f",
+   "f2dd0c5cfdb46929",
+   "f322d62c1b45a33a",
+   "f3cfe7623ef46232",
+   "f4515fd26bde7b26",
+   "f45d263b2a7ead85",
+   "f4eb8d515fee3e47",
+   "f50a2e942e17ae19",
+   "f5768fa26b8d10eb",
+   "f5b980d39c6131fc",
+   "f5cdd92a178719f2",
+   "f6b762d7358198bb",
+   "f7b7a1a7cfc9c354",
+   "f7c103b98cfefb1f",
+   "f7ff80a795928e7f",
+   "f86123f70c24925a",
+   "f86ea803c39be429",
+   "f89c1317c7760205",
+   "f90b48313b2df8c3",
+   "f91ba0b00402304b",
+   "f938821757c7eb07",
+   "f94f4a5505f23ab2",
+   "f9624ee4d6662e17",
+   "f9a18fd4fccfaee6",
+   "f9c67dfc53c39f2b",
+   "f9f64c79edc5323f",
+   "fa7e589eb7cf5b92",
+   "faad3c2eccbd145c",
+   "faefd4ec93fa2069",
+   "fb15eef6167ca160",
+   "fb38639beb7bfb25",
+   "fc739f81b5326861",
+   "fcf64edadc604b50",
+   "fd3ce08b85c20372",
+   "fe14de5c40eb820e",
+   "fe41194a99dbd8f9",
+   "feb68f594c49423f",
+   "ff3ce8438e0c6e92",
+   "ffe0dc1a025c236b"
+  ]
+ },
+ "inputs": {
+  "crops_stock_manifest": {
+   "path": "data/benchmark/baseline/stock_q8.pred.manifest.json",
+   "sha256": "d95004db34db0f5d09169613df400fe7abb7c4092ab20850a270555853beed1c"
+  },
+  "crops_stock_preds": {
+   "path": "data/benchmark/baseline/stock_q8.pred.jsonl",
+   "sha256": "dedcac4649a9064e9071ee42f31a593010e8889623cb99112bfe8b899f7b218d"
+  },
+  "crops_tuned_manifest": {
+   "path": "data/benchmark/acceptance/tuned_q8.pred.manifest.json",
+   "sha256": "0e2353ac72e0647f4d0f86bd567571b85d59c36025739a39af136f79745e1d19"
+  },
+  "crops_tuned_preds": {
+   "path": "data/benchmark/acceptance/tuned_q8.pred.jsonl",
+   "sha256": "7777c3a9c70e0d25440fa2a5a5520d489d76326235f5c20c2818af47b80c2ce6"
+  },
+  "pages_stock_manifest": {
+   "path": "data/benchmark/baseline/stock_q8_pages.pred.manifest.json",
+   "sha256": "7ac323890724f447a1a9e0ff9dfb0990ee7e0168b8dd5315b97d0b364fea4a0b"
+  },
+  "pages_stock_preds": {
+   "path": "data/benchmark/baseline/stock_q8_pages.pred.jsonl",
+   "sha256": "ceb0d05e224b636a5aedd6e3f690283db7cfc27efee69be8b32896fe84719c63"
+  },
+  "pages_stock_rows": {
+   "path": "data/benchmark/baseline/pages_rows.jsonl",
+   "sha256": "623b2573ac8f99d70e6fbbad8febc624a45592fcd763fbb41e291605cdef9713"
+  },
+  "pages_stock_stats": {
+   "path": "data/benchmark/baseline/pages_match_stats.json",
+   "sha256": "639558cc0af7857befa561bda3590dc7d999617f5917cdb97a242a13f707ca30"
+  },
+  "pages_tuned_manifest": {
+   "path": "data/benchmark/acceptance/tuned_q8_pages.pred.manifest.json",
+   "sha256": "fdfd679aea01625620794d5f85027cc360e21ccec0c34a01fd24d1666bb9bf8a"
+  },
+  "pages_tuned_preds": {
+   "path": "data/benchmark/acceptance/tuned_q8_pages.pred.jsonl",
+   "sha256": "a30dbdec2711d7903526de068921da430fd6bfa67b6468701b206a4dcb741fca"
+  },
+  "pages_tuned_rows": {
+   "path": "data/benchmark/acceptance/tuned_pages_rows.jsonl",
+   "sha256": "01d9114a607d90117d54b75794ae0dffba6292aef979cd6e636ee977d94a5f87"
+  },
+  "pages_tuned_stats": {
+   "path": "data/benchmark/acceptance/tuned_pages_match_stats.json",
+   "sha256": "38f7ebcb7bdff05e4618c0151075fb83d78aac192f862a42f7f874b71141f34a"
+  }
+ },
+ "mode": "benchmark",
+ "n_error": {
+  "crops_stock": 0,
+  "crops_tuned": 0,
+  "pages_stock": 0,
+  "pages_tuned": 0
+ },
+ "n_error_scored": {
+  "crops_stock": 0,
+  "crops_tuned": 0,
+  "pages_stock": 0,
+  "pages_tuned": 0
+ },
+ "page_match": {
+  "stock": {
+   "match_rate": 0.9696969696969697,
+   "n_gt": 297,
+   "n_matched": 288,
+   "page_match_version": "2",
+   "rate": 0.9696969696969697,
+   "threshold": 0.5
+  },
+  "tuned": {
+   "match_rate": 0.9393939393939394,
+   "n_gt": 297,
+   "n_matched": 279,
+   "page_match_version": "2",
+   "rate": 0.9393939393939394,
+   "threshold": 0.5
+  }
+ },
+ "per_class": [
+  {
+   "claim": "not enough events to claim",
+   "class": "prime_l",
+   "denom": 231,
+   "paired": {
+    "ci_high": 0.0,
+    "ci_low": -0.015268149244430587,
+    "delta": -0.004329004329004329,
+    "den": 231.0,
+    "n_papers": 150,
+    "rate_a": 0.004329004329004329,
+    "rate_b": 0.0
+   },
+   "stock": {
+    "ci_high": 0.015268149244430582,
+    "ci_low": 0.0,
+    "den": 231.0,
+    "n_papers": 150,
+    "num": 1.0,
+    "rate": 0.004329004329004329
+   },
+   "stock_errors": 1,
+   "tuned": {
+    "ci_high": 0.0,
+    "ci_low": 0.0,
+    "den": 231.0,
+    "n_papers": 150,
+    "num": 0.0,
+    "rate": 0.0
+   },
+   "tuned_errors": 0
+  },
+  {
+   "claim": "no significant change",
+   "class": "dropped_prime",
+   "denom": 231,
+   "paired": {
+    "ci_high": 0.047103158326497106,
+    "ci_low": -0.06201550387596899,
+    "delta": -0.00865800865800867,
+    "den": 231.0,
+    "n_papers": 150,
+    "rate_a": 0.1341991341991342,
+    "rate_b": 0.12554112554112554
+   },
+   "stock": {
+    "ci_high": 0.1976284584980237,
+    "ci_low": 0.07359148204736442,
+    "den": 231.0,
+    "n_papers": 150,
+    "num": 31.0,
+    "rate": 0.1341991341991342
+   },
+   "stock_errors": 31,
+   "tuned": {
+    "ci_high": 0.17708333333333334,
+    "ci_low": 0.07784431137724551,
+    "den": 231.0,
+    "n_papers": 150,
+    "num": 29.0,
+    "rate": 0.12554112554112554
+   },
+   "tuned_errors": 29
+  },
+  {
+   "claim": "not enough events to claim",
+   "class": "greek_latin",
+   "denom": 2473,
+   "paired": {
+    "ci_high": -0.0007993206551631457,
+    "ci_low": -0.00766581486262707,
+    "delta": -0.0040436716538617065,
+    "den": 2473.0,
+    "n_papers": 150,
+    "rate_a": 0.007278608976951072,
+    "rate_b": 0.003234937323089365
+   },
+   "stock": {
+    "ci_high": 0.012484407076736037,
+    "ci_low": 0.0031043849437330227,
+    "den": 2473.0,
+    "n_papers": 150,
+    "num": 18.0,
+    "rate": 0.007278608976951072
+   },
+   "stock_errors": 18,
+   "tuned": {
+    "ci_high": 0.007332050254209013,
+    "ci_low": 0.0004206939364593333,
+    "den": 2473.0,
+    "n_papers": 150,
+    "num": 8.0,
+    "rate": 0.003234937323089365
+   },
+   "tuned_errors": 8
+  },
+  {
+   "claim": "fewer errors",
+   "class": "decoration",
+   "denom": 991,
+   "paired": {
+    "ci_high": -0.028605388022464193,
+    "ci_low": -0.12218976020359658,
+    "delta": -0.07366296670030276,
+    "den": 991.0,
+    "n_papers": 150,
+    "rate_a": 0.29868819374369326,
+    "rate_b": 0.2250252270433905
+   },
+   "stock": {
+    "ci_high": 0.3645731649565903,
+    "ci_low": 0.2365976477971461,
+    "den": 991.0,
+    "n_papers": 150,
+    "num": 296.0,
+    "rate": 0.29868819374369326
+   },
+   "stock_errors": 296,
+   "tuned": {
+    "ci_high": 0.2771792652973343,
+    "ci_low": 0.18006270096463026,
+    "den": 991.0,
+    "n_papers": 150,
+    "num": 223.0,
+    "rate": 0.2250252270433905
+   },
+   "tuned_errors": 223
+  },
+  {
+   "claim": "not enough events to claim",
+   "class": "i_1",
+   "denom": 2065,
+   "paired": {
+    "ci_high": 0.0031861629494765588,
+    "ci_low": -0.0018895332598342289,
+    "delta": 0.00048426150121065386,
+    "den": 2065.0,
+    "n_papers": 150,
+    "rate_a": 0.0014527845036319612,
+    "rate_b": 0.001937046004842615
+   },
+   "stock": {
+    "ci_high": 0.003976242050186441,
+    "ci_low": 0.0,
+    "den": 2065.0,
+    "n_papers": 150,
+    "num": 3.0,
+    "rate": 0.0014527845036319612
+   },
+   "stock_errors": 3,
+   "tuned": {
+    "ci_high": 0.004642621404319632,
+    "ci_low": 0.0,
+    "den": 2065.0,
+    "n_papers": 150,
+    "num": 4.0,
+    "rate": 0.001937046004842615
+   },
+   "tuned_errors": 4
+  },
+  {
+   "claim": "fewer errors",
+   "class": "other",
+   "denom": 2688,
+   "paired": {
+    "ci_high": -0.10916522684965307,
+    "ci_low": -0.16654169746480738,
+    "delta": -0.13764880952380953,
+    "den": 2688.0,
+    "n_papers": 150,
+    "rate_a": 0.5513392857142857,
+    "rate_b": 0.41369047619047616
+   },
+   "stock": {
+    "ci_high": 0.5905399135490711,
+    "ci_low": 0.5130108911744652,
+    "den": 2688.0,
+    "n_papers": 150,
+    "num": 1482.0,
+    "rate": 0.5513392857142857
+   },
+   "stock_errors": 1482,
+   "tuned": {
+    "ci_high": 0.45179063360881544,
+    "ci_low": 0.3763163410080541,
+    "den": 2688.0,
+    "n_papers": 150,
+    "num": 1112.0,
+    "rate": 0.41369047619047616
+   },
+   "tuned_errors": 1112
+  }
+ ],
+ "regression_listing": {
+  "by_class": {
+   "decoration": 8,
+   "dropped_prime": 2,
+   "other": 53,
+   "render-only": 6
+  },
+  "n_control_glyph": 10,
+  "rows": [
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "X \\approx \\sum_{k=1}^R \\bigotimes_{i=1}^m U^{(i)}[:, k],",
+    "id": "0b0833917031f48b",
+    "paper_id": "2312.10330",
+    "stock_pred": "X \\approx \\sum_{k=1}^{R} \\bigotimes_{i=1}^{m} U^{(i)}[:,k],",
+    "tuned_pred": "X \\approx \\sum_{k=1}^R \\bigotimes_{i=1}^m U^{(i)}[\\cdot,k],"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "Y^{i_1\\dotso i_ka}_A\\partial_{i_1}\\dotso\\partial_{i_k}E^A=\\tilde Y^{i_1\\dotso i_{k-2m}a}_A\\Delta^m\\partial_{i_1}\\dotso\\partial_{i_{k-2m}}E^A=\\rho^a",
+    "id": "0b61a9a78307c3e3",
+    "paper_id": "2410.11678",
+    "stock_pred": "Y_A^{i_1 \\ldots i_k a} \\partial_{i_1} \\ldots \\partial_{i_k} E^A = \\tilde{Y}_A^{i_1 \\ldots i_{k-2m} a} \\Delta^m \\partial_{i_1} \\ldots \\partial_{i_{k-2m}} E^A = \\rho^a",
+    "tuned_pred": "Y_A^{i_1\\ldots i_k{}^a}\\partial_{i_1}\\ldots\\partial_{i_k}E^A=\\tilde{Y}_A^{i_1\\ldots i_{k-2m}{}^a}\\Delta^m\\partial_{i_1}\\ldots\\partial_{i_{k-2m}}E^A=\\rho^a"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "Z\\colon\\square^{\\vee 2}\\otimes\\square^{\\odot l}\\to\\square\\otimes\\square^{\\odot l}.",
+    "id": "0e5aa9699dbb841e",
+    "paper_id": "2410.11678",
+    "stock_pred": "Z \\colon \\square^{\\vee 2} \\otimes \\square^{\\odot l} \\to \\square \\otimes \\square^{\\odot l}.",
+    "tuned_pred": "Z:\\square^{\\vee 2}\\otimes \\square^{\\odot l}\\rightarrow \\square\\otimes \\square^{\\odot l}."
+   },
+   {
+    "classes": [
+     "decoration"
+    ],
+    "control_glyph": true,
+    "gt_latex": "\\hat{T} \\geq \\frac{1}{4\\beta\\tilde{\\beta}}\\ln\\left(\\frac{1}{\\delta^2}\\right).",
+    "id": "0f11d6bccde326a2",
+    "paper_id": "2402.09226",
+    "stock_pred": "\\hat{T} \\ge \\frac{1}{4\\beta\\tilde{\\beta}} \\ln \\left( \\frac{1}{\\delta^2} \\right).",
+    "tuned_pred": "\\hat{T} \\geq \\frac{1}{4\\beta\\widetilde{\\beta}} \\ln\\left(\\frac{1}{\\delta^2}\\right)."
+   },
+   {
+    "classes": [
+     "decoration"
+    ],
+    "control_glyph": true,
+    "gt_latex": "L_{\\text{aug}}(s) = L(s) + \\lambda \\sum_{(u,v) \\in s} p_{uv}",
+    "id": "170e7b2a14ab4407",
+    "paper_id": "2508.13333",
+    "stock_pred": "L_{\\text{aug}}(s) = L(s) + \\lambda \\sum_{(u,v) \\in s} p_{uv}",
+    "tuned_pred": "L_{\\mathrm{aug}}(s) = L(s) + \\lambda \\sum_{(u,v) \\in s} p_{uv}"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "I:=\\mathbb{E}\\int_{\\mathbb{R}}\\left[\\int_{\\mathbb{R}}|\\Delta_{h}J(\\eta,r,z)|^2|h|^{2H-2}dh\\right]^{\\frac{p}2}\\lambda(z)dz\\le c\\|v\\|_{\\mathcal{Z}_{\\lambda,T}^p}^p.",
+    "id": "1f5eaadb39dde87c",
+    "paper_id": "2604.07697",
+    "stock_pred": "I := \\mathbb{E} \\int_{\\mathbb{R}} \\left[ \\int_{\\mathbb{R}} |\\Delta_h J(\\eta, r, z)|^2 |h|^{2H-2} dh \\right]^{\\frac{p}{2}} \\lambda(z) dz \\leq c \\|v\\|_{\\mathcal{Z}_{\\lambda,T}^p}^p.",
+    "tuned_pred": "I:=\\mathbb{E}\\int_{\\mathbb{R}}\\bigg[\\int_{\\mathbb{R}}|\\Delta_{h}J(\\eta,r,z)|^{2}|h|^{2H-2}dh\\bigg]^{\\frac{p}{2}}\\lambda(z)dz\\leq c\\|v\\|_{\\mathcal{Z}_{\\lambda,T}^{p}}^{p}."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "s(\\mathbf{y}) = \\begin{cases} y_1^2+y_2^2, & \\mathbf{y} \\in \\Omega_{1}, \\\\ 0.1(y_1^2+y_2^2)^2 -0.01\\log\\left(2\\sqrt{y_1^2+y_2^2}\\right), & \\mathbf{y} \\in \\Omega_{2}. \\end{cases}",
+    "id": "234152363d0c8040",
+    "paper_id": "2604.08076",
+    "stock_pred": "s(\\mathbf{y}) = \n\\begin{cases}\ny_1^2 + y_2^2, & \\mathbf{y} \\in \\Omega_1, \\\\\n0.1(y_1^2 + y_2^2)^2 - 0.01 \\log \\left(2 \\sqrt{y_1^2 + y_2^2}\\right), & \\mathbf{y} \\in \\Omega_2.\n\\end{cases}",
+    "tuned_pred": "s(\\mathbf{y}) = \\begin{dcases} y_1^2 + y_2^2, & \\mathbf{y} \\in \\Omega_1, \\\\ 0.1(y_1^2 + y_2^2)^2 - 0.01 \\log\\left(2\\sqrt{y_1^2 + y_2^2}\\right), & \\mathbf{y} \\in \\Omega_2. \\end{dcases}"
+   },
+   {
+    "classes": [
+     "decoration"
+    ],
+    "control_glyph": true,
+    "gt_latex": "\\hat{\\mathbf{F}}_f^{\\mathrm{modal}} = \\mathbf{D}_{ff}\\, \\hat{\\mathbf{U}}_f^{\\mathrm{modal}}.",
+    "id": "2a524d411a0900f5",
+    "paper_id": "2606.29349",
+    "stock_pred": "\\hat{\\mathbf{F}}_f^{\\text{modal}} = \\mathbf{D}_{ff} \\, \\hat{\\mathbf{U}}_f^{\\text{modal}}.",
+    "tuned_pred": "\\mathbf{\\hat{F}}^{\\mathrm{modal}}_f = \\mathbf{D}_{ff} \\, \\mathbf{\\hat{U}}^{\\mathrm{modal}}_f."
+   },
+   {
+    "classes": [
+     "decoration",
+     "other"
+    ],
+    "control_glyph": true,
+    "gt_latex": "g_{\\text{eff}}^{\\text{raw}} = \\begin{cases} 0.8 + 0.2 \\cdot \\tilde{\\rho} & \\text{if } g(h_{\\text{new}}) \\ge g(h_{\\text{best}}) \\\\ 0.2 + 0.6 \\cdot \\tilde{\\rho} & \\text{if } g(h_{\\text{best}}) > g(h_{\\text{new}}) \\ge g(h_{\\text{avg}}) \\\\ -0.3 + 0.5 \\cdot \\tilde{\\rho} & \\text{if } g(h_{\\text{new}}) < g(h_{\\text{avg}}) \\end{cases}",
+    "id": "2a7b83613031942d",
+    "paper_id": "2508.13333",
+    "stock_pred": "g_{\\text{eff}}^{\\text{raw}} = \n\\begin{cases}\n0.8 + 0.2 \\cdot \\tilde{\\rho} & \\text{if } g(h_{\\text{new}}) \\geq g(h_{\\text{best}}) \\\\\n0.2 + 0.6 \\cdot \\tilde{\\rho} & \\text{if } g(h_{\\text{best}}) > g(h_{\\text{new}}) \\geq g(h_{\\text{avg}}) \\\\\n-0.3 + 0.5 \\cdot \\tilde{\\rho} & \\text{if } g(h_{\\text{new}}) < g(h_{\\text{avg}})\n\\end{cases}",
+    "tuned_pred": "g_{\\mathrm{eff}}^{\\mathrm{raw}} = \\begin{dcases} 0.8 + 0.2 \\cdot \\tilde{\\rho} & \\text{if } g(h_{\\mathrm{new}}) \\geq g(h_{\\mathrm{best}}) \\\\ 0.2 + 0.6 \\cdot \\tilde{\\rho} & \\text{if } g(h_{\\mathrm{best}}) > g(h_{\\mathrm{new}}) \\geq g(h_{\\mathrm{avg}}) \\\\ -0.3 + 0.5 \\cdot \\tilde{\\rho} & \\text{if } g(h_{\\mathrm{new}}) < g(h_{\\mathrm{avg}}) \\end{dcases}"
+   },
+   {
+    "classes": [
+     "decoration",
+     "other"
+    ],
+    "control_glyph": true,
+    "gt_latex": "C^{boiler,OPEX}_{s} = \\sum_{h\\in\\mathcal{H}} \\sum_{b\\in\\mathcal{B}} \\sum_{t\\in\\mathcal{T}} \\left[ H^{b}_{h,t} \\cdot \\Delta t \\cdot \\frac{R^{gas}}{\\eta^{b}} \\right] \\cdot n_{day,s}, \\forall s\\in\\mathcal{S}",
+    "id": "2ee70ee0db39bc50",
+    "paper_id": "2605.04746",
+    "stock_pred": "C_{s}^{boiler,OPEX} = \\sum_{h \\in \\mathcal{H}} \\sum_{b \\in \\mathcal{B}} \\sum_{t \\in \\mathcal{T}} \\left[ H_{h,t}^{b} \\cdot \\Delta t \\cdot \\frac{R^{gas}}{\\eta^{b}} \\right] \\cdot n_{day,s}, \\forall s \\in \\mathcal{S}",
+    "tuned_pred": "C_{s}^{boiler,OPEX} = \\underset{h \\in \\mathcal{H}}{\\mathbb{S}\\mathbb{U}\\mathbb{M}} \\underset{b \\in \\mathcal{B}}{\\mathbb{S}\\mathbb{U}\\mathbb{M}} \\underset{t \\in \\mathcal{T}}{\\mathbb{S}\\mathbb{U}\\mathbb{M}} \\left[ H_{h,t}^b \\cdot \\Delta t \\cdot \\frac{R^{gas}}{\\eta^b} \\right] \\cdot n_{day,s}, \\forall s \\in \\mathcal{S}"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\begin{split} &u_0\\in L^1_{\\mathrm{loc}}(\\mathbb{R}^N), \\; u\\in L^1_{\\mathrm{loc}}((0,\\infty)\\times\\mathbb{R}^N), \\\\ &|x|^{\\sigma_2}|u|^p\\in L^1_{\\mathrm{loc}}((0,\\infty)\\times\\mathbb{R}^N), \\quad |x|^{\\sigma_1}u \\in L^1_{\\mathrm{loc}}((0,\\infty)\\times\\mathbb{R}^N), \\end{split}",
+    "id": "3653b6d65abc9cc9",
+    "paper_id": "2603.06807",
+    "stock_pred": "\\begin{aligned}\n& u_0 \\in L^1_{\\mathrm{loc}}(\\mathbb{R}^N), \\; u \\in L^1_{\\mathrm{loc}}((0,\\infty) \\times \\mathbb{R}^N), \\\\\n& |x|^{\\sigma_2} |u|^p \\in L^1_{\\mathrm{loc}}((0,\\infty) \\times \\mathbb{R}^N), \\quad |x|^{\\sigma_1} u \\in L^1_{\\mathrm{loc}}((0,\\infty) \\times \\mathbb{R}^N),\n\\end{aligned}",
+    "tuned_pred": "&u_0\\in L^1_{\\mathrm{loc}}(\\mathbb{R}^N),\\ u\\in L^1_{\\mathrm{loc}}((0,\\infty)\\times \\mathbb{R}^N),\\\\ &|x|^{\\sigma_2}|u|^p\\in L^1_{\\mathrm{loc}}((0,\\infty)\\times \\mathbb{R}^N),\\quad |x|^{\\sigma_1}u\\in L^1_{\\mathrm{loc}}((0,\\infty)\\times \\mathbb{R}^N),"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\frac{1}{n} \\leq C \\cdot \\left| \\xi^n - 1 \\right|_p",
+    "id": "398dbf95eab3c81a",
+    "paper_id": "2603.08527",
+    "stock_pred": "\\frac{1}{n} \\leq C \\cdot \\left| \\xi^n - 1 \\right|_p",
+    "tuned_pred": "\\frac{1}{n} \\leq C \\cdot |\\xi^n - 1|_p"
+   },
+   {
+    "classes": [
+     "dropped_prime",
+     "other"
+    ],
+    "control_glyph": true,
+    "gt_latex": "\\sup_{t\\in[0,T],\\, x\\in\\mathbb{R}}\\left|\\sigma_{x, u}''(t, x, u)\\right|\\le C.",
+    "id": "3a55890759007789",
+    "paper_id": "2604.07697",
+    "stock_pred": "\\sup_{t \\in [0,T], \\, x \\in \\mathbb{R}} \\left| \\sigma_{x,u}''(t,x,u) \\right| \\leq C.",
+    "tuned_pred": "\\sup_{t\\in[0,T],\\,x\\in\\mathbb R}\\bigl|\\sigma''_{x,u}(t,x,u)\\bigr| \\le C."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\sum_{d\\mid n}\\mu(n/d)\\cdot L(f^{d})\\equiv 0\\mod n .",
+    "id": "41294c91154ec529",
+    "paper_id": "2603.08527",
+    "stock_pred": "\\sum_{d \\mid n} \\mu(n/d) \\cdot L(f^d) \\equiv 0 \\mod n.",
+    "tuned_pred": "\\sum_{d\\mid n}\\mu(n/d)\\cdot L(f^d)\\equiv 0\\pmod n."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "[x_0:\\cdots:x_i:\\cdots:x_n] &= (-x_i) \\odot [x_0:\\cdots: x_{i-1} :x_i: x_{i+1} : \\cdots:x_n] \\\\ &= [\\underbrace{x_0 - x_i}_{y_1} : \\cdots : \\underbrace{x_{i-1} - x_i}_{y_{i}} : 0 : \\underbrace{x_{i+1} - x_i}_{y_{i+1}} : \\cdots : \\underbrace{x_n - x_i}_{y_n}]",
+    "id": "4d1d1a5766b3f1a7",
+    "paper_id": "2411.10578",
+    "stock_pred": "\\begin{aligned}\n[x_0 : \\cdots : x_i : \\cdots : x_n] &= (-x_i) \\odot [x_0 : \\cdots : x_{i-1} : x_i : x_{i+1} : \\cdots : x_n] \\\\\n&= [\\underbrace{x_0 - x_i}_{y_1} : \\cdots : \\underbrace{x_{i-1} - x_i}_{y_i} : 0 : \\underbrace{x_{i+1} - x_i}_{y_{i+1}} : \\cdots : \\underbrace{x_n - x_i}_{y_n}]\n\\end{aligned}",
+    "tuned_pred": "[x_0:\\cdots:x_i:\\cdots:x_n] &= (-x_i)\\odot [x_0:\\cdots:x_{i-1}:x_i:x_{i+1}:\\cdots:x_n] \\\\ &= \\underbrace{x_0-x_i}_{y_1}:\\cdots:\\underbrace{x_{i-1}-x_i}_{y_i}:0:\\underbrace{x_{i+1}-x_i}_{y_{i+1}}:\\cdots:\\underbrace{x_n-x_i}_{y_n}"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\begin{aligned} \\left(v^{\\prime}(r)\\right)^{\\theta + 1} & \\le \\frac{\\theta + 1}{\\theta} C^\\theta r^{\\tau - q\\theta -1} g(v(r))(v(r)-a) \\\\ & < \\frac{\\theta + 1}{\\theta} C^\\theta r^{\\tau - q\\theta -1} g^{1+\\frac{1}{\\theta}}(v(r)), \\quad r> \\tilde r, \\end{aligned}",
+    "id": "520ecddb63c93489",
+    "paper_id": "2601.05550",
+    "stock_pred": "\\begin{aligned}\n\\left(v'(r)\\right)^{\\theta+1} &\\le \\frac{\\theta+1}{\\theta} C^{\\theta} r^{\\tau-q\\theta-1} g(v(r)) (v(r)-a) \\\\\n&< \\frac{\\theta+1}{\\theta} C^{\\theta} r^{\\tau-q\\theta-1} g^{1+\\frac{1}{\\theta}}(v(r)), \\quad r > \\tilde{r},\n\\end{aligned}",
+    "tuned_pred": "(v'(r))^{\\theta+1} &\\leq \\frac{\\theta+1}{\\theta} C'^\\theta r^{\\tau-q\\theta-1} g(v(r))(v(r)-a) \\\\ &< \\frac{\\theta+1}{\\theta} C'^\\theta r^{\\tau-q\\theta-1} g^{1+\\frac{1}{\\theta}}(v(r)), \\quad r>\\tilde{r},"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\mathcal A(z,q) &=\\sum_{\\substack{l\\ge 2\\\\1\\le k\\le l-1}} \\frac{(-zq^{2k+1};q^2)_{l-k-1}}{(zq^{2k};q^2)_{l-k}}q^{2k+l-1}, \\\\ \\mathcal B(z,q) &=\\sum_{\\substack{l\\ge 2\\\\1\\le k\\le l-1}} \\frac{(-zq^{2k+1};q^2)_{l-k}}{(zq^{2k};q^2)_{l-k}}q^{2k+l-1}.",
+    "id": "543815fadc943a5e",
+    "paper_id": "2606.11011",
+    "stock_pred": "\\begin{aligned}\n\\mathcal{A}(z,q) &= \\sum_{\\substack{l \\geq 2 \\\\ 1 \\leq k \\leq l-1}} \\frac{(-zq^{2k+1};q^2)_{l-k-1}}{(zq^{2k};q^2)_{l-k}} q^{2k+l-1}, \\\\\n\\mathcal{B}(z,q) &= \\sum_{\\substack{l \\geq 2 \\\\ 1 \\leq k \\leq l-1}} \\frac{(-zq^{2k+1};q^2)_{l-k}}{(zq^{2k};q^2)_{l-k}} q^{2k+l-1}.\n\\end{aligned}",
+    "tuned_pred": "\\begin{split} \\mathcal{A}(z,q)&=\\sum_{\\substack{l\\geq 2\\\\ 1\\leq k\\leq l-1}}\\frac{(-zq^{2k+1};q^2)_{l-k-1}}{(zq^{2k};q^2)_{l-k}}q^{2k+l-1},\\\\ \\mathcal{B}(z,q)&=\\sum_{\\substack{l\\geq 2\\\\ 1\\leq k\\leq l-1}}\\frac{(-zq^{2k+1};q^2)_{l-k}}{(zq^{2k};q^2)_{l-k}}q^{2k+l-1}. \\end{split}"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "a_p = \\begin{cases} \\frac{\\pi}{p} & \\text{, if \\(p\\) is odd;} \\\\ \\frac{2\\pi}{p} & \\text{, if \\(p\\) is even.} \\end{cases}",
+    "id": "638d5e7e4fccf94e",
+    "paper_id": "2607.08632",
+    "stock_pred": "a_p = \\begin{cases}\n\\frac{\\pi}{p} & \\text{, if } p \\text{ is odd;} \\\\\n\\frac{2\\pi}{p} & \\text{, if } p \\text{ is even.}\n\\end{cases}",
+    "tuned_pred": "a_p = \\begin{dcases} \\frac{\\pi}{p} & \\text{, if $p$ is odd;} \\\\ \\frac{2\\pi}{p} & \\text{, if $p$ is even.} \\end{dcases}"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "A_e := \\bigoplus_{\\alpha \\in A^+} \\bigoplus_{i=1}^{\\chi_\\alpha} M_\\alpha, \\quad A_o := \\bigoplus_{\\alpha \\in A^-} \\bigoplus_{i=1}^{|\\chi_\\alpha|} M_\\alpha.",
+    "id": "6a6dae63a4eb6954",
+    "paper_id": "2603.08527",
+    "stock_pred": "A_e := \\bigoplus_{\\alpha \\in A^+} \\bigoplus_{i=1}^{\\chi_\\alpha} M_\\alpha, \\quad A_o := \\bigoplus_{\\alpha \\in A^-} \\bigoplus_{i=1}^{|\\chi_\\alpha|} M_\\alpha.",
+    "tuned_pred": "A_e := \\bigoplus_{\\alpha \\in A^+} \\bigoplus_{i=1}^{\\chi\\alpha} M_\\alpha, \\quad A_o := \\bigoplus_{\\alpha \\in A^-} \\bigoplus_{i=1}^{|\\chi\\alpha|} M_\\alpha."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "h^{x}(y):=\\begin{cases} h(y) & y\\ne x, \\\\ h(x)+\\Delta h(x) & y=x. \\end{cases}",
+    "id": "6b21482f50ffca6c",
+    "paper_id": "2512.08771",
+    "stock_pred": "h^x(y) := \\begin{cases}\nh(y) & y \\ne x, \\\\\nh(x) + \\Delta h(x) & y = x.\n\\end{cases}",
+    "tuned_pred": "h^x(y) := \\begin{dcases} h(y) & y \\neq x, \\\\ h(x) + \\Delta h(x) & y = x. \\end{dcases}"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "f=hu,\\qquad g=\\omega\\,h\\,u^{\\#},\\qquad|\\omega|=1,\\qquad \\deg h+\\deg u\\le5 .",
+    "id": "6f8d2ea5febc3a5a",
+    "paper_id": "2608.06822",
+    "stock_pred": "f = h u, \\qquad g = \\omega \\, h \\, u^\\#, \\qquad |\\omega| = 1, \\qquad \\deg h + \\deg u \\le 5.",
+    "tuned_pred": "f=hu,\\qquad g=\\omega\\,h\\,u^\\sharp,\\qquad |\\omega|=1,\\qquad \\deg h+\\deg u\\leq 5."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\mathbf{A} &= \\operatorname{Out}\\left(U_{n-1}^{(1)}, \\ldots, U_{n-1}^{(i-1)}, U_{n-1}^{(i+1)}, \\ldots, U_{n-1}^{(m-1)}\\right)^{(m)} \\in \\mathbb{R}^{\\left(I_1 \\times \\cdots \\times I_{i-1} \\times I_{i+1} \\times \\cdots \\times I_m\\right) \\times R} \\\\ B &= \\operatorname{unfold}(\\mathbf{A}, m) \\in \\mathbb{R}^{\\left(I_1 \\cdots I_{i-1} I_{i+1} \\cdots I_m\\right) \\times R},",
+    "id": "6f917c2a9cd7bb44",
+    "paper_id": "2312.10330",
+    "stock_pred": "\\begin{aligned}\n\\mathbf{A} &= \\operatorname{Out}\\left(U_{n-1}^{(1)}, \\ldots, U_{n-1}^{(i-1)}, U_{n-1}^{(i+1)}, \\ldots, U_{n-1}^{(m-1)}\\right)^{(m)} \\in \\mathbb{R}^{(I_1 \\times \\cdots \\times I_{i-1} \\times I_{i+1} \\times \\cdots \\times I_m) \\times R} \\\\\nB &= \\operatorname{unfold}(\\mathbf{A}, m) \\in \\mathbb{R}^{(I_1 \\cdots I_{i-1} I_{i+1} \\cdots I_m) \\times R},\n\\end{aligned}",
+    "tuned_pred": "\\begin{aligned} &\\mathbf{A}=\\operatorname{Out}\\left(U_{n-1}^{(1)}, \\ldots, U_{n-1}^{(i-1)}, U_{n-1}^{(i+1)}, \\ldots, U_{n-1}^{(m-1)}\\right)^{(m)} \\in \\mathbb{R}^{\\left(I_1 \\times \\cdots \\times I_{i-1} \\times I_{i+1} \\times \\cdots \\times I_m\\right) \\times R} \\\\ &B=\\operatorname{unfold}(\\mathbf{A}, m) \\in \\mathbb{R}^{\\left(I_1 \\cdots I_{i-1} I_{i+1} \\cdots I_m\\right) \\times R}, \\end{aligned}"
+   },
+   {
+    "classes": [
+     "dropped_prime",
+     "other"
+    ],
+    "control_glyph": true,
+    "gt_latex": "\\sum_{i=1}^m \\left\\| N_\\beta(\\xi_i) - \\tilde{x}_i' \\right\\|^2 ,",
+    "id": "721fa1cf96877159",
+    "paper_id": "2603.07467",
+    "stock_pred": "\\sum_{i=1}^{m} \\left\\| N_{\\beta}(\\xi_{i}) - \\tilde{x}_{i}' \\right\\|^{2},",
+    "tuned_pred": "\\sum_{i=1}^m \\|N_\\beta(\\xi_i) - \\tilde x'_i\\|^2\\,,"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\operatorname{csch}z=\\frac{1}{\\operatorname{sinh}z}=\\frac{2}{e^z-e^{-z}}=2\\sum_{n=1}^{\\infty}e^{-\\left(2n-1\\right)z}.",
+    "id": "7615c8262c8d3819",
+    "paper_id": "2411.15803",
+    "stock_pred": "\\operatorname{csch} z = \\frac{1}{\\sinh z} = \\frac{2}{e^z - e^{-z}} = 2 \\sum_{n=1}^{\\infty} e^{-(2n-1)z}.",
+    "tuned_pred": "\\csch z = \\frac{1}{\\sinh z} = \\frac{2}{e^z-e^{-z}} = 2\\sum_{n=1}^\\infty e^{-(2n-1)z}."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "M\\sum_{j=1}^\\infty \\left(\\sqrt{x_j}-\\sqrt{x_{j+1}}\\right)^2\\ge\\frac{(x_1)^2}{4}.",
+    "id": "7619c78ea86d0542",
+    "paper_id": "2512.08771",
+    "stock_pred": "M \\sum_{j=1}^{\\infty} \\left( \\sqrt{x_j} - \\sqrt{x_{j+1}} \\right)^2 \\ge \\frac{(x_1)^2}{4}.",
+    "tuned_pred": "M\\sum_{j=1}^\\infty \\bigl(\\sqrt{x_j}-\\sqrt{x_{j+1}}\\bigr)^2 \\ge \\frac{(x_1)^2}{4}."
+   },
+   {
+    "classes": [
+     "render-only"
+    ],
+    "control_glyph": false,
+    "gt_latex": "M=M_0+E_{\\rm em}.",
+    "id": "788fee36db46b3bc",
+    "paper_id": "2608.06639",
+    "stock_pred": "M = M_0 + E_{\\text{em}}.",
+    "tuned_pred": "M = M_0 + E_{\\rm em}\\,."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\mathbf{v}&=\\lambda_1\\mathbf v_1+\\ldots+\\lambda_n\\mathbf v_n \\\\ \\mbox{with}\\quad 1&=\\lambda_1+\\ldots+\\lambda_n",
+    "id": "81308fcbf1978fe4",
+    "paper_id": "2501.00937",
+    "stock_pred": "\\begin{aligned}\n\\mathbf{v} &= \\lambda_1 \\mathbf{v}_1 + \\ldots + \\lambda_n \\mathbf{v}_n \\\\\n\\text{with} \\quad 1 &= \\lambda_1 + \\ldots + \\lambda_n\n\\end{aligned}",
+    "tuned_pred": "\\begin{gathered} \\mathbf{v}=\\lambda_1\\mathbf{v}_1+\\ldots+\\lambda_n\\mathbf{v}_n \\\\ \\text{with}\\quad 1=\\lambda_1+\\ldots+\\lambda_n \\end{gathered}"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\sigma_{\\rho_Y}\\sigma_d=\\sigma_{\\rho_X}.",
+    "id": "8aee28be7d890b5d",
+    "paper_id": "2609.10501",
+    "stock_pred": "\\sigma_{\\rho_Y} \\sigma_d = \\sigma_{\\rho_X}.",
+    "tuned_pred": "\\sigma_{\\rho Y} \\sigma_d = \\sigma_{\\rho X} ."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\operatorname{MC}(\\mathfrak g^\\Lambda):=\\{\\alpha\\in\\mathcal{F}_{\\geq 1}\\mathfrak g^\\Lambda: \\deg(\\alpha)=2, \\mathcal{C}(\\alpha)=0\\}.",
+    "id": "8bf48c9a424e80a7",
+    "paper_id": "2607.03234",
+    "stock_pred": "\\mathrm{MC}(\\mathfrak{g}^\\Lambda) := \\{ \\alpha \\in \\mathcal{F}_{\\ge 1} \\mathfrak{g}^\\Lambda : \\deg(\\alpha) = 2, \\mathcal{C}(\\alpha) = 0 \\}.",
+    "tuned_pred": "\\operatorname{MC}(\\mathfrak{g}^{\\wedge}) := \\{ \\alpha \\in \\mathcal{F}_{\\geq 1} \\mathfrak{g}^{\\wedge} : \\deg(\\alpha) = 2, \\mathcal{C}(\\alpha) = 0 \\}."
+   },
+   {
+    "classes": [
+     "render-only"
+    ],
+    "control_glyph": false,
+    "gt_latex": "&\\text{minimize}~\\mathbb E_{\\mathbb P} \\left[ \\tilde J\\circ\\Gamma(Z) \\right]\\\\ &\\text{subject to:}\\\\ &\\frac{d Z_t(\\omega)}{dt} = f(t,Z_t(\\omega)+O_t(\\omega),\\theta_t) + O_t(\\omega),\\\\ &Z_0 = x,\\\\ &dO_t(\\omega) = - O_t(\\omega) dt + \\sigma dB_t(\\omega).",
+    "id": "8f240606c5c9ec0f",
+    "paper_id": "2506.06723",
+    "stock_pred": "\\begin{aligned}\n&\\text{minimize } \\mathbb{E}_{\\mathbb{P}} \\left[ \\tilde{J} \\circ \\Gamma(Z) \\right] \\\\\n&\\text{subject to:} \\\\\n&\\frac{dZ_t(\\omega)}{dt} = f(t, Z_t(\\omega) + O_t(\\omega), \\theta_t) + O_t(\\omega), \\\\\n&Z_0 = x, \\\\\n&dO_t(\\omega) = -O_t(\\omega) dt + \\sigma dB_t(\\omega).\n\\end{aligned}",
+    "tuned_pred": "\\text{minimize } & \\mathbb{E}_{\\mathbb{P}}\\left[ \\tilde{J}\\circ\\Gamma(Z) \\right] \\\\ \\text{subject to: } & \\\\ & \\frac{dZ_t(\\omega)}{dt} = f(t, Z_t(\\omega) + O_t(\\omega), \\theta_t) + O_t(\\omega), \\\\ & Z_0 = x, \\\\ & dO_t(\\omega) = -O_t(\\omega)dt + \\sigma dB_t(\\omega)."
+   },
+   {
+    "classes": [
+     "render-only"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\forall \\lambda \\in \\sigma(A),\\; \\Psi(\\lambda) = \\lambda \\implies \\varphi_k(\\lambda) = \\lambda \\text{ for each } k,",
+    "id": "97e5de92949fa787",
+    "paper_id": "2508.06025",
+    "stock_pred": "\\forall \\lambda \\in \\sigma(A), \\; \\Psi(\\lambda) = \\lambda \\implies \\varphi_k(\\lambda) = \\lambda \\text{ for each } k,",
+    "tuned_pred": "\\forall \\lambda \\in \\sigma(A), \\ \\Psi(\\lambda) = \\lambda \\implies \\varphi_k(\\lambda) = \\lambda \\text{ for each } k,"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "C = x^2 + y^2 + 2\\left( \\frac{1-\\mu}{r_1} + \\frac{\\mu}{r_2} \\right) - \\left(v_x^2 + v_y^2\\right) = -2H,",
+    "id": "a3072c6f7d7466f2",
+    "paper_id": "2606.10941",
+    "stock_pred": "C = x^2 + y^2 + 2 \\left( \\frac{1 - \\mu}{r_1} + \\frac{\\mu}{r_2} \\right) - \\left( v_x^2 + v_y^2 \\right) = -2H,",
+    "tuned_pred": "C=x^2+y^2+2\\left(\\frac{1-\\mu}{r_1}+\\frac{\\mu}{r_2}\\right)-(v_x^2+v_y^2)=-2H,"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\left\\|\\left(\\mathbf{I}-\\frac{\\mathbf{u}\\mathbf{u}^\\top}{\\|\\mathbf{u}\\|_2^2}\\right) \\frac{\\overline{\\partial}\\mathcal{N}(\\mathbf{u})}{\\|\\mathbf{u}\\|_2}\\right\\|_2 &= \\left\\|\\left(\\frac{\\overline{\\partial}\\mathcal{N}(\\mathbf{u})}{\\|\\mathbf{u}\\|_2}-\\frac{2\\mathbf{u}\\mathcal{N}(\\mathbf{u})}{\\|\\mathbf{u}\\|_2^3}\\right) \\right\\|_2\\\\ &= \\left\\|\\overline{\\partial}\\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2}\\right)-\\frac{2\\mathbf{u}}{\\|\\mathbf{u}\\|_2}\\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2}\\right) \\right\\|_2\\\\ &\\geq \\left\\| \\mathbf{s} - \\frac{2\\mathbf{u}}{\\|\\mathbf{u}\\|_2}\\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2}\\right) \\right\\|_2 - \\left\\|\\overline{\\partial}\\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2}\\right)- \\mathbf{s}\\right\\|_2 \\\\ &\\geq \\left\\| \\mathbf{s} - {2\\mathbf{u}^*}\\mathcal{N}\\left({\\mathbf{u}^*}\\right) \\right\\|_2 - \\left\\|\\overline{\\partial}\\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2}\\right)- \\mathbf{s}\\right\\|_2 - \\left\\| {2\\mathbf{u}^*}\\mathcal{N}\\left({\\mathbf{u}^*}\\right) - \\frac{2\\mathbf{u}}{\\|\\mathbf{u}\\|_2}\\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2}\\right) \\right\\|_2,",
+    "id": "a3ca13eaad1a3137",
+    "paper_id": "2402.09226",
+    "stock_pred": "\\begin{aligned}\n\\left\\|\\left(\\mathbf{I}-\\frac{\\mathbf{u} \\mathbf{u}^{\\top}}{\\|\\mathbf{u}\\|_{2}^{2}}\\right) \\frac{\\overline{\\partial} \\mathcal{N}(\\mathbf{u})}{\\|\\mathbf{u}\\|_{2}}\\right\\|_{2} &=\\left\\|\\left(\\frac{\\overline{\\partial} \\mathcal{N}(\\mathbf{u})}{\\|\\mathbf{u}\\|_{2}}-\\frac{2 \\mathbf{u} \\mathcal{N}(\\mathbf{u})}{\\|\\mathbf{u}\\|_{2}^{3}}\\right)\\right\\|_{2} \\\\\n&=\\left\\|\\overline{\\partial} \\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_{2}}\\right)-\\frac{2 \\mathbf{u}}{\\|\\mathbf{u}\\|_{2}} \\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_{2}}\\right)\\right\\|_{2} \\\\\n&\\geq\\left\\|\\mathbf{s}-\\frac{2 \\mathbf{u}}{\\|\\mathbf{u}\\|_{2}} \\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_{2}}\\right)\\right\\|_{2}-\\left\\|\\overline{\\partial} \\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_{2}}\\right)-\\mathbf{s}\\right\\|_{2} \\\\\n&\\geq\\left\\|\\mathbf{s}-2 \\mathbf{u}^{*} \\mathcal{N}\\left(\\mathbf{u}^{*}\\right)\\right\\|_{2}-\\left\\|\\overline{\\partial} \\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_{2}}\\right)-\\mathbf{s}\\right\\|_{2}-\\left\\|2 \\mathbf{u}^{*} \\mathcal{N}\\left(\\mathbf{u}^{*}\\right)-\\frac{2 \\mathbf{u}}{\\|\\mathbf{u}\\|_{2}} \\mathcal{N}\\left(\\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_{2}}\\right)\\right\\|_{2},\n\\end{aligned}",
+    "tuned_pred": "\\left\\| \\left( \\mathbf{I} - \\frac{\\mathbf{u}\\mathbf{u}^\\top}{\\|\\mathbf{u}\\|_2^2} \\right) \\frac{\\overline{\\partial}\\mathcal{N}(\\mathbf{u})}{\\|\\mathbf{u}\\|_2} \\right\\|_2 &= \\left\\| \\left( \\frac{\\overline{\\partial}\\mathcal{N}(\\mathbf{u})}{\\|\\mathbf{u}\\|_2} - \\frac{2\\mathbf{u}\\mathcal{N}(\\mathbf{u})}{\\|\\mathbf{u}\\|_2^3} \\right) \\right\\|_2 \\\\ &= \\left\\| \\overline{\\partial}\\mathcal{N}\\left( \\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2} \\right) - \\frac{2\\mathbf{u}}{\\|\\mathbf{u}\\|_2} \\mathcal{N}\\left( \\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2} \\right) \\right\\|_2 \\\\ &\\ge \\left\\| \\mathbf{s} - \\frac{2\\mathbf{u}}{\\|\\mathbf{u}\\|_2} \\mathcal{N}\\left( \\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2} \\right) \\right\\|_2 - \\left\\| \\overline{\\partial}\\mathcal{N}\\left( \\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2} \\right) - \\mathbf{s} \\right\\|_2 \\\\ &\\ge \\|\\mathbf{s} - 2\\mathbf{u}^*\\mathcal{N}\\left( \\mathbf{u}^* \\right)\\|_2 - \\left\\| \\overline{\\partial}\\mathcal{N}\\left( \\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2} \\right) - \\mathbf{s} \\right\\|_2 - \\left\\| 2\\mathbf{u}^*\\mathcal{N}\\left( \\mathbf{u}^* \\right) - \\frac{2\\mathbf{u}}{\\|\\mathbf{u}\\|_2} \\mathcal{N}\\left( \\frac{\\mathbf{u}}{\\|\\mathbf{u}\\|_2} \\right) \\right\\|_2,"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\int_{\\Omega}|u(x)|^{p(x)}\\,dx\\leq \\Vert u\\Vert _{{p(\\cdot )}}.",
+    "id": "a43a3e701df5c35f",
+    "paper_id": "2410.06081",
+    "stock_pred": "\\int_{\\Omega} |u(x)|^{p(x)} \\, dx \\leq \\|u\\|_{p(\\cdot)}.",
+    "tuned_pred": "\\int_{\\Omega} |u(x)|^{p(x)} \\, dx \\leq ||u||_{p(\\cdot)}."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "&\\Vert A_2^{d/4 -1/2 + 2\\epsilon} (A_2^{-\\gamma} - A_{2,h}^{-\\gamma} \\pi_h \\tau_h) \\Vert_{L(H)}^2 \\\\ &\\quad \\leq 2 \\Vert A_2^{d/4 -1/2 + 2\\epsilon} (A_2^{-\\gamma} - A_{2,h}^{-\\gamma} \\pi_h) \\Vert_{L(H)}^2 + 2 \\Vert A_2^{d/4 -1/2 + 2\\epsilon} A_{2,h}^{-\\gamma} \\pi_h (I - \\tau_h) \\Vert_{L(H)}^2.",
+    "id": "a522c390f733bd90",
+    "paper_id": "2510.08443",
+    "stock_pred": "\\begin{aligned}\n&\\|A_2^{d/4-1/2+2\\epsilon}(A_2^{-\\gamma}-A_{2,h}^{-\\gamma}\\pi_h\\tau_h)\\|_{L(H)}^2 \\\\\n&\\quad\\le 2\\|A_2^{d/4-1/2+2\\epsilon}(A_2^{-\\gamma}-A_{2,h}^{-\\gamma}\\pi_h)\\|_{L(H)}^2 + 2\\|A_2^{d/4-1/2+2\\epsilon}A_{2,h}^{-\\gamma}\\pi_h(I-\\tau_h)\\|_{L(H)}^2.\n\\end{aligned}",
+    "tuned_pred": "\\|A_2^{d/4-1/2+2\\epsilon}(A_2^{-\\gamma}-A_{2,h}^{-\\gamma}\\pi_h\\tau_h)\\|^2_{L(H)}\\\\ \\leq 2\\|A_2^{d/4-1/2+2\\epsilon}(A_2^{-\\gamma}-A_{2,h}^{-\\gamma}\\pi_h)\\|^2_{L(H)}+2\\|A_2^{d/4-1/2+2\\epsilon}A_{2,h}^{-\\gamma}\\pi_h(I-\\tau_h)\\|^2_{L(H)}."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "g_i = \\rho\\left(\\hat z_i-x_i^+\\right)-\\hat\\lambda_i.",
+    "id": "ab772b95faa8bbb6",
+    "paper_id": "2508.06197",
+    "stock_pred": "g_i = \\rho \\left( \\hat{z}_i - x_i^+ \\right) - \\hat{\\lambda}_i.",
+    "tuned_pred": "g_i = \\rho\\bigl(\\hat z_i - x_i^+\\bigr) - \\hat\\lambda_i."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\mathcal{E}(f) := \\sum\\limits_{e \\in \\vec E(G)}\\frac{f(e)^2}{2C(e)},",
+    "id": "b14938b742900ad6",
+    "paper_id": "2207.06956",
+    "stock_pred": "\\mathcal{E}(f) := \\sum_{e \\in \\vec{E}(G)} \\frac{f(e)^2}{2C(e)},",
+    "tuned_pred": "\\mathcal{E}(f) := \\sum_{e \\in \\vec{E}^{(G)}} \\frac{f(e)^2}{2C(e)},"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "e^{-rT}\\mathbb{E}_{\\widehat{\\mathbb{P}}}\\left[V_{T}\\right]=V_{0}.",
+    "id": "b2ff12e3c8190618",
+    "paper_id": "1803.00335",
+    "stock_pred": "e^{-rT} \\mathbb{E}_{\\widehat{\\mathbb{P}}} \\left[ V_T \\right] = V_0.",
+    "tuned_pred": "e^{-rT}\\mathbb{E}_{\\widehat{\\mathbb{P}}}[V_T]=V_0."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\left[\\bar g-\\varphi_B^* g_0\\right]_0+\\left[\\bar f-\\log|\\Gamma|-\\varphi_B^* f_0\\right]_0\\leq e^{-\\frac{L^2}{33}},",
+    "id": "b559cade5a1422e0",
+    "paper_id": "2510.20320",
+    "stock_pred": "\\left[\\bar{g} - \\varphi_B^* g_0\\right]_0 + \\left[\\bar{f} - \\log |\\Gamma| - \\varphi_B^* f_0\\right]_0 \\le e^{-\\frac{L^2}{33}},",
+    "tuned_pred": "[\\bar{g}-\\varphi_B^*g_0]_0+[\\bar{f}-\\log|\\Gamma|-\\varphi_B^*f_0]_0\\leq e^{-\\frac{L^2}{33}},"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\int_{y_*(x, t)}^{y^*(x, t)}\\left(t u_0(\\eta)+\\eta-x\\right)\\rho_0(\\eta)\\,d\\eta=0.",
+    "id": "b87c25057214fbc5",
+    "paper_id": "2502.15927",
+    "stock_pred": "\\int_{y_*(x,t)}^{y^*(x,t)} \\left( t u_0(\\eta) + \\eta - x \\right) \\rho_0(\\eta) \\, d\\eta = 0.",
+    "tuned_pred": "\\int\\limits_{y_{\\ast}(x,t)}^{y^{\\ast}(x,t)}\\left(tu_{0}(\\eta)+\\eta-x\\right)\\rho_{0}(\\eta)\\,d\\eta=0."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "G_n^{(z)}(x)&:= \\frac{\\prod_{l=0}^{n-1} (2z+l)}{n!} \\vphantom{F}_2 F_1 (-n,2z+n;z+1/2; (1-x)/2)\\\\ &= \\prod_{l=0}^{n-1} (2z+l) \\sum_{k=0}^n (-1)^k \\frac{1}{k!(n-k)!}\\frac{ \\prod_{i=0}^{k-1}(2z+n+i)}{ \\prod_{i=0}^{k-1}(z+1/2+i) 2^k}(1-x)^k \\\\ &=\\sum_{k=0}^n (-1)^k \\frac{{2^{n} \\binom{n}{k}}}{n!}\\frac{ \\prod_{i=0}^{n+k-1}(z+i/2)}{ \\prod_{i=0}^{k-1}(z+(2i+1)/2) }(1-x)^k \\\\ &= \\sum_{k=0}^n \\frac{{2^{n} \\binom{n}{k}}}{n!} \\prod_{i=2k}^{n+k-1}(z+i/2) \\prod_{i=0}^{k-1}(z+i) (x-1)^k .",
+    "id": "bbe520389eb9facd",
+    "paper_id": "2301.00642",
+    "stock_pred": "\\begin{aligned}\nG_n^{(z)}(x) &:= \\frac{\\prod_{l=0}^{n-1}(2z+l)}{n!} {}_2F_1(-n, 2z+n; z+1/2; (1-x)/2) \\\\\n&= \\prod_{l=0}^{n-1}(2z+l) \\sum_{k=0}^{n} (-1)^k \\frac{1}{k!(n-k)!} \\frac{\\prod_{i=0}^{k-1}(2z+n+i)}{\\prod_{i=0}^{k-1}(z+1/2+i) 2^k} (1-x)^k \\\\\n&= \\sum_{k=0}^{n} (-1)^k \\frac{2^n \\binom{n}{k}}{n!} \\frac{\\prod_{i=0}^{n+k-1}(z+i/2)}{\\prod_{i=0}^{k-1}(z+(2i+1)/2)} (1-x)^k \\\\\n&= \\sum_{k=0}^{n} \\frac{2^n \\binom{n}{k}}{n!} \\prod_{i=2k}^{n+k-1} (z+i/2) \\prod_{i=0}^{k-1} (z+i) (x-1)^k.\n\\end{aligned}",
+    "tuned_pred": "G_n^{(z)}(x) :=&\\ \\frac{\\prod_{l=0}^{n-1}(2z+l)}{n!} {}_2F_1(-n,2z+n;z+1/2;(1-x)/2)\\\\ =&\\ \\prod_{l=0}^{n-1}(2z+l)\\sum_{k=0}^n(-1)^k\\frac{1}{k!(n-k)!}\\frac{\\prod_{i=0}^{k-1}(2z+n+i)}{\\prod_{i=0}^{k-1}(z+1/2+i)2^k}(1-x)^k\\\\ =&\\ \\sum_{k=0}^n(-1)^k\\frac{2^n{n\\choose k}}{n!}\\frac{\\prod_{i=0}^{n+k-1}(z+i/2)}{\\prod_{i=0}^{k-1}(z+(2i+1)/2)}(1-x)^k\\\\ =&\\ \\sum_{k=0}^n\\frac{2^n{n\\choose k}}{n!}\\prod_{i=2k}^{n+k-1}(z+i/2)\\prod_{i=0}^{k-1}(z+i)(x-1)^k."
+   },
+   {
+    "classes": [
+     "decoration"
+    ],
+    "control_glyph": true,
+    "gt_latex": "\\pi^* \\bar f_{\\Gamma}=\\bar f-\\log |\\Gamma|.",
+    "id": "bc31105408b64d22",
+    "paper_id": "2510.20320",
+    "stock_pred": "\\pi^* \\bar{f}_\\Gamma = \\bar{f} - \\log |\\Gamma|.",
+    "tuned_pred": "\\pi^* \\overline{f_\\Gamma} = \\overline{f} - \\log |\\Gamma|."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\left[\\bar g-\\varphi_A^* g\\right]_5+\\left[\\bar f-\\log |\\Gamma|-\\varphi_A^* f\\right]_5 \\leq e^{\\frac{\\bar f}{4}-\\frac{L^2}{16}}.",
+    "id": "bce64273cf55d5bd",
+    "paper_id": "2510.20320",
+    "stock_pred": "\\left[\\bar{g} - \\varphi_A^* g\\right]_5 + \\left[\\bar{f} - \\log |\\Gamma| - \\varphi_A^* f\\right]_5 \\le e^{\\frac{\\bar{f}}{4} - \\frac{L^2}{16}}.",
+    "tuned_pred": "[\\bar{g}-\\varphi_A^*g]_5+[\\bar{f}-\\log|\\Gamma|-\\varphi_A^*f]_5\\leq e^{\\frac{\\bar{f}}{4}-\\frac{L^2}{16}}."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\|f\\|_{\\operatorname{BMO}} \\le C_n \\|f\\|_{\\operatorname{BMO}_w}.",
+    "id": "bf924bcef78ed9d8",
+    "paper_id": "2604.25873",
+    "stock_pred": "\\|f\\|_{\\mathrm{BMO}} \\leq C_n \\|f\\|_{\\mathrm{BMO}_w}.",
+    "tuned_pred": "\\|f\\|_{\\rm BMO}\\le C_n\\|f\\|_{\\rm BMO_w}."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "G = \\sqrt[G]{\\gamma_1(G)} \\geq \\sqrt[G]{\\gamma_2(G)} \\geq \\dots \\geq \\sqrt[G]{\\gamma_c(G)} \\geq \\sqrt[G]{\\gamma_{c+1}(G)} = \\{e\\}",
+    "id": "c5dd20ebef239dfe",
+    "paper_id": "2603.08527",
+    "stock_pred": "G = \\sqrt[G]{\\gamma_1(G)} \\ge \\sqrt[G]{\\gamma_2(G)} \\ge \\cdots \\ge \\sqrt[G]{\\gamma_c(G)} \\ge \\sqrt[G]{\\gamma_{c+1}(G)} = \\{e\\}",
+    "tuned_pred": "G = \\sqrt[c]{\\gamma_1(G)} \\geq \\sqrt[c]{\\gamma_2(G)} \\geq \\cdots \\geq \\sqrt[c]{\\gamma_c(G)} \\geq \\sqrt[c+1]{\\gamma_{c+1}(G)} = \\{e\\}"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\left\\| I_\\alpha f \\right\\|_{L^{q_r, \\infty}\\left(Q, \\frac{w(x)dx}{w(Q)}\\right)} \\le \\frac{c_n}{\\alpha} p^*_\\alpha [w]_{A_r}^\\frac{1}{p} \\ell(Q)^\\alpha \\left( \\frac{1}{w(Q)}\\int_Q |f(x)|^p w(x)\\, dx\\right)^\\frac{1}{p},",
+    "id": "c96d302e6a0b9800",
+    "paper_id": "2604.25873",
+    "stock_pred": "\\|I_{\\alpha}f\\|_{L^{q_r,\\infty}\\left(Q,\\frac{w(x)dx}{w(Q)}\\right)} \\le \\frac{c_n}{\\alpha} p_{\\alpha}^*[w]_{A_r}^{\\frac{1}{p}} \\ell(Q)^{\\alpha} \\left(\\frac{1}{w(Q)} \\int_Q |f(x)|^p w(x) \\, dx\\right)^{\\frac{1}{p}},",
+    "tuned_pred": "\\|I_\\alpha f\\|_{L^{q_r,\\infty}\\big(Q,\\frac{w(x)dx}{w(Q)}\\big)} \\leq \\frac{c_n}{\\alpha} p^*_\\alpha[w]^{\\frac{1}{p}}_{A_r} \\ell(Q)^\\alpha \\left(\\frac{1}{w(Q)}\\int_Q |f(x)|^p w(x)\\,dx\\right)^{\\frac{1}{p}},"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "f^{I,I'} X^{I,I'}_0+\\sum_{k\\neq 0}g^{I,I'}_k a_k^\\dagger X^{I,I'}_1 a_k\\lesssim N^{\\tau}\\mathcal{N}^s+N^{\\max\\{\\tau-\\frac{1}{2},0\\}}\\frac{\\mathcal{N}^{s+1}}{N}\\lesssim N^{\\tau}\\mathcal{N}^s.",
+    "id": "cb787af37df71ed2",
+    "paper_id": "2406.19886",
+    "stock_pred": "f^{I,I'} X_0^{I,I'} + \\sum_{k \\neq 0} g_k^{I,I'} a_k^\\dagger X_1^{I,I'} a_k \\lesssim N^\\tau \\mathcal{N}^s + N^{\\max\\{\\tau - \\frac{1}{2}, 0\\}} \\frac{\\mathcal{N}^{s+1}}{N} \\lesssim N^\\tau \\mathcal{N}^s.",
+    "tuned_pred": "f^{I,I'}X_0^{I,I'}+\\sum_{k\\neq 0}g_k^{I,I'}a_k^\\dagger a_k^\\dagger X_1^{I,I'}a_k\\lesssim N^\\tau\\mathcal N^s+N^{\\max\\{\\tau-\\frac{1}{2},0\\}}\\frac{\\mathcal N^{s+1}}{N}\\lesssim N^\\tau\\mathcal N^s."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\rho \\ddot{\\mathbf{u}} - \\nabla \\cdot \\boldsymbol{\\sigma}(\\mathbf{u}) &= \\mathbf{b}(\\mathbf{x}, t) \\quad \\text{in } \\Omega \\times (0, T], \\\\ \\boldsymbol{\\sigma}(\\mathbf{u}) \\cdot \\mathbf{n} &= \\mathbf{t}(\\mathbf{x}, t) \\quad \\text{on } \\Gamma_N, \\\\ \\mathbf{u} &= \\mathbf{0} \\quad \\text{on } \\Gamma_D,",
+    "id": "db7f66486f5e43dc",
+    "paper_id": "2606.29349",
+    "stock_pred": "\\begin{aligned}\n\\rho \\ddot{\\mathbf{u}} - \\nabla \\cdot \\boldsymbol{\\sigma}(\\mathbf{u}) &= \\mathbf{b}(\\mathbf{x}, t) \\quad \\text{in } \\Omega \\times (0, T], \\\\\n\\boldsymbol{\\sigma}(\\mathbf{u}) \\cdot \\mathbf{n} &= \\mathbf{t}(\\mathbf{x}, t) \\quad \\text{on } \\Gamma_N, \\\\\n\\mathbf{u} &= \\mathbf{0} \\quad \\text{on } \\Gamma_D,\n\\end{aligned}",
+    "tuned_pred": "\\begin{aligned} \\rho \\ddot{\\mathbf{u}} - \\nabla \\cdot \\boldsymbol{\\sigma}(\\mathbf{u}) &= \\mathbf{b}(\\mathbf{x},t) & & \\text{in } \\Omega \\times (0,T], \\\\ \\boldsymbol{\\sigma}(\\mathbf{u}) \\cdot \\mathbf{n} &= \\mathbf{t}(\\mathbf{x},t) & & \\text{on } \\Gamma_N, \\\\ \\mathbf{u} &= \\mathbf{0} & & \\text{on } \\Gamma_D, \\end{aligned}"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "1 + \\sum_{a=1}^{a_{\\max}} n_a \\cdot \\binom{q^k-i_s+r}{a}",
+    "id": "dc0e43575b0472c6",
+    "paper_id": "2407.13428",
+    "stock_pred": "1 + \\sum_{a=1}^{a_{\\max}} n_a \\cdot \\binom{q^k - i_s + r}{a}",
+    "tuned_pred": "1+\\sum_{a=1}^{a_{\\text{max}}}n_a\\cdot\\begin{pmatrix} q^k-i_s+r\\\\a \\end{pmatrix}"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "e_{h,\\Delta t} := \\frac{\\Vert u_{h,\\Delta t}(1)-u_{\\tilde{h},\\widetilde{\\Delta t}}(1) \\Vert_H}{\\Vert u_{\\tilde{h},\\widetilde{\\Delta t}}(1)\\Vert_H},",
+    "id": "dc961f4bbfd2a701",
+    "paper_id": "2510.08443",
+    "stock_pred": "e_{h,\\Delta t} := \\frac{\\|u_{h,\\Delta t}(1) - u_{\\tilde{h},\\widetilde{\\Delta t}}(1)\\|_H}{\\|u_{\\tilde{h},\\widetilde{\\Delta t}}(1)\\|_H},",
+    "tuned_pred": "e_{h,\\Delta t} := \\frac{\\|u_{h,\\Delta t}(1) - u_{\\tilde{h},\\widetilde{\\Delta}t}(1)\\|_H}{\\|u_{\\tilde{h},\\widetilde{\\Delta}t}(1)\\|_H},"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "N(G,K_t) \\leq \\frac{1}{{t\\choose 2}}\\sum_{e\\in E(G)}{p(e)-1\\choose t-2} \\leq \\sum_{e \\in E(G)}\\frac{{r\\choose t}}{{r\\choose 2}} = \\frac{m}{{r\\choose 2}}{r\\choose t}",
+    "id": "ddb988b869c86bc4",
+    "paper_id": "2508.20946",
+    "stock_pred": "N(G,K_t) \\le \\frac{1}{\\binom{t}{2}} \\sum_{e \\in E(G)} \\binom{p(e)-1}{t-2} \\le \\sum_{e \\in E(G)} \\frac{\\binom{r}{t}}{\\binom{r}{2}} = \\frac{m}{\\binom{r}{2}} \\binom{r}{t}",
+    "tuned_pred": "N(G,K_t)\\leq \\frac{1}{\\binom{t}{2}}\\sum_{e\\in E(G)}\\binom{p(e)-1}{t-2}\\leq \\sum_{e\\in E(G)}\\binom{r}{t}\\binom{r}{2}=\\frac{m}{\\binom{r}{2}}\\binom{r}{t}"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\sum_{j=1}^\\infty \\left(\\sqrt{x_j}-\\sqrt{x_{j+1}}\\right)^2=\\sum_{j=1}^\\infty \\left(\\frac{x_j-x_{j+1}}{\\sqrt{x_j}+\\sqrt{x_{j+1}}}\\right)^2\\ge \\frac{\\left(\\sum_{j=1}^\\infty\\left(x_j-x_{j+1}\\right)\\right)^2}{\\sum_{j=1}^\\infty\\left(\\sqrt{x_j}+\\sqrt{x_{j+1}}\\right)^2}.",
+    "id": "e3003fc2cd27b791",
+    "paper_id": "2512.08771",
+    "stock_pred": "\\sum_{j=1}^{\\infty} \\left( \\sqrt{x_j} - \\sqrt{x_{j+1}} \\right)^2 = \\sum_{j=1}^{\\infty} \\left( \\frac{x_j - x_{j+1}}{\\sqrt{x_j} + \\sqrt{x_{j+1}}} \\right)^2 \\geq \\frac{\\left( \\sum_{j=1}^{\\infty} \\left( x_j - x_{j+1} \\right) \\right)^2}{\\sum_{j=1}^{\\infty} \\left( \\sqrt{x_j} + \\sqrt{x_{j+1}} \\right)^2}.",
+    "tuned_pred": "\\sum_{j=1}^\\infty \\left(\\sqrt{x_j}-\\sqrt{x_{j+1}}\\right)^2 = \\sum_{j=1}^\\infty \\left(\\frac{x_j-x_{j+1}}{\\sqrt{x_j}+\\sqrt{x_{j+1}}}\\right)^2 \\geq \\frac{\\left(\\sum_{j=1}^\\infty (x_j-x_{j+1})\\right)^2}{\\sum_{j=1}^\\infty \\left(\\sqrt{x_j}+\\sqrt{x_{j+1}}\\right)^2}."
+   },
+   {
+    "classes": [
+     "render-only"
+    ],
+    "control_glyph": false,
+    "gt_latex": "&\\mathbb E[D_u\\tilde{J}\\circ\\Gamma(Y)]\\\\ &\\quad=\\int \\lim_{\\epsilon\\rightarrow 0} \\frac{1}{\\epsilon} \\left(\\tilde{J}\\circ\\Gamma(y + \\epsilon u) - \\tilde{J}\\circ\\Gamma(y)\\right) d\\pi_F^x(y)\\\\ &\\quad= \\lim_{\\epsilon\\rightarrow 0} \\frac{1}{\\epsilon}\\int\\left(\\tilde{J}\\circ\\Gamma(y + \\epsilon u) - \\tilde{J}\\circ\\Gamma(y)\\right) d\\pi_F^x(y)\\\\ &\\quad=D_u\\mathbb E[\\tilde{J}\\circ\\Gamma(Y)] = D_u J(F),",
+    "id": "e4ebca6d2979fb0d",
+    "paper_id": "2506.06723",
+    "stock_pred": "\\begin{aligned}\n&\\mathbb{E}[D_u \\tilde{J} \\circ \\Gamma(Y)] \\\\\n&\\quad = \\int \\lim_{\\epsilon \\to 0} \\frac{1}{\\epsilon} \\left( \\tilde{J} \\circ \\Gamma(y + \\epsilon u) - \\tilde{J} \\circ \\Gamma(y) \\right) d\\pi_F^x(y) \\\\\n&\\quad = \\lim_{\\epsilon \\to 0} \\frac{1}{\\epsilon} \\int \\left( \\tilde{J} \\circ \\Gamma(y + \\epsilon u) - \\tilde{J} \\circ \\Gamma(y) \\right) d\\pi_F^x(y) \\\\\n&\\quad = D_u \\mathbb{E}[\\tilde{J} \\circ \\Gamma(Y)] = D_u J(F),\n\\end{aligned}",
+    "tuned_pred": "\\mathbb{E}[D_u\\tilde{J}\\circ\\Gamma(Y)]\\\\ &=\\int\\lim_{\\epsilon\\to 0}\\frac{1}{\\epsilon}\\left(\\tilde{J}\\circ\\Gamma(y+\\epsilon u)-\\tilde{J}\\circ\\Gamma(y)\\right)d\\pi_F^x(y)\\\\ &=\\lim_{\\epsilon\\to 0}\\frac{1}{\\epsilon}\\int\\left(\\tilde{J}\\circ\\Gamma(y+\\epsilon u)-\\tilde{J}\\circ\\Gamma(y)\\right)d\\pi_F^x(y)\\\\ &=D_u\\mathbb{E}[\\tilde{J}\\circ\\Gamma(Y)]=D_uJ(F),"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "z\\in D\\vdash z=u",
+    "id": "e561a8bca8c6f59e",
+    "paper_id": "2511.04708",
+    "stock_pred": "z \\in D \\vdash z = u",
+    "tuned_pred": "z\\in D\\dashv z=u"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "I(\\theta_k ; D_1 \\mid \\theta_{k-1}) = 0",
+    "id": "e629aa660be91f9c",
+    "paper_id": "2603.07415",
+    "stock_pred": "I(\\theta_k; D_1 \\mid \\theta_{k-1}) = 0",
+    "tuned_pred": "I(\\theta_k;D_1\\,|\\,\\theta_{k-1})=0"
+   },
+   {
+    "classes": [
+     "render-only"
+    ],
+    "control_glyph": false,
+    "gt_latex": "v_1 &:= \\sum_{i=0}^{s} |\\Delta u(i)| \\begin{bmatrix} g(k-i)-g(k-1)\\\\ g(k+1-i)-g(k)\\\\ g(k+2-i)-g(k+1) \\end{bmatrix}\\\\ v_2 &:= \\sum_{j=s+1}^{T-2} |\\Delta u(j)| \\begin{bmatrix} g(k-j)-g(k-1)\\\\ g(k+1-j)-g(k)\\\\ g(k+2-j)-g(k+1) \\end{bmatrix}.",
+    "id": "e92b8d697666027b",
+    "paper_id": "2503.23520",
+    "stock_pred": "\\begin{aligned}\nv_1 &:= \\sum_{i=0}^{s} |\\Delta u(i)| \\begin{bmatrix} g(k-i) - g(k-1) \\\\ g(k+1-i) - g(k) \\\\ g(k+2-i) - g(k+1) \\end{bmatrix} \\\\\nv_2 &:= \\sum_{j=s+1}^{T-2} |\\Delta u(j)| \\begin{bmatrix} g(k-j) - g(k-1) \\\\ g(k+1-j) - g(k) \\\\ g(k+2-j) - g(k+1) \\end{bmatrix}.\n\\end{aligned}",
+    "tuned_pred": "v_1 := \\sum_{i=0}^s |\\Delta u(i)| \\begin{bmatrix} g(k-i) - g(k-1) \\\\ g(k+1-i) - g(k) \\\\ g(k+2-i) - g(k+1) \\end{bmatrix} \\\\ v_2 := \\sum_{j=s+1}^{T-2} |\\Delta u(j)| \\begin{bmatrix} g(k-j) - g(k-1) \\\\ g(k+1-j) - g(k) \\\\ g(k+2-j) - g(k+1) \\end{bmatrix}."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\left[\\bar g-\\varphi_B^* g(-1)\\right]_0+\\left[\\bar f-\\varphi_B^* f(-1)\\right]_0\\leq e^{-\\frac{L^2}{33}},",
+    "id": "e97b66aaf962f8e8",
+    "paper_id": "2510.20320",
+    "stock_pred": "\\left[\\bar{g} - \\varphi_B^* g(-1)\\right]_0 + \\left[\\bar{f} - \\varphi_B^* f(-1)\\right]_0 \\le e^{-\\frac{L^2}{33}},",
+    "tuned_pred": "[\\bar{g}-\\varphi_B^*g(-1)]_0+[\\bar{f}-\\varphi_B^*f(-1)]_0\\leq e^{-\\frac{L^2}{33}},"
+   },
+   {
+    "classes": [
+     "render-only"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\int_{\\partial B_1} |\\omega_1|^{1+s} \\, d\\mathcal{H}_{\\omega}^{n-1} = 2 \\pi^{\\frac{n-1}{2}} \\frac{\\Gamma\\left(\\frac{s+2}{2}\\right)}{\\Gamma\\left(\\frac{n+s+1}{2}\\right)}.",
+    "id": "ebd12c084915a5f4",
+    "paper_id": "2604.07708",
+    "stock_pred": "\\int_{\\partial B_1} |\\omega_1|^{1+s} \\, d\\mathcal{H}^{n-1}_\\omega = 2\\pi^{\\frac{n-1}{2}} \\frac{\\Gamma\\left(\\frac{s+2}{2}\\right)}{\\Gamma\\left(\\frac{n+s+1}{2}\\right)}.",
+    "tuned_pred": "\\int_{\\partial B_1}|\\omega_1|^{1+s}\\,d\\mathcal{H}^{n-1}_\\omega = 2\\pi^{\\frac{n-1}{2}}\\, \\frac{\\Gamma\\left(\\frac{s+2}{2}\\right)}{\\Gamma\\left(\\frac{n+s+1}{2}\\right)}."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "V_{0}=e^{-rT}\\mathbb{E}_{\\widehat{\\mathbb{P}}}\\left[V_{T}\\right].",
+    "id": "f4e124975798b5b1",
+    "paper_id": "1803.00335",
+    "stock_pred": "V_0 = e^{-rT} \\mathbb{E}_{\\widehat{\\mathbb{P}}} \\left[ V_T \\right].",
+    "tuned_pred": "V_0=e^{-rT}\\mathbb{E}_{\\widehat{\\mathbb{P}}}[V_T]\\,."
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\left[\\bar g-\\psi_2^*g \\right]_4+\\left[\\bar f-\\psi_2^*f\\right]_4\\leq C e^{-CL}",
+    "id": "f59a474d2535ee8f",
+    "paper_id": "2510.20320",
+    "stock_pred": "\\left[\\bar{g} - \\psi_2^* g\\right]_4 + \\left[\\bar{f} - \\psi_2^* f\\right]_4 \\le C e^{-CL}",
+    "tuned_pred": "[\\bar{g}-\\psi_2^*g]_4+[\\bar{f}-\\psi_2^*f]_4\\leq Ce^{-CL}"
+   },
+   {
+    "classes": [
+     "decoration",
+     "other"
+    ],
+    "control_glyph": true,
+    "gt_latex": "\\text{Sym}^3\\sigma\\otimes\\omega_\\sigma^{-1}\\simeq (\\sigma\\otimes\\mu)\\boxplus(\\sigma\\otimes\\mu^2)",
+    "id": "f7560633e13aa6a5",
+    "paper_id": "2609.10446",
+    "stock_pred": "\\mathrm{Sym}^3 \\sigma \\otimes \\omega_{\\sigma}^{-1} \\simeq (\\sigma \\otimes \\mu) \\boxplus (\\sigma \\otimes \\mu^2)",
+    "tuned_pred": "\\mathrm{Sym}^3\\sigma\\otimes\\omega_\\sigma^{-1}\\simeq(\\sigma\\otimes\\mu)\\oplus(\\sigma\\otimes\\mu^2)"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\left[\\bar g-\\varphi_B^* g_0\\right]_0+\\left[\\bar f-\\varphi_B^* f_0\\right]_0\\leq e^{-\\frac{L^2}{33}},",
+    "id": "fa0c1f9e07116e38",
+    "paper_id": "2510.20320",
+    "stock_pred": "\\left[\\bar{g} - \\varphi_B^* g_0\\right]_0 + \\left[\\bar{f} - \\varphi_B^* f_0\\right]_0 \\le e^{-\\frac{L^2}{33}},",
+    "tuned_pred": "[\\bar{g}-\\varphi_B^*g_0]_0+[\\bar{f}-\\varphi_B^*f_0]_0\\leq e^{-\\frac{L^2}{33}},"
+   },
+   {
+    "classes": [
+     "other"
+    ],
+    "control_glyph": false,
+    "gt_latex": "\\alpha(q) :=\\begin{cases} \\frac{2q}{q+2} & \\text{if}\\ 2\\le q\\le q_n ,\\\\ \\frac{q(n-1)}{2n} & \\text{if}\\ q_n\\le q\\le \\infty. \\end{cases}",
+    "id": "fb772bc2fe53132f",
+    "paper_id": "2505.05904",
+    "stock_pred": "\\alpha(q) := \\begin{cases}\n\\frac{2q}{q+2} & \\text{if } 2 \\le q \\le q_n, \\\\\n\\frac{q(n-1)}{2n} & \\text{if } q_n \\le q \\le \\infty.\n\\end{cases}",
+    "tuned_pred": "\\alpha(q) := \\left\\{ \\begin{aligned} \\frac{2q}{q+2} &&& \\text{if } 2 \\leq q \\leq q_n, \\\\ \\frac{q(n-1)}{2n} &&& \\text{if } q_n \\leq q \\leq \\infty. \\end{aligned} \\right."
+   },
+   {
+    "classes": [
+     "decoration"
+    ],
+    "control_glyph": true,
+    "gt_latex": "\\nabla_i f(\\mathbf{p}) = \\frac{1}{\\ln 2} \\left[ \\text{tr} \\left( \\mathbf{K}^{-1} \\frac{\\partial \\mathbf{Q}}{\\partial P_i} \\right) - \\text{tr} \\left( \\mathbf{K}^{-1} \\mathbf{Q} \\mathbf{K}^{-1} \\frac{\\partial \\mathbf{R}_{\\mathbf{n}_{\\text{eff}}}}{\\partial P_i} \\right) \\right].",
+    "id": "fd1df86c3c5cfd4a",
+    "paper_id": "2604.08437",
+    "stock_pred": "\\nabla_i f(\\mathbf{p}) = \\frac{1}{\\ln 2} \\left[ \\operatorname{tr} \\left( \\mathbf{K}^{-1} \\frac{\\partial \\mathbf{Q}}{\\partial P_i} \\right) - \\operatorname{tr} \\left( \\mathbf{K}^{-1} \\mathbf{Q} \\mathbf{K}^{-1} \\frac{\\partial \\mathbf{R}_{\\mathbf{n}_{\\text{eff}}}}{\\partial P_i} \\right) \\right].",
+    "tuned_pred": "\\nabla_i f(\\mathbf{p}) = \\frac{1}{\\ln 2} \\left[ \\mathrm{tr}\\left( \\mathbf{K}^{-1} \\frac{\\partial \\mathbf{Q}}{\\partial P_i} \\right) - \\mathrm{tr}\\left( \\mathbf{K}^{-1} \\mathbf{Q} \\mathbf{K}^{-1} \\frac{\\partial \\mathbf{R}_{\\mathbf{n}_{\\mathrm{eff}}}}{\\partial P_i} \\right) \\right]."
+   }
+  ]
+ },
+ "secondary": {
+  "crops": {
+   "stock": {
+    "exact": {
+     "ci_high": 0.4417892636362025,
+     "ci_low": 0.36804751012442755,
+     "den": 2688.0,
+     "n_papers": 150,
+     "num": 1090.0,
+     "rate": 0.4055059523809524
+    },
+    "glyph_error_mean": 0.09086328366770849,
+    "render_tolerant": {
+     "ci_high": 0.46731385567296996,
+     "ci_low": 0.38941476671215114,
+     "den": 2688.0,
+     "n_papers": 150,
+     "num": 1153.0,
+     "rate": 0.4289434523809524
+    }
+   },
+   "tuned": {
+    "exact": {
+     "ci_high": 0.5886451909094009,
+     "ci_low": 0.5117903794899632,
+     "den": 2688.0,
+     "n_papers": 150,
+     "num": 1480.0,
+     "rate": 0.5505952380952381
+    },
+    "glyph_error_mean": 0.07198023739559979,
+    "render_tolerant": {
+     "ci_high": 0.6945061451958003,
+     "ci_low": 0.6173284208942935,
+     "den": 2688.0,
+     "n_papers": 150,
+     "num": 1766.0,
+     "rate": 0.6569940476190477
+    }
+   }
+  },
+  "pages": {
+   "stock": {
+    "exact": {
+     "ci_high": 0.5047036871174801,
+     "ci_low": 0.32042168056885,
+     "den": 297.0,
+     "n_papers": 50,
+     "num": 123.0,
+     "rate": 0.41414141414141414
+    },
+    "glyph_error_mean": 0.05705135374752779,
+    "render_tolerant": {
+     "ci_high": 0.49337857267340535,
+     "ci_low": 0.3122800083211983,
+     "den": 297.0,
+     "n_papers": 50,
+     "num": 119.0,
+     "rate": 0.4006734006734007
+    }
+   },
+   "tuned": {
+    "exact": {
+     "ci_high": 0.5529030016047736,
+     "ci_low": 0.3794263624139841,
+     "den": 297.0,
+     "n_papers": 50,
+     "num": 139.0,
+     "rate": 0.468013468013468
+    },
+    "glyph_error_mean": 0.09613653413353337,
+    "render_tolerant": {
+     "ci_high": 0.5833333333333334,
+     "ci_low": 0.3888888888888889,
+     "den": 297.0,
+     "n_papers": 50,
+     "num": 144.0,
+     "rate": 0.48484848484848486
+    }
+   }
+  }
+ },
+ "spacing": {
+  "crops": {
+   "decides": false,
+   "n_excluded": 0,
+   "n_rerendered": 969,
+   "paired": {
+    "ci_high": 0.18295742032105583,
+    "ci_low": 0.13531071763003322,
+    "delta": 0.15922619047619058,
+    "den": 2688.0,
+    "n_papers": 150,
+    "rate_a": 0.5290178571428571,
+    "rate_b": 0.6882440476190477
+   },
+   "stock": {
+    "ci_high": 0.5652978872039022,
+    "ci_low": 0.4917404786628557,
+    "den": 2688.0,
+    "n_papers": 150,
+    "num": 1422.0,
+    "rate": 0.5290178571428571
+   },
+   "tuned": {
+    "ci_high": 0.7226861379986779,
+    "ci_low": 0.6516028997747748,
+    "den": 2688.0,
+    "n_papers": 150,
+    "num": 1850.0,
+    "rate": 0.6882440476190477
+   }
+  },
+  "pages": {
+   "decides": false,
+   "n_excluded": 0,
+   "n_rerendered": 122,
+   "paired": {
+    "ci_high": 0.16382664091392946,
+    "ci_low": -0.02491130918725956,
+    "delta": 0.07070707070707077,
+    "den": 297.0,
+    "n_papers": 50,
+    "rate_a": 0.4781144781144781,
+    "rate_b": 0.5488215488215489
+   },
+   "stock": {
+    "ci_high": 0.5736689675267261,
+    "ci_low": 0.37894736842105264,
+    "den": 297.0,
+    "n_papers": 50,
+    "num": 142.0,
+    "rate": 0.4781144781144781
+   },
+   "tuned": {
+    "ci_high": 0.6476906752107447,
+    "ci_low": 0.44805136619652747,
+    "den": 297.0,
+    "n_papers": 50,
+    "num": 163.0,
+    "rate": 0.5488215488215489
+   }
+  }
+ },
+ "statements": {
+  "secondary": "secondary metrics cannot change the verdict",
+  "transfer": "page-level transfer holds",
+  "verdict": "acceptance passed"
+ },
+ "tag": "mathocr-lora-q8:p4-full-1",
+ "timings": {
+  "assemble": 47.019,
+  "score_crops_stock": 7.941,
+  "score_crops_tuned": 38.063,
+  "score_pages_stock": 0.699,
+  "score_pages_tuned": 3.786,
+  "total": 97.508
+ },
+ "transfer": {
+  "blocks_crop_verdict": false,
+  "ci_high": 0.17726004922067265,
+  "ci_low": -0.010418487762237746,
+  "delta": 0.08417508417508418,
+  "excluded": {
+   "stock_none": 0,
+   "tuned_none": 0
+  },
+  "flip": {
+   "both_right": 98,
+   "both_wrong": 136,
+   "mcnemar_p": 0.0022275315109880345,
+   "n": 297,
+   "right_to_wrong": 19,
+   "wrong_to_right": 44
+  },
+  "holds": true,
+  "n": 297,
+  "n_papers": 50,
+  "statement": "page-level transfer holds",
+  "stock_rate": 0.3939393939393939,
+  "tuned_rate": 0.4781144781144781
+ },
+ "verdict": "pass"
+}

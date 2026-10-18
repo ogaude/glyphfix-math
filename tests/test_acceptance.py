@@ -85,7 +85,7 @@ def test_assert_pinned_refuses_mismatch_and_accepts_match(monkeypatch):
 
 
 def test_benchmark_results_bound_to_pin():
-    p = ROOT / ".planning/phases/05-acceptance-evaluation/evidence/results.json"
+    p = ROOT / "evidence/acceptance/results.json"
     if not p.is_file():
         pytest.skip("no benchmark results yet")
     res = json.loads(p.read_text())

@@ -1,0 +1,80 @@
+{
+  "checks": {
+    "ollama_version": {
+      "actual": "0.40.1",
+      "expected": "0.40.1",
+      "ok": true
+    },
+    "projector_blob": {
+      "actual": "fd5acde1a7a7439b3f9a720d3cead67378beeaabbecc57fe4b30a7f9b301b102",
+      "expected": "fd5acde1a7a7439b3f9a720d3cead67378beeaabbecc57fe4b30a7f9b301b102",
+      "ok": true
+    },
+    "stock_digest": {
+      "actual": "9b84c5ce75a08d0ee9d76896801cce0d1480208c60db584e29c2fde3d93cfaa0",
+      "expected": "9b84c5ce75a08d0ee9d76896801cce0d1480208c60db584e29c2fde3d93cfaa0",
+      "ok": true
+    },
+    "stock_params": {
+      "actual": {
+        "num_ctx": 32768,
+        "num_predict": 24576
+      },
+      "expected": {
+        "num_ctx": 32768,
+        "num_predict": 24576
+      },
+      "ok": true
+    },
+    "template_sha256": {
+      "actual": "d5ddb788d5f3df12e32244954037eb535409d24eeb48c2429d7588af4e7b69a7",
+      "expected": "d5ddb788d5f3df12e32244954037eb535409d24eeb48c2429d7588af4e7b69a7",
+      "ok": true
+    },
+    "text_blob": {
+      "actual": "103d473ee394028b772371a3b98428c384494703d3589b2e2afb5f8491b2146c",
+      "expected": "103d473ee394028b772371a3b98428c384494703d3589b2e2afb5f8491b2146c",
+      "ok": true
+    },
+    "tuned_digest": {
+      "actual": "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737",
+      "expected": "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737",
+      "ok": true
+    }
+  },
+  "pass": true,
+  "readiness": {
+    "frozen_code": {
+      "scripts/acceptance.py": {
+        "blob": "9eb9e4bb6fbc015eb402246f794ab7f36434e29b",
+        "clean": true
+      },
+      "src/lightonocr_math/acceptance.py": {
+        "blob": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac",
+        "clean": true
+      }
+    },
+    "gpu": {
+      "holders": "rocm-smi pids:\n============================ ROCm System Management Interface ============================\n===================================== KFD Processes ======================================\nNo KFD PIDs currently running\n==========================================================================================\n================================== End of ROCm SMI Log ===================================\nollama ps:\nNAME    ID    SIZE    PROCESSOR    CONTEXT    RUNNER    UNTIL",
+      "mem_available_bytes": 25330065408,
+      "timestamp": "2026-10-17T08:20:34.081198+00:00",
+      "vram_free_bytes": 17027596288,
+      "vram_total_bytes": 17095983104,
+      "vram_used_bytes": 68386816
+    },
+    "mem_available_bytes": 25330065408,
+    "ollama_ps": [],
+    "pin": {
+      "acceptance_sha256": "7b42234c9078a5b1005352395cfe00300536b749a56c99eb8a3ef447e02aabc2",
+      "clean": true,
+      "commit": "0a3aff0e66504ff2b8d69f40c61cda7221c28c9d",
+      "commit_time": "2026-10-17T09:59:12+02:00",
+      "digest_now": "7b42234c9078a5b1005352395cfe00300536b749a56c99eb8a3ef447e02aabc2"
+    },
+    "server_env": {
+      "OLLAMA_HOST": "127.0.0.1:11434",
+      "OLLAMA_KEEP_ALIVE": "0"
+    },
+    "server_env_sha256": "6fd9c3c0bec9c0cb92455f8d9dd2a8531111b4da0be5b7f303856e44eea3c346"
+  }
+}
