@@ -11,8 +11,24 @@ tags:
   - latex
   - math
   - gguf
+language:
+  - en
 datasets:
   - @@HF_NAMESPACE@@/@@DATASET_NAME@@
+model-index:
+  - name: @@MODEL_NAME@@
+    results:
+      - task:
+          type: image-text-to-text
+          name: Equation image to LaTeX
+        dataset:
+          type: @@HF_NAMESPACE@@/@@DATASET_NAME@@
+          name: @@DATASET_NAME@@ benchmark split
+          split: benchmark
+        metrics:
+          - type: render_identical_rate
+            name: Render-identical rate
+            value: {{tuned_rate}}
 ---
 
 # @@MODEL_NAME@@
@@ -48,7 +64,7 @@ output cap to {{num_predict}} tokens.
 ## Use with PEFT
 
 Load the base model at the pinned revision with transformers {{transformers_version}}, attach the adapter in
-`adapter/` with peft {{peft_version}}, send a single user turn that contains only the image (no text prompt), and apply
+this repository's root (`adapter_config.json`, `adapter_model.safetensors`) with peft {{peft_version}}, send a single user turn that contains only the image (no text prompt), and apply
 the chat template with `enable_thinking=False`. Use the same processor pixel limits as in training
 ({{min_px}} to {{max_px}} pixels).
 
@@ -75,7 +91,11 @@ training), decided on the render-identical metric:
 - page-level transfer ({{page_n}} equations from {{page_papers}} papers): {{page_stock_rate}} for the base model,
   {{page_tuned_rate}} with this model
 
-## Limits
+## Intended use and limits
+
+Intended for transcribing images of single display equations from mathematics papers into LaTeX. It was trained on
+crops rendered from arXiv papers typeset with LaTeX; handwriting, scans, tables and full pages were not part of the
+training data. Always check the output of any OCR model before relying on it.
 
 {{limits}}
 
@@ -89,3 +109,14 @@ REPRODUCE.md at the repository root).
 Apache License 2.0. See NOTICE and LICENSE. Third-party credits, including the base model, are in NOTICE.
 
 Contact: @@CONTACT_EMAIL@@
+
+## Citation
+
+```bibtex
+@misc{@@MODEL_NAME@@,
+  title  = {@@MODEL_NAME@@: a LoRA for mathematical notation in LightOnOCR-3},
+  author = {@@GH_OWNER@@},
+  year   = {2026},
+  url    = {https://huggingface.co/@@HF_NAMESPACE@@/@@MODEL_NAME@@}
+}
+```

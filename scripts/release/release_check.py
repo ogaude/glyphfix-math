@@ -41,7 +41,7 @@ DATASET_ALLOW = (
 MODEL_ALLOW = (
     re.compile(
         r"^(README\.md|NOTICE|LICENSE|PROVENANCE\.json|Modelfile|SHA256SUMS|text-q8_0\.gguf|mmproj-stock-q8_0\.gguf"
-        r"|adapter/adapter_config\.json|adapter/adapter_model\.safetensors)$"
+        r"|adapter_config\.json|adapter_model\.safetensors)$"
     ),
 )
 
@@ -439,7 +439,7 @@ def check_hashes(cfg: Config, t: Tables) -> dict:
             continue
         problems += [f"{label}: {m}" for m in C.verify_sha256sums(root)]
     for rel, want in (
-        (f"{C.ADAPTER_SUBDIR}/adapter_model.safetensors", cfg.adapter_sha),
+        ("adapter_model.safetensors", cfg.adapter_sha),
         (C.GGUF_NAME, cfg.gguf_sha),
         (C.MMPROJ_NAME, cfg.proj_sha),
     ):

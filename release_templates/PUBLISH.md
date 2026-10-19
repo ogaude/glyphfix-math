@@ -103,7 +103,7 @@ gh repo edit @@GH_OWNER@@/@@REPO_NAME@@ --visibility public --accept-visibility-
 |----------|------|--------|
 | model/{{gguf_name}} | {{gguf_size}} | {{gguf_sha256}} |
 | model/{{mmproj_name}} | {{mmproj_size}} | {{mmproj_sha256}} |
-| model/adapter/adapter_model.safetensors | {{adapter_size}} | {{adapter_sha256}} |
+| model/adapter_model.safetensors | {{adapter_size}} | {{adapter_sha256}} |
 | dataset/data/train-00000-of-00001.parquet | {{dataset_train_size}} | {{dataset_train_sha256}} |
 | dataset/data/benchmark-00000-of-00001.parquet | {{dataset_bench_size}} | {{dataset_bench_sha256}} |
 

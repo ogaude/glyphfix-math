@@ -5,6 +5,12 @@ task_categories:
   - image-to-text
 language:
   - en
+multilinguality:
+  - monolingual
+source_datasets:
+  - original
+annotations_creators:
+  - machine-generated
 tags:
   - ocr
   - latex
@@ -63,6 +69,14 @@ crops, which is more than the train split holds.
 | group, mining_class, control_glyph, tags | train only: how the row was selected |
 | render_image_digest, preamble_sha256, canon_version, builder_version, env | benchmark only: render provenance |
 
+## Intended use and limitations
+
+Intended for training and evaluating OCR models on display equations, in particular on glyph-level notation. All
+equations come from arXiv mathematics papers typeset in LaTeX and rendered with one pinned preamble, so the images
+are clean renderings: no handwriting, scans, noise or page context. Papers are limited to CC BY 3.0, CC BY 4.0 and
+CC0 versions, which is a small and self-selected part of arXiv. The `latex` label is canonicalized, so a model can
+be correct and still differ from it as a string; the released benchmark scores by rendering, not by string match.
+
 ## License
 
 The dataset repository is licensed CC BY 4.0. Every record carries the license of its source paper in
@@ -80,6 +94,19 @@ Equations were extracted from each paper's LaTeX source, canonicalized, and re-r
 pinned TeX Live image. The `latex` column is the canonicalized LaTeX, not the author's original source, which is an
 indication of modification under CC BY 4.0 section 3(a)(1)(B). The page images used for page-level checks are not part
 of this dataset. The raw equation body and its source file position are not shipped.
+
+## Citation
+
+```bibtex
+@misc{@@DATASET_NAME@@,
+  title  = {@@DATASET_NAME@@: equation crops for glyph-level math OCR},
+  author = {@@GH_OWNER@@},
+  year   = {2026},
+  url    = {https://huggingface.co/datasets/@@HF_NAMESPACE@@/@@DATASET_NAME@@}
+}
+```
+
+Please also cite the source papers listed in `ATTRIBUTION.md` for any rows you reuse.
 
 ## Links and contact
 
