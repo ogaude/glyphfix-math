@@ -650,6 +650,8 @@ def check_names(cfg: Config, final: bool) -> dict:
     mail = names.get("contact_email")
     if isinstance(mail, str) and mail.strip() and (not EMAIL_RE.match(mail) or mail in cfg.contact_forbidden):
         problems.append("contact_email is invalid or is the arXiv User-Agent address")
+    elif isinstance(mail, str) and mail.strip().lower().endswith(".invalid"):
+        problems.append("contact_email is still a placeholder (.invalid); supply the real takedown address")
     return result("names", problems)
 
 
