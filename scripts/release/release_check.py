@@ -645,6 +645,8 @@ def check_names(cfg: Config, final: bool) -> dict:
             continue
         if C.NAME_FORBIDDEN.search(v):
             problems.append(f"{key} contains the LightOn name")
+        if "PENDING" in v.upper():
+            problems.append(f"{key} is still a placeholder; supply the real value")
         if key in ("dataset_name", "model_name", "repo_name") and not NAME_RE.match(v):
             problems.append(f"{key} is not a valid repository name")
     mail = names.get("contact_email")
