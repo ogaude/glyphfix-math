@@ -529,12 +529,12 @@ def check_results_overlay(cfg: Config) -> dict:
         dst = res / Path(src).name
         if not dst.is_file():
             problems.append(f"results/{Path(src).name} is missing")
-        elif not Path(src).is_file() or dst.read_bytes() != Path(src).read_bytes():
+        elif not Path(src).is_file() or dst.read_bytes() != C.phase4_public_bytes(Path(src)):
             problems.append(f"results/{Path(src).name} differs from its source")
     for rel in _walk(res):
         if _is_text(rel) and ".planning" in _read(res / rel):
             problems.append(f"results/{rel} contains a .planning string")
-    byte_copies = {Path(src).name for src in cfg.phase4}
+    byte_copies = {Path(src).name for src in cfg.phase4} - {"MINING.md"}  # MINING.md is label-stripped and scanned
     for rel in _walk(cfg.overlay):
         if rel.startswith("results/") and Path(rel).name in byte_copies:
             continue  # byte copies of development reports are compared with their source above

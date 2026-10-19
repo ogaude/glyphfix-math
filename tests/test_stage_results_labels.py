@@ -1,7 +1,8 @@
 from pathlib import Path
 
 from scripts.release import common as C
-from scripts.release.stage_results import strip_mining_labels
+
+strip_mining_labels = C.strip_mining_labels
 
 MINING = Path(".planning/phases/04-error-mining-and-lora-training/reports/MINING.md")
 
