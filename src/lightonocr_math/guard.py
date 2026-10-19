@@ -13,15 +13,17 @@ Behaviour:
   preflight  Before work starts, wait (polling every poll_s) until the declared need fits:
              MemAvailable >= ram_gb * max(workers, 1) GiB + 1.5 GiB floor, and free VRAM
              >= vram_gb GiB. After timeout_s the guard exits 75 naming the short resource
-             (and, for VRAM, who holds it: rocm-smi pids and `ollama ps`). Ollama models
+             (and, for VRAM, who holds it: rocm-smi or nvidia-smi pids and `ollama ps`). Ollama models
              are reported, never unloaded.
   watchdog   While the job runs a thread samples every watch_s. MemAvailable below the
              floor, or free VRAM below vram_floor_gb (when a VRAM need was declared),
              pauses registered children with SIGSTOP and resumes them with SIGCONT on
              recovery. No recovery within grace_s terminates them (SIGTERM, then SIGKILL)
              and the guard exits 76.
-  fail closed  A declared VRAM need with neither rocm-smi nor an already-imported torch
-             able to report free VRAM exits 78; the job never runs unguarded.
+  fail closed  A declared VRAM need that none of rocm-smi, nvidia-smi or an already-imported
+             torch can report free VRAM for exits 78; the job never runs unguarded.
+             Free VRAM is read from the first tool that answers, in that order (AMD ROCm,
+             NVIDIA, then torch for any other backend torch supports).
 
 Exit codes: 75 preflight timeout, 76 watchdog killed the job, 78 VRAM unmeasurable.
 Otherwise the wrapped command's own exit code is returned.
@@ -117,6 +119,18 @@ def vram_free_bytes(device: str = "card0") -> int | None:
     return max(total - used, 0)
 
 
+def nvidia_vram_free_bytes(index: int = 0) -> int | None:
+    """Free VRAM of NVIDIA GPU `index` from nvidia-smi, or None if it cannot be read."""
+    out = _run_tool(["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"])
+    if not out:
+        return None
+    rows = [line.strip() for line in out.splitlines() if line.strip()]
+    try:
+        return int(float(rows[index])) * 1024**2
+    except (ValueError, IndexError):
+        return None
+
+
 def torch_vram_free_bytes() -> int | None:
     """Free VRAM via torch, only if torch is already imported (this module never imports it)."""
     torch = sys.modules.get("torch")
@@ -130,9 +144,13 @@ def torch_vram_free_bytes() -> int | None:
 
 
 def vram_holders() -> str:
-    """Short report of who holds VRAM (rocm-smi pids, ollama ps). Never raises, never unloads anything."""
+    """Short report of who holds VRAM (rocm-smi or nvidia-smi pids, ollama ps). Never raises, never unloads anything."""
     parts = []
-    for label, cmd in (("rocm-smi pids", ["rocm-smi", "--showpids"]), ("ollama ps", ["ollama", "ps"])):
+    for label, cmd in (
+        ("rocm-smi pids", ["rocm-smi", "--showpids"]),
+        ("nvidia-smi pids", ["nvidia-smi", "--query-compute-apps=pid,used_memory", "--format=csv"]),
+        ("ollama ps", ["ollama", "ps"]),
+    ):
         out = _run_tool(cmd)
         text = out.strip() if out and out.strip() else "unavailable"
         parts.append(f"{label}:\n{text}")
@@ -147,8 +165,11 @@ class Sampler:
 
 
 def _default_vram() -> int | None:
-    free = vram_free_bytes()
-    return free if free is not None else torch_vram_free_bytes()
+    for probe in (vram_free_bytes, nvidia_vram_free_bytes, torch_vram_free_bytes):
+        free = probe()
+        if free is not None:
+            return free
+    return None
 
 
 def default_sampler() -> Sampler:
@@ -189,7 +210,7 @@ def preflight(
         if need_vram > 0:
             free = s.vram()
             if free is None:
-                raise GuardUnmeasurable("VRAM unmeasurable: neither rocm-smi nor torch can report free VRAM; refusing to run unguarded")
+                raise GuardUnmeasurable("VRAM unmeasurable: none of rocm-smi, nvidia-smi or torch can report free VRAM; refusing to run unguarded")
             if free < need_vram:
                 short.append(f"short: VRAM free {_gib(free)} < needed {_gib(need_vram)}; holders:\n{s.holders()}")
         if not short:

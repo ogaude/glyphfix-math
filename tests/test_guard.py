@@ -41,6 +41,29 @@ def test_vram_free_none_cases(monkeypatch):
     assert G.vram_free_bytes() is None
 
 
+def test_nvidia_free_parses_first_gpu(monkeypatch):
+    _patch_run(monkeypatch, stdout="15000\n8000\n")
+    assert G.nvidia_vram_free_bytes() == 15000 * 1024**2
+
+
+def test_nvidia_free_none_cases(monkeypatch):
+    _patch_run(monkeypatch, exc=FileNotFoundError())
+    assert G.nvidia_vram_free_bytes() is None
+    _patch_run(monkeypatch, stdout="N/A\n")
+    assert G.nvidia_vram_free_bytes() is None
+
+
+def test_default_vram_order(monkeypatch):
+    monkeypatch.setattr(G, "vram_free_bytes", lambda *a: None)
+    monkeypatch.setattr(G, "nvidia_vram_free_bytes", lambda *a: 7)
+    monkeypatch.setattr(G, "torch_vram_free_bytes", lambda: 9)
+    assert G._default_vram() == 7
+    monkeypatch.setattr(G, "nvidia_vram_free_bytes", lambda *a: None)
+    assert G._default_vram() == 9
+    monkeypatch.setattr(G, "vram_free_bytes", lambda *a: 5)
+    assert G._default_vram() == 5
+
+
 def test_preflight_ram_timeout():
     with pytest.raises(G.GuardTimeout) as ei:
         G.preflight(ram_gb=4, timeout_s=0.3, poll_s=0.1, sampler=fake(mem=3 * GIB), log=lambda m: None)
