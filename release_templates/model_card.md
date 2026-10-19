@@ -68,6 +68,9 @@ this repository's root (`adapter_config.json`, `adapter_model.safetensors`) with
 the chat template with `enable_thinking=False`. Use the same processor pixel limits as in training
 ({{min_px}} to {{max_px}} pixels).
 
+Hardware: the GGUF runs on any backend Ollama or llama.cpp supports, but it was tested only on an AMD ROCm GPU
+(gfx1200). Training and export were also done only on ROCm.
+
 ## How the GGUF was made
 
 The adapter was merged into the bf16 base weights, the merged model was converted with llama.cpp {{llama_cpp_commit}}

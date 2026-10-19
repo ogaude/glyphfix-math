@@ -8,7 +8,7 @@ Versions and digests (Python, locked packages, llama.cpp commit, Ollama, render 
 
 - arXiv politeness: metadata is read through `export.arxiv.org` and `oaipmh.arxiv.org`, and e-prints are fetched one at a time. Keep at least 3.1 s between two requests (the scripts refuse a smaller interval). Send a User-Agent with a contact address of your own (the constant `UA` in `src/lightonocr_math/corpus/catalog.py`, and the one in `scripts/build_candidates.py`). Fetch metadata and e-prints only, no bulk transfers.
 - License: only papers under CC BY (3.0 or 4.0) and CC0 enter the dataset. The license is per paper version, so the version is pinned.
-- GPU: a local 16 GB card. The GPU may be shared, so check the free VRAM first (`rocm-smi --showmeminfo vram`), size batches to it, and wait or stop instead of running out of memory. Ollama may hold a model in VRAM.
+- GPU: a local 16 GB card. Training, export and acceptance were run and tested only on AMD ROCm (gfx1200); other GPUs are untested. The GPU may be shared, so check the free VRAM first (`rocm-smi --showmeminfo vram` on AMD, `nvidia-smi --query-gpu=memory.free --format=csv` on NVIDIA), size batches to it, and wait or stop instead of running out of memory. Ollama may hold a model in VRAM.
 - RAM: keep `MemAvailable` above 1.5 GB at all times. Check it before a job and cap workers and Docker memory. The renderer runs at most 3 containers at 4 GB each; the training and export steps run under `lightonocr_math.guard`.
 - Rendering uses the Docker image `texlive/texlive` at the digest in PINS.md, with no network.
 
@@ -34,5 +34,5 @@ Versions and digests (Python, locked packages, llama.cpp commit, Ollama, render 
 ## Environments
 
 - Default environment (everything except training and export): `uv sync --frozen`.
-- Training environment: `scripts/setup_train_env.sh` builds `.venv-lighton` from `requirements/train.lock.txt` (ROCm PyTorch first). Commands that name `.venv-lighton/bin/python` use it.
+- Training environment: `scripts/setup_train_env.sh` builds `.venv-lighton` from `requirements/train.lock.txt` (ROCm PyTorch first; on another GPU, install the matching PyTorch and torchvision build instead, untested). Commands that name `.venv-lighton/bin/python` use it.
 - Export environment: `requirements/convert.lock.txt`, plus a llama.cpp checkout at the commit named in PINS.md (`LLAMA_CPP_DIR`, default `$HOME/src/llama.cpp`).

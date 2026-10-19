@@ -31,6 +31,10 @@ uv run python -m scripts.release.reproduce
 
 The command prints a verdict and writes a report. [REPRODUCE.md](REPRODUCE.md) explains each verdict and also documents Tier 2, the regeneration of predictions with Ollama.
 
+## Hardware
+
+The published model files and the benchmark rerun do not depend on a particular GPU: the GGUF runs in Ollama or llama.cpp on any backend they support, and Tier 1 above uses no GPU. Training, export and the full rebuild were done and tested only on AMD ROCm (a gfx1200 card with 16 GB). The pinned training environment installs the ROCm build of PyTorch, so other GPUs need the matching PyTorch build and have not been tried. The resource guard also reads free VRAM through `nvidia-smi` and torch, but that path was tested only with mocked output, not on NVIDIA hardware.
+
 ## Rebuild
 
 [REBUILD.md](REBUILD.md) lists the whole pipeline in script order: candidate harvesting, fetching, building and selecting equations, error mining, training, export and acceptance. The versions and digests it relies on are in [results/PINS.md](results/PINS.md). A rebuild re-derives the artifacts; the published benchmark stays the frozen one in `data/benchmark` and `data/splits`.
