@@ -19,11 +19,14 @@ This file spells the old names as data and is therefore itself on the allow-list
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 
@@ -269,6 +272,176 @@ def apply(root: Path = Path("."), *, write: bool) -> dict:
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# trial: the rename in throwaway clones
+
+MIN_AVAILABLE_BYTES = 6 * 1024**3
+DEFAULT_PYTEST_ARGS = ("-q", "-m", "not docker", "-p", "no:cacheprovider", "-o", "junit_family=xunit1")
+_TRIAL_GIT = ("-c", "user.name=trial", "-c", "user.email=trial@example.invalid", "-c", "commit.gpgsign=false")
+
+
+def mem_available() -> int:
+    for line in Path("/proc/meminfo").read_text().splitlines():
+        if line.startswith("MemAvailable:"):
+            return int(line.split()[1]) * 1024
+    return 0
+
+
+def _test_id(case: ET.Element) -> str:
+    name = case.get("name", "")
+    file = case.get("file")
+    classname = case.get("classname", "")
+    if file:
+        cls = [c for c in classname.split(".") if c[:1].isupper()]
+        return "::".join([file, *cls, name])
+    parts = classname.split(".")
+    mod = [x for x in parts if not x[:1].isupper()]
+    cls = parts[len(mod):]
+    return "::".join(["/".join(mod) + ".py", *cls, name])
+
+
+def parse_junit(path: Path) -> dict:
+    """Counts, failing ids (failures and errors), skipped ids with reasons and the first message line of each failure."""
+    counts = {"passed": 0, "failed": 0, "errors": 0, "skipped": 0}
+    failing: list[str] = []
+    skipped: list[dict] = []
+    messages: dict[str, str] = {}
+    for case in ET.parse(path).getroot().iter("testcase"):
+        tid = _test_id(case)
+        bad = case.find("failure")
+        err = case.find("error")
+        skip = case.find("skipped")
+        if bad is not None or err is not None:
+            node = bad if bad is not None else err
+            counts["failed" if bad is not None else "errors"] += 1
+            failing.append(tid)
+            messages[tid] = ((node.get("message") or node.text or "").strip().splitlines() or [""])[0][:300]
+        elif skip is not None:
+            counts["skipped"] += 1
+            skipped.append({"id": tid, "reason": skip.get("message") or ""})
+        else:
+            counts["passed"] += 1
+    return {"counts": counts, "failing": sorted(failing), "skipped": skipped, "messages": messages}
+
+
+_EXP001_RE = re.compile(r'^(EXP001_TREE\s*=\s*")([0-9a-f]{40})(")', re.MULTILINE)
+
+
+def set_exp001_literal(text: str, tree: str) -> str:
+    if len(_EXP001_RE.findall(text)) != 1:
+        raise RenameError("EXP001_TREE line missing or not unique")
+    return _EXP001_RE.sub(lambda m: m.group(1) + tree + m.group(3), text)
+
+
+def _default_runner(clone: Path, args: list[str], junit: Path) -> int:
+    env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
+    env["PATH"] = os.pathsep.join(d for d in env.get("PATH", "").split(os.pathsep) if not re.search(r"/\.venv[^/]*/bin/?$", d))
+    env["UV_CACHE_DIR"] = subprocess.run(["uv", "cache", "dir"], capture_output=True, text=True, check=True).stdout.strip()
+    log = junit.with_suffix("").with_suffix(".log")
+    with log.open("w", encoding="utf-8") as fh:
+        sync = subprocess.run(["uv", "sync", "--frozen"], cwd=clone, env=env, stdout=fh, stderr=subprocess.STDOUT, check=False)
+        if sync.returncode != 0:
+            return sync.returncode
+        r = subprocess.run(["uv", "run", "--frozen", "pytest", *args, "--junitxml", str(junit)],
+                           cwd=clone, env=env, stdout=fh, stderr=subprocess.STDOUT, check=False)
+    return r.returncode
+
+
+def _carry(root: Path, clones: list[Path], paths: tuple[str, ...] | None) -> list[str]:
+    """Commit the source worktree's uncommitted changes (limited to `paths` when given) in each clone."""
+    spec = ["--", *paths] if paths else []
+    diff = _git(root, "diff", "HEAD", "--binary", *spec).stdout
+    carried = [x for x in _git(root, "diff", "HEAD", "--name-only", "-z", *spec).stdout.decode().split("\0") if x]
+    untracked: list[str] = []
+    if paths:
+        out = _git(root, "ls-files", "-o", "--exclude-standard", "-z", *spec).stdout.decode()
+        untracked = [x for x in out.split("\0") if x]
+    for clone in clones:
+        if diff:
+            r = _git(clone, "apply", "--index", "-", input=diff, check=False)
+            if r.returncode != 0:
+                raise RenameError(f"cannot apply the worktree diff: {r.stderr.decode(errors='replace').strip()}")
+        for rel in untracked:
+            dest = clone / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(root / rel, dest)
+            _git(clone, "add", "--", rel)
+        if _git(clone, "diff", "--cached", "--quiet", check=False).returncode != 0:
+            _git(clone, *_TRIAL_GIT, "commit", "-q", "-m", "trial: carried worktree changes")
+    return sorted(set(carried) | set(untracked))
+
+
+def trial(root: Path, work: Path, *, tests: tuple[str, ...] = (), pytest_args: tuple[str, ...] = DEFAULT_PYTEST_ARGS,
+          overlays: tuple[str, ...] = (), set_exp001_tree: bool = False, allow_red: tuple[str, ...] = (),
+          paths: tuple[str, ...] | None = None, runner=None, mem_check=None) -> dict:
+    """Run the suite in a baseline clone and in a renamed clone; report the tests only the rename turns red."""
+    root, work = Path(root).resolve(), Path(work).resolve()
+    runner = runner or _default_runner
+    avail = (mem_check or mem_available)()
+    if avail < MIN_AVAILABLE_BYTES:
+        raise RenameError(f"MemAvailable {avail / 1024**3:.1f} GiB is below 6 GiB; not starting the trial")
+    if _git(root, "check-ignore", "-q", str(work), check=False).returncode != 0:
+        raise RenameError(f"work directory is not gitignored in the source repository: {work}")
+    if work.exists() and any(work.iterdir()):
+        raise RenameError(f"work directory is not empty: {work}")
+    work.mkdir(parents=True, exist_ok=True)
+    status = _git(root, "status", "--porcelain").stdout
+    head = _git(root, "rev-parse", "HEAD").stdout.decode().strip()
+    clones = {"base": work / "base", "renamed": work / "renamed"}
+    for c in clones.values():
+        subprocess.run(["git", "clone", "-q", "--no-local", str(root), str(c)], check=True, capture_output=True)
+        _git(c, "remote", "remove", "origin")
+    carried = _carry(root, list(clones.values()), paths)
+    renamed = clones["renamed"]
+    apply(renamed, write=True)
+    for ov in overlays:
+        src, _, dest = ov.partition("=")
+        if not src or not dest:
+            raise RenameError(f"bad overlay (expected SRC=DEST): {ov}")
+        s, d = root / src, renamed / dest
+        d.parent.mkdir(parents=True, exist_ok=True)
+        if s.is_dir():
+            shutil.copytree(s, d, dirs_exist_ok=True)
+        else:
+            shutil.copy2(s, d)
+        _git(renamed, "add", "-A", "--", dest)
+    _git(renamed, "add", "-u")
+    tree = None
+    if set_exp001_tree:
+        t = _git(renamed, "write-tree").stdout.decode().strip()
+        tree = _git(renamed, "rev-parse", f"{t}:experiments/exp001_baseline").stdout.decode().strip()
+        f = renamed / "tests" / "test_frozen_exp001.py"
+        f.write_text(set_exp001_literal(f.read_text(encoding="utf-8"), tree), encoding="utf-8")
+        _git(renamed, "add", "-u")
+    _git(renamed, *_TRIAL_GIT, "commit", "-q", "--allow-empty", "-m", "trial rename")
+    results = {}
+    for name, c in clones.items():  # one after the other: RAM
+        junit = work / f"{name}.junit.xml"
+        runner(c, [*pytest_args, *tests], junit)
+        if not junit.exists():
+            raise RenameError(f"the {name} run wrote no junit report (see {work / (name + '.log')})")
+        results[name] = parse_junit(junit)
+    base_fail, ren_fail = set(results["base"]["failing"]), set(results["renamed"]["failing"])
+    red_all = sorted(ren_fail - base_fail)
+    red = [r for r in red_all if not any(fnmatch.fnmatchcase(r, pat) for pat in allow_red)]
+    out = {
+        "source_head": head,
+        "worktree_diff_applied": bool(carried),
+        "carried_paths": carried,
+        "overlays": list(overlays),
+        "exp001_tree": tree,
+        "base": results["base"],
+        "renamed": results["renamed"],
+        "red": red,
+        "red_allowed": [r for r in red_all if r not in red],
+        "fixed": sorted(base_fail - ren_fail),
+        "renamed_scan_residue": len(scan(renamed)),
+    }
+    if _git(root, "status", "--porcelain").stdout != status or _git(root, "rev-parse", "HEAD").stdout.decode().strip() != head:
+        raise RenameError("the source repository changed during the trial")
+    return out
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # CLI
 
 
@@ -300,8 +473,33 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--write", action="store_true")
     a.add_argument("--root", default=".")
     a.add_argument("--json")
+    t = sub.add_parser("trial")
+    t.add_argument("--root", default=".")
+    t.add_argument("--work", required=True)
+    t.add_argument("--tests", nargs="+", default=[])
+    t.add_argument("--paths", nargs="+")
+    t.add_argument("--overlay", nargs="+", default=[], metavar="SRC=DEST")
+    t.add_argument("--set-exp001-tree", action="store_true")
+    t.add_argument("--allow-red", nargs="+", default=[], metavar="PATTERN")
+    t.add_argument("--json")
     args = ap.parse_args(argv)
     try:
+        if args.cmd == "trial":
+            res = trial(Path(args.root), Path(args.work), tests=tuple(args.tests), overlays=tuple(args.overlay),
+                        set_exp001_tree=args.set_exp001_tree, allow_red=tuple(args.allow_red),
+                        paths=tuple(args.paths) if args.paths else None)
+            for name in ("base", "renamed"):
+                print(f"{name}: {res[name]['counts']}")
+            print(f"carried paths: {len(res['carried_paths'])}; residue in renamed clone: {res['renamed_scan_residue']}")
+            print(f"red (turned red by the rename alone): {len(res['red'])}")
+            for r in res["red"]:
+                print(f"  {r}: {res['renamed']['messages'].get(r, '')}")
+            if res["red_allowed"]:
+                print(f"red but allowed: {res['red_allowed']}")
+            if res["fixed"]:
+                print(f"fixed by the rename: {res['fixed']}")
+            _write_json(args.json, res)
+            return 1 if res["red"] else 0
         if args.cmd == "scan":
             found = scan(Path(args.root))
             print(_summary(found))
