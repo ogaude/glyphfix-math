@@ -799,7 +799,7 @@ def _record_setup(tmp_path: Path, **kw):
 
     acc = repo / "evidence" / "acceptance"
     _dump(acc / "results.json", published)
-    (acc / "ACCEPTANCE.md").write_text("# acceptance\n", encoding="utf-8")
+    (acc / "ACCEPTANCE.md").write_bytes(ACC_PUBLISHED)
     _dump(acc / "FREEZE_AMENDMENT.json", a1)
     _dump(acc / "env_check.json", {"python": "3"})
     (repo / PRED).parent.mkdir(parents=True, exist_ok=True)
@@ -819,7 +819,7 @@ def _record_setup(tmp_path: Path, **kw):
     _dump(preview / "exp001.json", {"old_tree": ra.EXP001_OLD_TREE, "predicted_new_tree": tree, "files": []})
     rerun = tmp_path / "rerun"
     _dump(rerun / "evidence" / "results.json", fresh)
-    (rerun / "ACCEPTANCE.md").write_bytes((acc / "ACCEPTANCE.md").read_bytes())
+    (rerun / "ACCEPTANCE.md").write_bytes(ACC_RERENDERED)
     report = {
         "tier": "score-only", "cold_cache": True, "render_image": "texlive/texlive:latest", "git_head": "f" * 40,
         "score_exit": 0, "seconds": 12, "harness": "scripts.release.frozen_rescore",
@@ -829,6 +829,23 @@ def _record_setup(tmp_path: Path, **kw):
     return SimpleNamespace(
         repo=repo, a1=a1, published=published, fresh=fresh, preview=preview, rerun=rerun, report=report, commit=h2, tree=tree
     )
+
+
+ACC_PUBLISHED = (
+    "# Acceptance\n\n## Rerun (D-18)\n\n"
+    "Mode benchmark, git commit " + "9" * 40 + ", acceptance constants sha256 " + "7" * 64 + ".\n\n"
+    "| input | sha256 |\n|---|---|\n| a | " + "1" * 64 + " |\n\n"
+    "## Appendix: CPU llama-server sensitivity\n\n"
+    "Coverage: 736 of 736 flipped records run on CPU.\n\n| direction | run |\n|---|---|\n| r | 1 |\n\n"
+    "The sensitivity run does not change the verdict (D-21).\n"
+).encode()
+ACC_RERENDERED = (
+    "# Acceptance\n\n## Rerun (D-18)\n\n"
+    "Mode benchmark, git commit " + "a" * 40 + ", acceptance constants sha256 " + "7" * 64 + ".\n\n"
+    "| input | sha256 |\n|---|---|\n| a | " + "1" * 64 + " |\n\n"
+    "## Appendix: CPU llama-server sensitivity\n\n"
+    "CPU llama-server sensitivity run: not yet run; non-blocking (D-21).\n"
+).encode()
 
 
 def _check(s, **over):
@@ -870,9 +887,40 @@ def _mut_fresh_headline(s):
     _dump(s.rerun / "evidence" / "results.json", fresh)
 
 
+def _rewrite_rerun_acc(s, old: bytes, new: bytes):
+    data = (s.rerun / "ACCEPTANCE.md").read_bytes()
+    assert old in data
+    (s.rerun / "ACCEPTANCE.md").write_bytes(data.replace(old, new, 1))
+
+
 def _mut_acceptance_md(s):
-    with open(s.rerun / "ACCEPTANCE.md", "a", encoding="utf-8") as fh:
-        fh.write("x")
+    data = (s.rerun / "ACCEPTANCE.md").read_bytes()
+    (s.rerun / "ACCEPTANCE.md").write_bytes(b"x" + data)
+
+
+def _mut_acc_stamp_text(s):
+    _rewrite_rerun_acc(s, b"acceptance constants sha256 " + b"7" * 64, b"acceptance constants sha256 " + b"8" * 64)
+
+
+def _mut_acc_stamp_prefix(s):
+    _rewrite_rerun_acc(s, b"Mode benchmark,", b"Mode dev,")
+
+
+def _mut_acc_before_section(s):
+    _rewrite_rerun_acc(s, b"| a | " + b"1" * 64, b"| a | " + b"2" * 64)
+
+
+def _mut_acc_heading(s):
+    _rewrite_rerun_acc(s, b"## Appendix: CPU llama-server sensitivity", b"## Appendix: CPU sensitivity")
+
+
+def _mut_acc_no_stamp(s):
+    _rewrite_rerun_acc(s, b"Mode benchmark, git commit ", b"Mode benchmark, commit ")
+
+
+def _mut_acc_section_after(s):
+    with open(s.rerun / "ACCEPTANCE.md", "ab") as fh:
+        fh.write(b"## Extra\n\nx\n")
 
 
 def _mut_module(s):
@@ -912,6 +960,12 @@ def _mut_no_public_paths(s):
         (lambda s: _report(s, harness="scripts.acceptance"), "harness"),
         (_mut_fresh_headline, "not identical_modulo_amendment"),
         (_mut_acceptance_md, "ACCEPTANCE.md"),
+        (_mut_acc_stamp_text, "ACCEPTANCE.md"),
+        (_mut_acc_stamp_prefix, "ACCEPTANCE.md"),
+        (_mut_acc_before_section, "ACCEPTANCE.md"),
+        (_mut_acc_heading, "ACCEPTANCE.md"),
+        (_mut_acc_no_stamp, "ACCEPTANCE.md"),
+        (_mut_acc_section_after, "ACCEPTANCE.md"),
         (_mut_module, "preview module blob"),
         (_mut_run_lock, "RUN_LOCK.json"),
         (_mut_preview_registry, "REGISTRY.json"),
@@ -1071,3 +1125,44 @@ def test_verify_rename_real_repository():
     if not (ROOT / ra.AMENDMENT2_PATH).exists():
         pytest.skip("record not written yet")
     assert fa.verify_chain(ROOT) == []
+
+
+def test_blank_acceptance_variants_accepts_the_real_diff_shape():
+    assert ra.acceptance_identical_modulo_variants(ACC_RERENDERED, ACC_PUBLISHED)
+    assert ra.acceptance_identical_modulo_variants(ACC_PUBLISHED, ACC_PUBLISHED)
+
+
+def test_blank_acceptance_variants_keeps_the_heading_and_neighbours():
+    out = ra.blank_acceptance_variants(ACC_PUBLISHED)
+    assert b"## Appendix: CPU llama-server sensitivity\n<sensitivity-section>\n" in out
+    assert b"Coverage:" not in out and b"9" * 40 not in out and b"acceptance constants sha256 " + b"7" * 64 in out
+
+
+def test_blank_acceptance_variants_stops_at_the_next_heading():
+    a = ACC_PUBLISHED + b"## Tail\n\nsame\n"
+    b = ACC_RERENDERED + b"## Tail\n\nsame\n"
+    assert ra.acceptance_identical_modulo_variants(a, b)
+    assert not ra.acceptance_identical_modulo_variants(a, b.replace(b"same", b"diff"))
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        ACC_RERENDERED.replace(b"Mode benchmark, git commit ", b"Mode benchmark, commit "),
+        ACC_RERENDERED.replace(b"## Appendix: CPU llama-server sensitivity\n", b""),
+        ACC_RERENDERED + ACC_RERENDERED[ACC_RERENDERED.index(b"## Appendix") :],
+        b"# acceptance\n",
+    ],
+)
+def test_blank_acceptance_variants_fails_closed(bad):
+    with pytest.raises(ra.AmendmentError):
+        ra.blank_acceptance_variants(bad)
+    with pytest.raises(ra.AmendmentError):
+        ra.acceptance_identical_modulo_variants(ACC_PUBLISHED, bad)
+
+
+def test_build_record_states_the_rerender_modulo_note(tmp_path):
+    rec, _ = _build(_record_setup(tmp_path))
+    re_ = rec["rerun_equivalence"]
+    assert re_["report_rerender_identical"] is True
+    assert re_["report_rerender_note"] == "identical modulo the git commit stamp and the CPU sensitivity section"

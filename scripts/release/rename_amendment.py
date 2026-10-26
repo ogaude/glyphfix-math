@@ -858,6 +858,39 @@ RECORD_EFFECTS = [
 RECORD_HARNESS = "scripts.release.frozen_rescore"
 PUBLISHED_RESULTS = fa.NEW_EVIDENCE_DIR / "results.json"
 PUBLISHED_ACCEPTANCE_MD = fa.NEW_EVIDENCE_DIR / "ACCEPTANCE.md"
+RERENDER_NOTE = "identical modulo the git commit stamp and the CPU sensitivity section"
+_COMMIT_STAMP = re.compile(
+    rb"^(Mode benchmark, git commit )[0-9a-f]{40}(, acceptance constants sha256 [0-9a-f]{64}\.)$", re.MULTILINE
+)
+_SENSITIVITY_HEAD = re.compile(rb"^## Appendix: CPU llama-server sensitivity\n", re.MULTILINE)
+_NEXT_HEADING = re.compile(rb"^## ", re.MULTILINE)
+
+
+def blank_acceptance_variants(data: bytes) -> bytes:
+    """Return the ACCEPTANCE.md bytes with the two parts a fresh render cannot reproduce blanked.
+
+    Blanked, and nothing else: (1) the 40-hex git commit on the single line
+    "Mode benchmark, git commit <hash>, acceptance constants sha256 <64 hex>." and (2) the body of the
+    "## Appendix: CPU llama-server sensitivity" section, i.e. every byte after its heading line up to the next
+    "## " heading or the end of the file. Everything else, including the rest of the stamp line, the heading
+    itself and the sections around the appendix, is kept byte for byte. Fails closed: raises AmendmentError
+    unless the stamp line and the heading each occur exactly once.
+    """
+    if len(_COMMIT_STAMP.findall(data)) != 1:
+        raise AmendmentError("ACCEPTANCE.md does not hold exactly one 'Mode benchmark, git commit <hash>, ...' line")
+    data = _COMMIT_STAMP.sub(rb"\1<git-commit>\2", data)
+    heads = list(_SENSITIVITY_HEAD.finditer(data))
+    if len(heads) != 1:
+        raise AmendmentError("ACCEPTANCE.md does not hold exactly one '## Appendix: CPU llama-server sensitivity' section")
+    start = heads[0].end()
+    nxt = _NEXT_HEADING.search(data, start)
+    end = nxt.start() if nxt else len(data)
+    return data[:start] + b"<sensitivity-section>\n" + data[end:]
+
+
+def acceptance_identical_modulo_variants(fresh: bytes, published: bytes) -> bool:
+    """True when the two ACCEPTANCE.md byte strings match after `blank_acceptance_variants`."""
+    return blank_acceptance_variants(fresh) == blank_acceptance_variants(published)
 RECORDED_DATA_DIR = "data/benchmark/acceptance/"
 RECORDED_DATA_FILES = ("evidence/acceptance/results.json", "evidence/acceptance/env_check.json")
 COMMIT_PROOF_KEYS = ("commit", "changed", "pure_rewrite", "exceptions", "renames", "latest_only_rewritten")
@@ -1017,8 +1050,12 @@ def check_record_inputs(
             problems.append(f"frozen compare-results output is {out!r}, expected {want!r}")
 
     with _guard(problems, "ACCEPTANCE.md"):
-        if (rerun / "ACCEPTANCE.md").read_bytes() != (root / PUBLISHED_ACCEPTANCE_MD).read_bytes():
-            problems.append(f"re-rendered ACCEPTANCE.md differs from {PUBLISHED_ACCEPTANCE_MD}")
+        if not acceptance_identical_modulo_variants(
+            (rerun / "ACCEPTANCE.md").read_bytes(), (root / PUBLISHED_ACCEPTANCE_MD).read_bytes()
+        ):
+            problems.append(
+                f"re-rendered ACCEPTANCE.md differs from {PUBLISHED_ACCEPTANCE_MD} beyond the commit stamp and sensitivity section"
+            )
 
     with _guard(problems, "frozen file blobs"):
         for label, rel, key in (("cli", FROZEN_CLI, "cli_new"), ("module", NEW_MODULE, "module_new")):
@@ -1157,6 +1194,7 @@ def build_record(root: Path, draft: dict, *, approved: str, amendment_commit: st
             "git_head": report.get("git_head"),
             "render_image": report.get("render_image"),
             "report_rerender_identical": True,
+            "report_rerender_note": RERENDER_NOTE,
         },
         "effects": list(RECORD_EFFECTS),
     }
