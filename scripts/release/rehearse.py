@@ -22,6 +22,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from scripts.release import common as C
+from scripts.release import freeze_amendment as FA
+from scripts.release import rename_amendment as RA
 
 ABSENT_INPUTS = (
     "data/corpus/images",
@@ -31,7 +33,7 @@ ABSENT_INPUTS = (
     "data/corpus/train/records.jsonl",
 )
 VERDICT = "identical_modulo_history_and_amendment"
-AMENDED = {"code_freeze.commits.scripts/acceptance.py", "code_freeze.current_blobs.cli", "code_freeze.lock_blobs.cli"}
+AMENDED = set(FA.AMENDED_KEYS)
 MIN_AVAILABLE_BYTES = 3 * 1024**3
 
 
@@ -62,15 +64,23 @@ def evaluate(r: dict) -> list[str]:
     fa = r.get("freeze_amendment_tests") or {}
     if fa.get("exit") != 0 or fa.get("failed") != 0 or fa.get("errors") != 0 or fa.get("skipped") != 0 or not fa.get("passed"):
         bad.append("freeze_amendment_tests")
+    renamed = bool(r.get("rename_amendment_present"))
+    if renamed:
+        ra = r.get("rename_amendment_tests") or {}
+        if ra.get("exit") != 0 or ra.get("failed") != 0 or ra.get("errors") != 0 or ra.get("skipped") != 0 or not ra.get("passed"):
+            bad.append("rename_amendment_tests")
+    history_module = RA.NEW_MODULE if renamed else FA.FROZEN_MODULE
+    amended = set(RA.RENAME_KEYS) if renamed else AMENDED
     rp = r.get("reproduce")
     if not isinstance(rp, dict) or rp.get("score_exit") != 0 or rp.get("compare") != VERDICT or not rp.get("cold_cache"):
         bad.append("reproduce")
     else:
-        if set(rp.get("history_mapped") or {}) != {"src/lightonocr_math/acceptance.py", "scripts/acceptance.py"}:
+        if set(rp.get("history_mapped") or {}) != {history_module, FA.FROZEN_CLI}:
             bad.append("reproduce.history_mapped")
-        if {k for k, v in (rp.get("allowed") or {}).items() if v == "amendment"} != AMENDED:
+        if {k for k, v in (rp.get("allowed") or {}).items() if v == "amendment"} != amended:
             bad.append("reproduce.allowed")
-        if not (rp.get("amendment") or {}).get("verified"):
+        am = rp.get("amendment") or {}
+        if not am.get("verified") or (renamed and not am.get("rename_verified")):
             bad.append("reproduce.amendment")
     if (r.get("release_check_git") or {}).get("status") != "pass":
         bad.append("release_check_git")
@@ -137,6 +147,13 @@ def rehearse(repo: Path, work: Path, skip_reproduce: bool = False) -> dict:
         ["uv", "run", "--frozen", "pytest", "-q", "-rs", "-p", "no:cacheprovider", "tests/test_freeze_amendment.py"],
     )
     report["freeze_amendment_tests"] = {**parse_pytest_summary(out), "exit": code}
+    report["rename_amendment_present"] = (h.clone / RA.AMENDMENT2_PATH).is_file()
+    if report["rename_amendment_present"]:
+        code, out = h.run(
+            "rename_amendment_tests",
+            ["uv", "run", "--frozen", "pytest", "-q", "-rs", "-p", "no:cacheprovider", "tests/test_rename_amendment.py"],
+        )
+        report["rename_amendment_tests"] = {**parse_pytest_summary(out), "exit": code}
     report["leakscan_exit"], _ = h.run("leakscan", ["uv", "run", "--frozen", "python", "-m", "lightonocr_math.leakscan"])
     report["amendment_verify_exit"], _ = h.run(
         "amendment_verify", ["uv", "run", "--frozen", "python", "-m", "scripts.release.freeze_amendment", "verify"]

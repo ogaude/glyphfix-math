@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from scripts.release import common as C
-from scripts.release import public_paths
+from scripts.release import public_paths, rename_amendment
 
 MAX_DETAILS = 20
 TEXT_SUFFIXES = {".md", ".json", ".jsonl", ".txt", ".yaml", ".yml"}
@@ -85,6 +85,7 @@ class Config:
     freeze_json: Path = Path("data/benchmark/BENCHMARK_FREEZE.json")
     results_json: Path = C.RESULTS_JSON
     amendment_json: Path = C.FREEZE_AMENDMENT_JSON
+    amendment2_json: Path = rename_amendment.AMENDMENT2_PATH
     phase4: tuple = C.PHASE4_SOURCES
     adapter_sha: str = C.ADAPTER_SHA256
     gguf_sha: str = C.GGUF_Q8_SHA256
@@ -557,6 +558,18 @@ def check_results_overlay(cfg: Config) -> dict:
             for key in ("compare", "published_sha256", "fresh_sha256"):
                 if str(am.get(key)) not in text:
                     problems.append(f"results/README.md rerun record lacks {key}={am.get(key)}")
+            if cfg.amendment2_json.is_file():
+                try:
+                    am2 = C.load_json(cfg.amendment2_json)["rerun_equivalence"]
+                except (OSError, KeyError, ValueError) as e:
+                    problems.append(f"{rename_amendment.AMENDMENT2_REF} unreadable: {e}")
+                    am2 = None
+                if am2 is not None:
+                    if rename_amendment.AMENDMENT2_REF not in text:
+                        problems.append(f"results/README.md does not cite {rename_amendment.AMENDMENT2_REF}")
+                    for key in ("compare", "published_sha256", "fresh_sha256"):
+                        if str(am2.get(key)) not in text:
+                            problems.append(f"results/README.md rename rerun record lacks {key}={am2.get(key)}")
             inputs = {v["path"]: v["sha256"] for v in (published.get("inputs") or {}).values()}
             hexre = re.compile(r"\b[0-9a-f]{64}\b")
             for line in text.splitlines():
