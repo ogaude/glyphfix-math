@@ -22,7 +22,9 @@ from __future__ import annotations
 
 import argparse
 import ast
+import contextlib
 import copy
+import hashlib
 import io
 import json
 import re
@@ -75,6 +77,8 @@ RENAME_KEYS = (
 assert list(RENAME_KEYS) == sorted(RENAME_KEYS) and len(RENAME_KEYS) == 8
 
 DEFAULT_PREVIEW_DIR = "data/runs/rename-amendment/preview"
+PUBLIC_PATHS_REF = "scripts/release/public_paths.txt"
+RELEASE_HISTORY_REF = "RELEASE_HISTORY.json"
 
 
 # ---------------------------------------------------------------------- proof
@@ -834,6 +838,235 @@ def _summary(blobs: dict, proof_cli: dict, proof_mod: dict, new_tree: str, plan:
         "that is recorded as an effect of the amendment."),
     ]
     return "\n".join(L) + "\n"
+
+
+# ---------------------------------------------------------------- record preconditions
+
+RECORD_REASON = (
+    "rename the project, package, experiments directory and our Ollama tags to the published names "
+    "before the first release (user decision 2026-10-26)"
+)
+RECORD_EFFECTS = [
+    (
+        "scripts.acceptance score --mode benchmark refuses when called directly: the module's last commit is the rename "
+        "commit, later than the generation start; the published-claim rescore runs through scripts.release.frozen_rescore"
+    ),
+    "scripts.acceptance generate refuses for every arm, as after amendment 1",
+    "results.json, ACCEPTANCE.md and the recorded predictions are unchanged; they describe the run as scored under the old names",
+    "historical commits keep the old names; amendment 1 is verified from git objects",
+]
+RECORD_HARNESS = "scripts.release.frozen_rescore"
+PUBLISHED_RESULTS = fa.NEW_EVIDENCE_DIR / "results.json"
+PUBLISHED_ACCEPTANCE_MD = fa.NEW_EVIDENCE_DIR / "ACCEPTANCE.md"
+RECORDED_DATA_DIR = "data/benchmark/acceptance/"
+RECORDED_DATA_FILES = ("evidence/acceptance/results.json", "evidence/acceptance/env_check.json")
+COMMIT_PROOF_KEYS = ("commit", "changed", "pure_rewrite", "exceptions", "renames", "latest_only_rewritten")
+
+
+@contextlib.contextmanager
+def _guard(problems: list[str], label: str):
+    try:
+        yield
+    except (AmendmentError, OSError, ValueError, KeyError, TypeError, AttributeError) as e:
+        problems.append(f"{label}: {e}")
+
+
+def _run_compare(root: Path, published: Path, fresh: Path) -> str:
+    """Output of the frozen scorer's own results comparison (`scripts.acceptance compare-results`)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "scripts.acceptance", "compare-results", str(published), str(fresh)],
+        cwd=root, capture_output=True, text=True, check=False,
+    )
+    return r.stdout.strip()
+
+
+def _load_json(path: Path) -> dict:
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def _sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _tracked(root: Path, ref: str = "HEAD") -> list[str]:
+    out = _run(root, "ls-tree", "-r", "--name-only", "-z", ref).stdout
+    return [p.decode("utf-8", "surrogateescape") for p in out.split(b"\0") if p]
+
+
+def _outside_phase(path: str) -> bool:
+    return not path.startswith(rename_map.PHASE_DIR + "/")
+
+
+def _unpinned_rewrites(root: Path, commit: str, res: dict, problems: list[str]) -> list[dict]:
+    """Unpinned allow-listed files `commit` changed; each must equal rewrite_text of its parent version."""
+    old_of = {new: old for old, new in res.get("renames", [])}
+    out: list[dict] = []
+    for path, st in sorted(_name_status(root, commit).items()):
+        if st == "D":
+            continue
+        entry = rename_map.allowed_entry(path)
+        if not (entry and entry[2].startswith("none")):
+            continue
+        old = _run(root, "show", f"{commit}~1:{old_of.get(path, path)}", check=False)
+        if old.returncode != 0:
+            continue
+        new = _cat_blob_at(root, commit, path)
+        if _expected_blob(old.stdout) != new:
+            problems.append(f"rewritten unpinned file is not rewrite_text of its parent: {path}")
+        elif _outside_phase(path):
+            out.append({"path": path, "sha256_before": _sha256_bytes(old.stdout), "sha256_after": _sha256_bytes(new)})
+    return out
+
+
+def _cat_blob_at(root: Path, ref: str, path: str) -> bytes:
+    return _run(root, "show", f"{ref}:{path}").stdout
+
+
+def _kept_data(root: Path, rewritten: list[dict]) -> tuple[list[dict], list[dict]]:
+    """(recorded_data_kept, kept_unpinned) of the tracked allow-listed files that keep their old names."""
+    gone = {e["path"] for e in rewritten}
+    skip = {fa.LOCK_PATH.as_posix(), AMENDMENT2_REF}
+    kept, unpinned = [], []
+    for path in _tracked(root):
+        entry = rename_map.allowed_entry(path)
+        p = Path(root) / path
+        if entry is None or path in skip or path in gone or not _outside_phase(path) or not p.is_file():
+            continue
+        if entry[2].startswith("none"):
+            data = p.read_bytes()
+            if not rename_map.is_binary(data):
+                text = data.decode("utf-8", "surrogateescape")
+                if rename_map.rewrite_text(text) != text:
+                    unpinned.append({"path": path, "sha256": _sha256_bytes(data), "reason": entry[1]})
+        elif path.startswith(RECORDED_DATA_DIR) or path in RECORDED_DATA_FILES:
+            kept.append({"path": path, "sha256": fa._sha256(p)})
+    return kept, unpinned
+
+
+def check_record_inputs(
+    root: Path,
+    rerun_dir: Path,
+    *,
+    preview_dir: Path,
+    amendment_commit: str,
+    approved: str,
+    compare_runner=None,
+) -> tuple[list[str], dict]:
+    """Every reason the amendment record must not be written yet, and the values the record is built from.
+
+    Collects all problems instead of stopping at the first. Reads files and git objects; writes nothing.
+    """
+    root, rerun, preview = Path(root), Path(rerun_dir), Path(preview_dir)
+    if compare_runner is None:
+        def compare_runner(published: Path, fresh: Path) -> str:
+            return _run_compare(root, published, fresh)
+    problems: list[str] = []
+    draft: dict = {}
+
+    if not str(approved or "").strip():
+        problems.append("approved text is empty")
+
+    try:
+        full = _run(root, "rev-parse", "--verify", f"{amendment_commit}^{{commit}}").stdout.decode().strip()
+        _run(root, "rev-parse", "--verify", f"{full}~1")
+        date = _run(root, "log", "-1", "--format=%cI", full).stdout.decode().strip()
+        if _run(root, "merge-base", "--is-ancestor", full, "HEAD", check=False).returncode != 0:
+            problems.append(f"amendment commit {full} is not an ancestor of HEAD")
+    except AmendmentError as e:
+        problems.append(f"amendment commit: {e}")
+        return problems, draft
+    draft.update(commit=full, commit_date=date, amendment_commit=[full, date])
+
+    blobs: dict = {}
+    with _guard(problems, "preview blobs.json"):
+        blobs = _load_json(preview / "blobs.json")
+    draft["blobs"] = blobs
+
+    report: dict = {}
+    with _guard(problems, "rerun report"):
+        report = _load_json(rerun / "reproduce_report.json")
+        if report.get("score_exit") != 0:
+            problems.append(f"rerun report: score_exit is {report.get('score_exit')!r}, not 0")
+        if report.get("cold_cache") is not True:
+            problems.append("rerun report: the render cache was not cold")
+        if report.get("harness") != RECORD_HARNESS:
+            problems.append(f"rerun report: harness is {report.get('harness')!r}, not {RECORD_HARNESS}")
+    draft["report"] = report
+
+    published_path, fresh_path = root / PUBLISHED_RESULTS, rerun / "evidence" / "results.json"
+    with _guard(problems, "rerun comparison"):
+        published, fresh = _load_json(published_path), _load_json(fresh_path)
+        a1 = _load_json(root / fa.AMENDMENT_PATH)
+        proposal = {
+            "files": {"cli": {"new_blob": blobs.get("cli_new")}, "module": {"new_blob": blobs.get("module_new")}},
+            "amendment_commit": [full, date],
+        }
+        cmp = fa.compare_published(published, fresh, amendment=a1, rename=proposal)
+        draft.update(published=published, fresh=fresh, a1=a1, compare=cmp)
+        if cmp["compare"] != "identical_modulo_amendment":
+            problems.append(f"rerun is {cmp['compare']}, not identical_modulo_amendment: {cmp['problems']}")
+        elif cmp["differing_keys"] != list(RENAME_KEYS):
+            problems.append(f"rerun differing keys are not exactly the rename keys: {cmp['differing_keys']}")
+        draft["published_sha256"], draft["fresh_sha256"] = fa._sha256(published_path), fa._sha256(fresh_path)
+
+    with _guard(problems, "frozen compare-results"):
+        out = compare_runner(published_path.resolve(), fresh_path.resolve()).strip()
+        want = "different: " + ", ".join(RENAME_KEYS)
+        draft["frozen_compare_output"] = out
+        if out != want:
+            problems.append(f"frozen compare-results output is {out!r}, expected {want!r}")
+
+    with _guard(problems, "ACCEPTANCE.md"):
+        if (rerun / "ACCEPTANCE.md").read_bytes() != (root / PUBLISHED_ACCEPTANCE_MD).read_bytes():
+            problems.append(f"re-rendered ACCEPTANCE.md differs from {PUBLISHED_ACCEPTANCE_MD}")
+
+    with _guard(problems, "frozen file blobs"):
+        for label, rel, key in (("cli", FROZEN_CLI, "cli_new"), ("module", NEW_MODULE, "module_new")):
+            cur = fa._blob_of(root / rel, root)
+            if cur != blobs.get(key):
+                problems.append(f"current {rel} blob {cur} is not the preview {label} blob {blobs.get(key)}")
+        proofs = {}
+        for label, old_blob, rel in (("cli", CLI_OLD_BLOB, FROZEN_CLI), ("module", MODULE_OLD_BLOB, NEW_MODULE)):
+            try:
+                proofs[label] = prove_rename(_cat_text(root, old_blob), (root / rel).read_text(encoding="utf-8"))
+            except AmendmentError as e:
+                problems.append(f"{label} names-only proof: {e}")
+        draft["proofs"] = proofs
+
+    with _guard(problems, "RUN_LOCK.json"):
+        if (root / fa.LOCK_PATH).read_bytes() != (preview / "RUN_LOCK.json").read_bytes():
+            problems.append("current RUN_LOCK.json differs from the preview RUN_LOCK.json")
+
+    with _guard(problems, "REGISTRY.json"):
+        at_commit = _cat_blob_at(root, full, fa.REGISTRY_PATH.as_posix())
+        if at_commit != (preview / "REGISTRY.json").read_bytes():
+            problems.append(f"REGISTRY.json at {full} differs from the preview REGISTRY.json")
+        draft["registry_new_bytes"] = at_commit
+
+    with _guard(problems, "experiments tree"):
+        exp = _load_json(preview / "exp001.json")
+        got = fa._git("rev-parse", f"HEAD:{EXP001_NEW}", root=root).strip()
+        draft["exp001"] = exp
+        if got != exp.get("predicted_new_tree"):
+            problems.append(f"experiments tree {got} at HEAD is not the preview predicted_new_tree {exp.get('predicted_new_tree')}")
+
+    if _run(root, "cat-file", "-e", f"HEAD:{RELEASE_HISTORY_REF}", check=False).returncode == 0:
+        problems.append(f"HEAD tracks {RELEASE_HISTORY_REF}: the record is written in the development repository, not in a public clone")
+    if _run(root, "cat-file", "-e", f"HEAD:{PUBLIC_PATHS_REF}", check=False).returncode != 0:
+        problems.append(f"HEAD does not track {PUBLIC_PATHS_REF}: the latest-only files cannot be classified")
+
+    with _guard(problems, "commit rewrite"):
+        res = check_commit_rewrite(root, full)
+        draft["commit_rewrite"] = res
+        problems += [f"commit rewrite: {p}" for p in res["problems"]]
+        if res["filtered"]:
+            problems.append("commit rewrite: HEAD is a filtered public clone")
+        if res["pure_rewrite"] is not True:
+            problems.append(f"commit rewrite: {full} is not a pure rewrite (pure_rewrite is {res['pure_rewrite']!r})")
+        rewritten = _unpinned_rewrites(root, full, res, problems)
+        kept, unpinned = _kept_data(root, rewritten)
+        draft.update(rewritten_unpinned=rewritten, recorded_data_kept=kept, kept_unpinned=unpinned)
+    return problems, draft
 
 
 def main(argv: list[str] | None = None) -> int:

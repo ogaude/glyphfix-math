@@ -10,6 +10,7 @@ import copy
 import json
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -472,7 +473,13 @@ def _vr_lock(renamed: dict | None = None) -> str:
     return json.dumps(lock, indent=2, sort_keys=True) + "\n"
 
 
-def _build_verify_repo(tmp_path: Path, *, registry_in_first_commit: bool = True, filtered: bool = False):
+SIDECAR = "data/benchmark/acceptance/tuned_q8.sidecar.jsonl"
+NOTE = "docs/note.txt"
+
+
+def _build_verify_repo(
+    tmp_path: Path, *, registry_in_first_commit: bool = True, filtered: bool = False, sidecar: str | None = None, a_extra: bool = False
+):
     """Throwaway repository: commit 1 holds the real frozen files, commit 2 is the rename; returns (repo, a1, a2, published)."""
     repo = init_repo(tmp_path / "vr")
     cli_old, mod_old = real_blob(ra.CLI_OLD_BLOB), real_blob(ra.MODULE_OLD_BLOB)
@@ -487,6 +494,13 @@ def _build_verify_repo(tmp_path: Path, *, registry_in_first_commit: bool = True,
     if registry_in_first_commit:
         (repo / REG).parent.mkdir(parents=True)
         (repo / REG).write_text(old_reg, encoding="utf-8")
+    sidecar_old = f'{{"model": "{ra.OLD_TAG}"}}\n'
+    if sidecar:
+        (repo / SIDECAR).parent.mkdir(parents=True, exist_ok=True)
+        (repo / SIDECAR).write_text(sidecar_old, encoding="utf-8")
+    if a_extra:
+        (repo / NOTE).parent.mkdir(parents=True)
+        (repo / NOTE).write_text("note\n", encoding="utf-8")
     h1 = commit_all(repo, "old")
     d1 = git(repo, "log", "-1", "--format=%cI")
 
@@ -505,6 +519,11 @@ def _build_verify_repo(tmp_path: Path, *, registry_in_first_commit: bool = True,
     (repo / REG).write_text(new_reg, encoding="utf-8")
     lock_new = _vr_lock(blobs)
     (repo / ra.COMMIT_EXCEPTIONS[0]).write_text(lock_new, encoding="utf-8")
+    if sidecar in ("rewritten", "bad"):
+        (repo / SIDECAR).write_text(rename_map.rewrite_text(sidecar_old) + ("x" if sidecar == "bad" else ""), encoding="utf-8")
+    if a_extra:
+        with open(repo / NOTE, "a", encoding="utf-8") as fh:
+            fh.write("x")
     h2 = commit_all(repo, "rename")
     d2 = git(repo, "log", "-1", "--format=%cI")
     if filtered:
@@ -733,6 +752,208 @@ def test_verify_chain_returns_rename_problems_in_a_throwaway_repository(tmp_path
 def test_verify_chain_before_the_rename_is_amendment_1_only(tmp_path):
     assert fa.verify_chain(tmp_path, published={}, commit_map={}) != []
     assert not (tmp_path / ra.AMENDMENT2_PATH).exists()
+
+
+# ----------------------------------------------------------------- record
+
+PIN = "2026-10-17T10:09:32+02:00"
+PRED = "data/benchmark/acceptance/tuned_q8.pred.jsonl"
+SCHEMA_KEYS = {
+    "schema", "kind", "previous", "reason", "approved", "token_map", "path_moves", "files", "module_pin_commit",
+    "previous_amendment_commit", "amendment_commit", "tags", "run_lock", "registry", "exp001_tree", "commit_proof",
+    "recorded_data_kept", "kept_unpinned", "rewritten_unpinned", "rerun_equivalence", "effects",
+}
+
+
+def fake_compare(published, fresh):
+    return "different: " + ", ".join(ra.RENAME_KEYS)
+
+
+def _dump(path: Path, obj) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(obj, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _record_setup(tmp_path: Path, **kw):
+    """Throwaway repository after the rename commit, plus a preview directory and a score-only rerun directory."""
+    repo, a1, a2, _ = _build_verify_repo(tmp_path, **kw)
+    h1, d1 = a2["module_pin_commit"]
+    h2, d2 = a2["amendment_commit"]
+    a1 = {**a1, "old_commit": ["c" * 40, PIN], "amendment_commit": ["a" * 40, "2026-10-18T18:34:42+02:00"]}
+    cli_new, mod_new = a2["files"]["cli"]["new_blob"], a2["files"]["module"]["new_blob"]
+    published = {
+        "headline": {"exact": 117},
+        "tag": ra.OLD_TAG,
+        "code_freeze": {
+            "commits": {ra.FROZEN_CLI: list(a1["old_commit"]), ra.OLD_MODULE: [h1, d1]},
+            "current_blobs": {"cli": a1["old_blob"], "module": ra.MODULE_OLD_BLOB},
+            "lock_blobs": {"cli": a1["old_blob"], "module": ra.MODULE_OLD_BLOB},
+        },
+    }
+    fresh = copy.deepcopy(published)
+    fresh["tag"] = ra.NEW_TAG
+    fcf = fresh["code_freeze"]
+    fcf["commits"] = {ra.FROZEN_CLI: [h2, d2], ra.NEW_MODULE: [h1, d1]}
+    fcf["current_blobs"] = {"cli": cli_new, "module": mod_new}
+    fcf["lock_blobs"] = {"cli": cli_new, "module": mod_new}
+
+    acc = repo / "evidence" / "acceptance"
+    _dump(acc / "results.json", published)
+    (acc / "ACCEPTANCE.md").write_text("# acceptance\n", encoding="utf-8")
+    _dump(acc / "FREEZE_AMENDMENT.json", a1)
+    _dump(acc / "env_check.json", {"python": "3"})
+    (repo / PRED).parent.mkdir(parents=True, exist_ok=True)
+    (repo / PRED).write_text(f'{{"model": "{ra.OLD_TAG}"}}\n', encoding="utf-8")
+    (repo / ra.EXP001_NEW).mkdir(parents=True)
+    (repo / ra.EXP001_NEW / "a.txt").write_text("x\n", encoding="utf-8")
+    commit_all(repo, "experiments")
+    tree = git(repo, "rev-parse", f"HEAD:{ra.EXP001_NEW}")
+    (repo / ra.EXP001_TEST).parent.mkdir(parents=True, exist_ok=True)
+    (repo / ra.EXP001_TEST).write_text(f'EXP001_TREE = "{tree}"\n', encoding="utf-8")
+    commit_all(repo, "record inputs")
+
+    preview = tmp_path / "preview"
+    _dump(preview / "blobs.json", {"cli_old": ra.CLI_OLD_BLOB, "cli_new": cli_new, "module_old": ra.MODULE_OLD_BLOB, "module_new": mod_new})
+    (preview / "RUN_LOCK.json").write_bytes((repo / fa.LOCK_PATH).read_bytes())
+    (preview / "REGISTRY.json").write_bytes((repo / REG).read_bytes())
+    _dump(preview / "exp001.json", {"old_tree": ra.EXP001_OLD_TREE, "predicted_new_tree": tree, "files": []})
+    rerun = tmp_path / "rerun"
+    _dump(rerun / "evidence" / "results.json", fresh)
+    (rerun / "ACCEPTANCE.md").write_bytes((acc / "ACCEPTANCE.md").read_bytes())
+    report = {
+        "tier": "score-only", "cold_cache": True, "render_image": "texlive/texlive:latest", "git_head": "f" * 40,
+        "score_exit": 0, "seconds": 12, "harness": "scripts.release.frozen_rescore",
+        "pin_substitution": {"path": ra.OLD_MODULE, "commit": h1, "date": d1}, "compare": "not_run: score-only",
+    }
+    _dump(rerun / "reproduce_report.json", report)
+    return SimpleNamespace(
+        repo=repo, a1=a1, published=published, fresh=fresh, preview=preview, rerun=rerun, report=report, commit=h2, tree=tree
+    )
+
+
+def _check(s, **over):
+    kw = {"preview_dir": s.preview, "amendment_commit": s.commit, "approved": "approved (test)", "compare_runner": fake_compare}
+    kw.update(over)
+    return ra.check_record_inputs(s.repo, s.rerun, **kw)
+
+
+def _report(s, **changes):
+    _dump(s.rerun / "reproduce_report.json", {**s.report, **changes})
+
+
+def test_check_record_inputs_valid_setup_has_no_problem(tmp_path):
+    s = _record_setup(tmp_path)
+    problems, draft = _check(s)
+    assert problems == []
+    res = draft["commit_rewrite"]
+    assert res["pure_rewrite"] is True and res["filtered"] is False
+    assert res["latest_only_rewritten"] == [{"path": REG, "new_blob": git(s.repo, "rev-parse", f"{s.commit}:{REG}")}]
+
+
+def test_check_record_inputs_writes_nothing(tmp_path):
+    s = _record_setup(tmp_path)
+    before = git(s.repo, "status", "--porcelain")
+    _check(s)
+    _check(s, approved="")
+    assert git(s.repo, "status", "--porcelain") == before == ""
+
+
+def test_check_record_inputs_default_compare_runner_is_the_frozen_cli(tmp_path):
+    _dump(tmp_path / "a.json", {"x": 1})
+    _dump(tmp_path / "b.json", {"x": 2})
+    assert ra._run_compare(ROOT, tmp_path / "a.json", tmp_path / "b.json") == "different: x"
+
+
+def _mut_fresh_headline(s):
+    fresh = json.loads((s.rerun / "evidence" / "results.json").read_text(encoding="utf-8"))
+    fresh["headline"]["exact"] = 116
+    _dump(s.rerun / "evidence" / "results.json", fresh)
+
+
+def _mut_acceptance_md(s):
+    with open(s.rerun / "ACCEPTANCE.md", "a", encoding="utf-8") as fh:
+        fh.write("x")
+
+
+def _mut_module(s):
+    with open(s.repo / ra.NEW_MODULE, "a", encoding="utf-8") as fh:
+        fh.write("#")
+
+
+def _mut_run_lock(s):
+    with open(s.repo / fa.LOCK_PATH, "a", encoding="utf-8") as fh:
+        fh.write("\n")
+
+
+def _mut_preview_registry(s):
+    with open(s.preview / "REGISTRY.json", "a", encoding="utf-8") as fh:
+        fh.write("\n")
+
+
+def _mut_exp_tree(s):
+    _dump(s.preview / "exp001.json", {"predicted_new_tree": "1" * 40})
+
+
+def _mut_release_history(s):
+    (s.repo / "RELEASE_HISTORY.json").write_text("{}\n", encoding="utf-8")
+    commit_all(s.repo, "release")
+
+
+def _mut_no_public_paths(s):
+    git(s.repo, "rm", "-q", "scripts/release/public_paths.txt")
+    commit_all(s.repo, "drop spec")
+
+
+@pytest.mark.parametrize(
+    "mutate,needle",
+    [
+        (lambda s: _report(s, score_exit=1), "score_exit"),
+        (lambda s: _report(s, cold_cache=False), "not cold"),
+        (lambda s: _report(s, harness="scripts.acceptance"), "harness"),
+        (_mut_fresh_headline, "not identical_modulo_amendment"),
+        (_mut_acceptance_md, "ACCEPTANCE.md"),
+        (_mut_module, "preview module blob"),
+        (_mut_run_lock, "RUN_LOCK.json"),
+        (_mut_preview_registry, "REGISTRY.json"),
+        (_mut_exp_tree, "experiments tree"),
+        (_mut_release_history, "RELEASE_HISTORY.json"),
+        (_mut_no_public_paths, "public_paths.txt"),
+    ],
+)
+def test_check_record_inputs_refuses(tmp_path, mutate, needle):
+    s = _record_setup(tmp_path)
+    mutate(s)
+    problems, _ = _check(s)
+    assert any(needle in p for p in problems), problems
+
+
+def test_check_record_inputs_refuses_a_different_frozen_compare_output(tmp_path):
+    s = _record_setup(tmp_path)
+    problems, _ = _check(s, compare_runner=lambda p, f: "different: tag")
+    assert any("frozen compare-results" in p for p in problems), problems
+
+
+def test_check_record_inputs_refuses_empty_approval(tmp_path):
+    s = _record_setup(tmp_path)
+    assert any("approved" in p for p in _check(s, approved="  ")[0])
+
+
+def test_check_record_inputs_refuses_a_commit_that_changes_a_non_name_byte(tmp_path):
+    s = _record_setup(tmp_path, a_extra=True)
+    problems, _ = _check(s)
+    assert any("commit rewrite" in p and NOTE in p for p in problems), problems
+
+
+def test_check_record_inputs_refuses_a_rewritten_unpinned_sidecar_that_is_not_rewrite_text(tmp_path):
+    s = _record_setup(tmp_path, sidecar="bad")
+    problems, _ = _check(s)
+    assert any("rewritten unpinned file is not rewrite_text of its parent" in p and SIDECAR in p for p in problems), problems
+
+
+def test_check_record_inputs_refuses_an_unknown_commit(tmp_path):
+    s = _record_setup(tmp_path)
+    problems, draft = _check(s, amendment_commit="0" * 40)
+    assert any("amendment commit" in p for p in problems) and draft == {}
 
 
 def test_verify_rename_real_repository():
