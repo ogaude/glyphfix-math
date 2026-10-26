@@ -334,8 +334,42 @@ def load_commit_map(root: Path = Path(".")) -> dict:
 
 # --------------------------------------------------------------------- verify
 
-def verify_amendment(root: Path = Path("."), amendment: dict | None = None, *, published: dict | None = None, commit_map: dict | None = None) -> list[str]:
+def _load_superseding(root: Path) -> dict | None:
+    """The rename amendment record of this tree, or None before the rename."""
+    from scripts.release import rename_amendment as ra
+
+    p = Path(root) / ra.AMENDMENT2_PATH
+    if not p.is_file():
+        return None
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def _object_exists(root: Path, sha: object) -> bool:
+    if not isinstance(sha, str) or not sha:
+        return False
+    return subprocess.run(["git", "cat-file", "-e", f"{sha}^{{blob}}"], cwd=root, capture_output=True, check=False).returncode == 0
+
+
+def verify_amendment(
+    root: Path = Path("."),
+    amendment: dict | None = None,
+    *,
+    published: dict | None = None,
+    commit_map: dict | None = None,
+    superseded_by: dict | None | str = "auto",
+) -> list[str]:
+    """Re-verify amendment 1.
+
+    Before the rename the current files are checked. When a later rename record supersedes it (given, or found at
+    FREEZE_AMENDMENT_2.json with superseded_by="auto"), amendment 1 is checked from git objects instead, because the
+    current files are the renamed ones.
+    """
     root = Path(root)
+    if isinstance(superseded_by, str):
+        try:
+            superseded_by = _load_superseding(root)
+        except (OSError, ValueError) as e:
+            return [f"cannot load the rename amendment record: {e}"]
     problems: list[str] = []
     cmap = load_commit_map(root) if commit_map is None else commit_map
     try:
@@ -350,25 +384,47 @@ def verify_amendment(root: Path = Path("."), amendment: dict | None = None, *, p
     cf = published.get("code_freeze") or {}
     if not (old_blob == OLD_CLI_BLOB == (cf.get("lock_blobs") or {}).get("cli") == (cf.get("current_blobs") or {}).get("cli")):
         problems.append("old_blob does not match the published code_freeze record")
-    try:
-        if _blob_of(root / FROZEN_CLI, root) != new_blob:
-            problems.append("current scripts/acceptance.py blob is not new_blob")
-        if _blob_of(root / FROZEN_MODULE, root) != MODULE_BLOB or amendment.get("module_blob") != MODULE_BLOB:
-            problems.append("src/lightonocr_math/acceptance.py blob changed")
-        old_text = _git("cat-file", "-p", str(old_blob), root=root)
-        new_text = (root / FROZEN_CLI).read_text(encoding="utf-8")
-        recorded = tuple((r["name"], r["old"], r["new"]) for r in amendment.get("replacements", []))
-        if recorded != REPLACEMENTS:
-            problems.append("recorded replacements differ from the expected ones")
-        prove(old_text, new_text, recorded or REPLACEMENTS)
-    except (AmendmentError, OSError, KeyError, SyntaxError) as e:
-        problems.append(f"proof: {e}")
+    if superseded_by is None:
+        try:
+            if _blob_of(root / FROZEN_CLI, root) != new_blob:
+                problems.append("current scripts/acceptance.py blob is not new_blob")
+            if _blob_of(root / FROZEN_MODULE, root) != MODULE_BLOB or amendment.get("module_blob") != MODULE_BLOB:
+                problems.append("src/lightonocr_math/acceptance.py blob changed")
+            old_text = _git("cat-file", "-p", str(old_blob), root=root)
+            new_text = (root / FROZEN_CLI).read_text(encoding="utf-8")
+            recorded = tuple((r["name"], r["old"], r["new"]) for r in amendment.get("replacements", []))
+            if recorded != REPLACEMENTS:
+                problems.append("recorded replacements differ from the expected ones")
+            prove(old_text, new_text, recorded or REPLACEMENTS)
+        except (AmendmentError, OSError, KeyError, SyntaxError) as e:
+            problems.append(f"proof: {e}")
+    else:
+        files = superseded_by.get("files") or {}
+        if (files.get("cli") or {}).get("old_blob") != new_blob:
+            problems.append("rename record: the CLI blob it renamed is not amendment 1's new_blob")
+        if (files.get("module") or {}).get("old_blob") != MODULE_BLOB or amendment.get("module_blob") != MODULE_BLOB:
+            problems.append("rename record: the module blob it renamed is not the frozen module blob")
+        try:
+            if not _object_exists(root, old_blob) or not _object_exists(root, new_blob):
+                raise AmendmentError("amendment 1 blobs are not reachable in git objects")
+            old_text = _git("cat-file", "-p", str(old_blob), root=root)
+            new_text = _git("cat-file", "-p", str(new_blob), root=root)
+            recorded = tuple((r["name"], r["old"], r["new"]) for r in amendment.get("replacements", []))
+            if recorded != REPLACEMENTS:
+                problems.append("recorded replacements differ from the expected ones")
+            prove(old_text, new_text, recorded or REPLACEMENTS)
+        except (AmendmentError, OSError, KeyError, SyntaxError) as e:
+            problems.append(f"proof: {e}")
 
     try:
         arms = json.loads((root / LOCK_PATH).read_text(encoding="utf-8")).get("arms", {})
         for arm in ARMS:
             a = arms.get(arm, {})
-            if a.get("acceptance_cli_blob") != new_blob or a.get("acceptance_cli_blob_generated") != old_blob:
+            if superseded_by is None:
+                bad = a.get("acceptance_cli_blob") != new_blob or a.get("acceptance_cli_blob_generated") != old_blob
+            else:
+                bad = a.get("acceptance_cli_blob_generated") != old_blob
+            if bad:
                 problems.append(f"RUN_LOCK {arm}: blob fields inconsistent with the amendment")
     except (OSError, ValueError) as e:
         problems.append(f"RUN_LOCK unreadable: {e}")
@@ -396,7 +452,12 @@ def verify_amendment(root: Path = Path("."), amendment: dict | None = None, *, p
         problems.append(str(e))
 
     try:
-        h, d = _git("log", "-1", "--format=%H %cI", "--", FROZEN_CLI, root=root).split()
+        # after the rename the newest commit touching the CLI is the rename commit; amendment 1 is the one before it
+        lines = _git("log", "-2", "--format=%H %cI", "--", FROZEN_CLI, root=root).splitlines()
+        want = 0 if superseded_by is None else 1
+        if len(lines) <= want:
+            raise ValueError("fewer commits touch scripts/acceptance.py than expected")
+        h, d = lines[want].split()
         ac = amendment.get("amendment_commit") or []
         if len(ac) != 2 or d != ac[1] or h not in (ac[0], cmap.get(ac[0])):
             problems.append("last commit touching scripts/acceptance.py is not the recorded amendment commit")
@@ -563,15 +624,46 @@ def cmd_record(args: argparse.Namespace) -> int:
     return 0
 
 
+def verify_chain(
+    root: Path = Path("."), *, published: dict | None = None, commit_map: dict | None = None, info: dict | None = None
+) -> list[str]:
+    """Amendment 1, then (when its record exists) amendment 2. Fails closed on anything unreadable."""
+    from scripts.release import rename_amendment as ra
+
+    root = Path(root)
+    cmap = load_commit_map(root) if commit_map is None else commit_map
+    problems = verify_amendment(root, published=published, commit_map=cmap)
+    try:
+        a2 = _load_superseding(root)
+    except (OSError, ValueError) as e:
+        return problems + [f"cannot load the rename amendment record: {e}"]
+    if a2 is None:
+        return problems
+    try:
+        a1 = json.loads((root / AMENDMENT_PATH).read_text(encoding="utf-8"))
+        if published is None:
+            published = json.loads((root / "evidence/acceptance/results.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        return problems + [f"cannot load amendment 1 or the published results: {e}"]
+    return problems + ra.verify_rename(root, a2, a1=a1, published=published, commit_map=cmap, info=info)
+
+
 def cmd_verify(args: argparse.Namespace) -> int:
     cmap = None
     if args.history:
         cmap = dict(json.loads(Path(args.history).read_text(encoding="utf-8")).get("commit_map") or {})
-    problems = verify_amendment(Path("."), commit_map=cmap)
+    info: dict = {}
+    problems = verify_chain(Path("."), commit_map=cmap, info=info)
     for p in problems:
         print(f"PROBLEM: {p}")
+    n = len((info.get("commit_rewrite") or {}).get("latest_only_unproven_in_clone") or [])
     if not problems:
-        print("freeze amendment verified")
+        if n:
+            print(
+                f"rename commit: pure rewrite, partial in this clone: {n} latest-only files rest on the "
+                "development-repository proof recorded in commit_proof"
+            )
+        print("freeze amendment chain verified")
     return 1 if problems else 0
 
 

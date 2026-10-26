@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from scripts.release import freeze_amendment as fa
 from scripts.release import rename_amendment as ra
 from scripts.release import rename_map
 
@@ -433,3 +434,308 @@ def test_constants():
     assert ra.NEW_TAG == "glyphfix-math-lora-q8:p4-full-1"
     assert len(ra.RENAME_KEYS) == 8
     assert ra.AMENDMENT2_PATH.as_posix() == "evidence/acceptance/FREEZE_AMENDMENT_2.json"
+
+
+# ---------------------------------------------------------------- verify_rename
+
+DIGEST = "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737"
+RENAME_SPEC = "[history]\nsrc/**\n[latest-only]\n" + REG + "\n"
+GOOD_RERUN = {
+    "compare": "identical_modulo_amendment",
+    "differing_keys": list(ra.RENAME_KEYS),
+    "report_rerender_identical": True,
+    "score_exit": 0,
+    "cold_cache": True,
+}
+
+
+def real_blob(sha: str) -> bytes:
+    return subprocess.run(["git", "cat-file", "blob", sha], cwd=ROOT, capture_output=True, check=True).stdout
+
+
+def _vr_registry(tag=ra.OLD_TAG, cand=ra.OLD_CAND_TAG) -> str:
+    return json.dumps({"entries": [{"tag": tag, "candidate_tag": cand, "ollama_digest": DIGEST}], "schema_version": 1}, indent=2) + "\n"
+
+
+def _vr_lock(renamed: dict | None = None) -> str:
+    arm = {
+        "acceptance_cli_blob": ra.CLI_OLD_BLOB,
+        "acceptance_module_blob": ra.MODULE_OLD_BLOB,
+        "acceptance_cli_blob_generated": ra.CLI_GENERATED_BLOB,
+        "freeze_amendment": fa.AMENDMENT_REF,
+        "model": ra.OLD_TAG,
+        "n_ok": 3,
+    }
+    lock = {"arms": {"tuned-crops": dict(arm), "tuned-pages": dict(arm)}}
+    if renamed:
+        lock = ra.amended_lock_rename(lock, cli_new=renamed["cli"], module_new=renamed["module"])
+    return json.dumps(lock, indent=2, sort_keys=True) + "\n"
+
+
+def _build_verify_repo(tmp_path: Path, *, registry_in_first_commit: bool = True, filtered: bool = False):
+    """Throwaway repository: commit 1 holds the real frozen files, commit 2 is the rename; returns (repo, a1, a2, published)."""
+    repo = init_repo(tmp_path / "vr")
+    cli_old, mod_old = real_blob(ra.CLI_OLD_BLOB), real_blob(ra.MODULE_OLD_BLOB)
+    (repo / "scripts" / "release").mkdir(parents=True)
+    (repo / ra.FROZEN_CLI).write_bytes(cli_old)
+    (repo / ra.OLD_MODULE).parent.mkdir(parents=True)
+    (repo / ra.OLD_MODULE).write_bytes(mod_old)
+    (repo / "scripts/release/public_paths.txt").write_text(RENAME_SPEC, encoding="utf-8")
+    (repo / ra.COMMIT_EXCEPTIONS[0]).parent.mkdir(parents=True)
+    (repo / ra.COMMIT_EXCEPTIONS[0]).write_text(_vr_lock(), encoding="utf-8")
+    old_reg = _vr_registry()
+    if registry_in_first_commit:
+        (repo / REG).parent.mkdir(parents=True)
+        (repo / REG).write_text(old_reg, encoding="utf-8")
+    h1 = commit_all(repo, "old")
+    d1 = git(repo, "log", "-1", "--format=%cI")
+
+    cli_new = rename_map.rewrite_text(cli_old.decode()).encode()
+    mod_new = rename_map.rewrite_text(mod_old.decode()).encode()
+    (repo / ra.FROZEN_CLI).write_bytes(cli_new)
+    (repo / ra.NEW_MODULE).parent.mkdir(parents=True, exist_ok=True)
+    git(repo, "mv", ra.OLD_MODULE, ra.NEW_MODULE)
+    (repo / ra.NEW_MODULE).write_bytes(mod_new)
+    blobs = {
+        "cli": git(repo, "hash-object", "--no-filters", ra.FROZEN_CLI),
+        "module": git(repo, "hash-object", "--no-filters", ra.NEW_MODULE),
+    }
+    new_reg = ra.renamed_registry_text(old_reg)
+    (repo / REG).parent.mkdir(parents=True, exist_ok=True)
+    (repo / REG).write_text(new_reg, encoding="utf-8")
+    lock_new = _vr_lock(blobs)
+    (repo / ra.COMMIT_EXCEPTIONS[0]).write_text(lock_new, encoding="utf-8")
+    h2 = commit_all(repo, "rename")
+    d2 = git(repo, "log", "-1", "--format=%cI")
+    if filtered:
+        (repo / "RELEASE_HISTORY.json").write_text("{}\n", encoding="utf-8")
+        commit_all(repo, "release")
+
+    res = ra.check_commit_rewrite(repo, h2)
+    a1 = {"old_blob": ra.CLI_GENERATED_BLOB, "new_blob": ra.CLI_OLD_BLOB}
+    lock_changes = [
+        {"arm": arm, "key": k, "old": None, "new": None}
+        for arm in fa.ARMS
+        for k in sorted(ra.LOCK_RENAME_KEYS)
+    ]
+    a2 = {
+        "schema": 1,
+        "kind": "rename-only",
+        "previous": fa.AMENDMENT_PATH.as_posix(),
+        "token_map": [list(x) for x in rename_map.TOKEN_MAP],
+        "path_moves": [list(x) for x in rename_map.PATH_MOVES],
+        "files": {
+            "cli": {"old_blob": ra.CLI_OLD_BLOB, "new_blob": blobs["cli"]},
+            "module": {"old_blob": ra.MODULE_OLD_BLOB, "new_blob": blobs["module"]},
+        },
+        "module_pin_commit": [h1, d1],
+        "amendment_commit": [h2, d2],
+        "run_lock": {
+            "path": fa.LOCK_PATH.as_posix(),
+            "sha256_after": fa._sha256(repo / ra.COMMIT_EXCEPTIONS[0]),
+            "changes": lock_changes,
+        },
+        "registry": {"path": REG, "changes": ra.registry_changes(old_reg, new_reg)},
+        "exp001_tree": {"new_tree": "0" * 40},
+        "commit_proof": {
+            "commit": res["commit"],
+            "changed": res["changed"],
+            "pure_rewrite": res["pure_rewrite"],
+            "exceptions": res["exceptions"],
+            "renames": res["renames"],
+            "latest_only_rewritten": res["latest_only_rewritten"],
+        },
+        "recorded_data_kept": [],
+        "kept_unpinned": [],
+        "rewritten_unpinned": [],
+        "rerun_equivalence": dict(GOOD_RERUN),
+    }
+    published = {"code_freeze": {"commits": {ra.OLD_MODULE: [h1, d1]}}}
+    return repo, a1, a2, published
+
+
+def _verify(repo, a1, a2, published, **kw):
+    return ra.verify_rename(repo, a2, a1=a1, published=published, **kw)
+
+
+def test_verify_rename_sound_record(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    assert a2["commit_proof"]["latest_only_rewritten"][0]["path"] == REG
+    assert _verify(repo, a1, a2, pub) == []
+
+
+def test_verify_rename_sound_record_after_a_later_release_commit(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path, filtered=True)
+    info: dict = {}
+    assert _verify(repo, a1, a2, pub, info=info) == []
+    assert info["commit_rewrite"]["filtered"] is True and info["commit_rewrite"]["pure_rewrite"] is True
+
+
+def test_verify_rename_public_clone_reports_partial(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path, registry_in_first_commit=False, filtered=True)
+    a2["commit_proof"]["latest_only_rewritten"] = [{"path": REG, "new_blob": git(repo, "rev-parse", f"HEAD:{REG}")}]
+    info: dict = {}
+    assert _verify(repo, a1, a2, pub, info=info) == []
+    res = info["commit_rewrite"]
+    assert res["pure_rewrite"] == "partial" and res["latest_only_unproven_in_clone"] == [REG]
+
+
+def test_verify_rename_public_clone_refuses_unlisted_addition(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path, registry_in_first_commit=False, filtered=True)
+    a2["commit_proof"]["latest_only_rewritten"] = []
+    assert any(REG in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_module_changed_by_one_byte(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    with open(repo / ra.NEW_MODULE, "a", encoding="utf-8") as fh:
+        fh.write("#")
+    assert any("module" in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_old_module_path_present(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    (repo / ra.OLD_MODULE).write_bytes(real_blob(ra.MODULE_OLD_BLOB))
+    assert any("still exists" in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_amendment_commit_elsewhere(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    a2["amendment_commit"] = [a2["module_pin_commit"][0], a2["amendment_commit"][1]]
+    assert any("commits:" in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_second_commit_touching_the_module(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    with open(repo / ra.NEW_MODULE, "a", encoding="utf-8") as fh:
+        fh.write("#")
+    commit_all(repo, "touch module")
+    assert any("exactly the recorded amendment commit" in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_run_lock_model_field_changed(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    lock = json.loads((repo / fa.LOCK_PATH).read_text(encoding="utf-8"))
+    lock["arms"]["tuned-crops"]["model"] = "other"
+    (repo / fa.LOCK_PATH).write_text(json.dumps(lock, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    assert any("RUN_LOCK" in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_run_lock_blob_field_changed(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    a1["old_blob"] = "e" * 40
+    assert any("acceptance_cli_blob_generated" in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_third_registry_change(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    a2["registry"]["changes"].append({"key": "entries[tag=x].other", "old": 1, "new": 2})
+    assert any("exactly the tag and candidate_tag" in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_registry_head_value_differs(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    (repo / REG).write_text(_vr_registry(tag=ra.NEW_TAG, cand="something-else:p4-full-1"), encoding="utf-8")
+    assert any("candidate_tag" in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_registry_old_tag_remains(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    (repo / REG).write_text(_vr_registry(), encoding="utf-8")
+    assert any("registry" in p for p in _verify(repo, a1, a2, pub))
+
+
+@pytest.mark.parametrize("how", ["removed", "blob-changed"])
+def test_verify_rename_latest_only_list_differs_from_recomputed(tmp_path, how):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    if how == "removed":
+        a2["commit_proof"]["latest_only_rewritten"] = []
+    else:
+        a2["commit_proof"]["latest_only_rewritten"][0]["new_blob"] = "f" * 40
+    assert any("latest_only_rewritten" in p for p in _verify(repo, a1, a2, pub))
+
+
+@pytest.mark.parametrize(
+    "mutate,needle",
+    [
+        (lambda a: a.__setitem__("kind", "other"), "kind"),
+        (lambda a: a.__setitem__("token_map", []), "token_map"),
+        (lambda a: a.__setitem__("path_moves", []), "path_moves"),
+        (lambda a: a["rerun_equivalence"].__setitem__("compare", "different"), "rerun"),
+        (lambda a: a["rerun_equivalence"].__setitem__("differing_keys", []), "rerun"),
+        (lambda a: a["rerun_equivalence"].__setitem__("cold_cache", False), "rerun"),
+        (lambda a: a["rerun_equivalence"].__setitem__("report_rerender_identical", False), "rerun"),
+        (lambda a: a["files"]["cli"].__setitem__("new_blob", "a" * 40), "cli"),
+        (lambda a: a["module_pin_commit"].__setitem__(1, "other-date"), "commits"),
+        (lambda a: a["commit_proof"].__setitem__("exceptions", []), "exceptions"),
+    ],
+)
+def test_verify_rename_rejects_record_changes(tmp_path, mutate, needle):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    mutate(a2)
+    assert any(needle in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_recorded_data(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    f = repo / "data" / "kept.txt"
+    f.write_text("kept\n", encoding="utf-8")
+    a2["recorded_data_kept"] = [{"path": "data/kept.txt", "sha256": fa._sha256(f)}]
+    a2["kept_unpinned"] = [{"path": "data/gone.txt", "sha256": "0" * 64, "reason": "absent paths are skipped"}]
+    assert _verify(repo, a1, a2, pub) == []
+    f.write_text("changed\n", encoding="utf-8")
+    assert any("data/kept.txt" in p for p in _verify(repo, a1, a2, pub))
+    f.write_text("kept\n", encoding="utf-8")
+    a2["rewritten_unpinned"] = [{"path": "data/gone.txt", "sha256_before": "0" * 64, "sha256_after": "1" * 64}]
+    assert any("both" in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_rewritten_unpinned_must_hold_no_old_name(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    f = repo / "data" / "side.jsonl"
+    f.write_text(f"{NEW_PKG}\n", encoding="utf-8")
+    a2["rewritten_unpinned"] = [{"path": "data/side.jsonl", "sha256_before": "0" * 64, "sha256_after": fa._sha256(f)}]
+    assert _verify(repo, a1, a2, pub) == []
+    f.write_text(f"{OLD_PKG}\n", encoding="utf-8")
+    a2["rewritten_unpinned"][0]["sha256_after"] = fa._sha256(f)
+    assert any("old name" in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_rename_exp001_tree(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    (repo / ra.EXP001_NEW).mkdir(parents=True)
+    (repo / ra.EXP001_NEW / "a.txt").write_text("x\n", encoding="utf-8")
+    (repo / ra.EXP001_TEST).parent.mkdir(parents=True, exist_ok=True)
+    (repo / ra.EXP001_TEST).write_text('EXP001_TREE = "0000"\n', encoding="utf-8")
+    commit_all(repo, "exp001")
+    tree = git(repo, "rev-parse", f"HEAD:{ra.EXP001_NEW}")
+    a2["exp001_tree"]["new_tree"] = tree
+    assert any("literal" in p for p in _verify(repo, a1, a2, pub))
+    (repo / ra.EXP001_TEST).write_text(f'EXP001_TREE = "{tree}"\n', encoding="utf-8")
+    assert _verify(repo, a1, a2, pub) == []
+    a2["exp001_tree"]["new_tree"] = "1" * 40
+    assert any("exp001" in p for p in _verify(repo, a1, a2, pub))
+
+
+def test_verify_chain_returns_rename_problems_in_a_throwaway_repository(tmp_path):
+    repo, a1, a2, pub = _build_verify_repo(tmp_path)
+    assert fa.verify_chain(repo, published=pub, commit_map={}) != []  # amendment 1 files are absent here
+    (repo / fa.AMENDMENT_PATH).parent.mkdir(parents=True)
+    (repo / fa.AMENDMENT_PATH).write_text(json.dumps(a1), encoding="utf-8")
+    (repo / ra.AMENDMENT2_PATH).write_text(json.dumps(a2), encoding="utf-8")
+    problems = fa.verify_chain(repo, published=pub, commit_map={})
+    assert not any(p.startswith("cannot load") for p in problems)
+    a2["kind"] = "other"
+    (repo / ra.AMENDMENT2_PATH).write_text(json.dumps(a2), encoding="utf-8")
+    assert any("kind" in p for p in fa.verify_chain(repo, published=pub, commit_map={}))
+
+
+def test_verify_chain_before_the_rename_is_amendment_1_only(tmp_path):
+    assert fa.verify_chain(tmp_path, published={}, commit_map={}) != []
+    assert not (tmp_path / ra.AMENDMENT2_PATH).exists()
+
+
+def test_verify_rename_real_repository():
+    if not (ROOT / ra.AMENDMENT2_PATH).exists():
+        pytest.skip("record not written yet")
+    assert fa.verify_chain(ROOT) == []

@@ -309,6 +309,97 @@ def test_compare_rename_rejected_without_the_record():
     assert r["compare"] == "different"
 
 
+# ---- amendment 1 once a rename supersedes it
+
+def _chain_repo(tmp_path):
+    import subprocess
+
+    def sh(*a):
+        return subprocess.run(a, cwd=tmp_path, check=True, capture_output=True, text=True).stdout.strip()
+
+    def blob(sha):
+        return subprocess.run(["git", "cat-file", "blob", sha], cwd=ROOT, check=True, capture_output=True).stdout
+
+    sh("git", "init", "-q")
+    sh("git", "config", "user.email", "t@t")
+    sh("git", "config", "user.name", "t")
+    (tmp_path / "scripts").mkdir()
+    cli = tmp_path / "scripts/acceptance.py"
+    cli.write_bytes(blob(fa.OLD_CLI_BLOB))
+    sh("git", "add", ".")
+    sh("git", "commit", "-qm", "frozen")
+    cli.write_bytes(blob(_ra().CLI_OLD_BLOB))
+    lock = tmp_path / fa.LOCK_PATH
+    lock.parent.mkdir(parents=True)
+    lock.write_text(json.dumps({"arms": {a: {"acceptance_cli_blob": "x", "acceptance_cli_blob_generated": fa.OLD_CLI_BLOB} for a in fa.ARMS}}))
+    sh("git", "add", ".")
+    sh("git", "commit", "-qm", "amendment 1")
+    h1, d1 = sh("git", "log", "-1", "--format=%H %cI").split()
+    from scripts.release import rename_map
+
+    cli.write_text(rename_map.rewrite_text(blob(_ra().CLI_OLD_BLOB).decode()))
+    sh("git", "add", ".")
+    sh("git", "commit", "-qm", "rename")
+    a1 = {
+        "old_blob": fa.OLD_CLI_BLOB,
+        "new_blob": _ra().CLI_OLD_BLOB,
+        "module_blob": fa.MODULE_BLOB,
+        "replacements": [{"name": n, "old": o, "new": w} for n, o, w in fa.REPLACEMENTS],
+        "amendment_commit": [h1, d1],
+    }
+    a2 = {"files": {"cli": {"old_blob": _ra().CLI_OLD_BLOB}, "module": {"old_blob": fa.MODULE_BLOB}}}
+    return a1, a2
+
+
+def _only(problems, *needles):
+    return [p for p in problems if any(n in p for n in needles)]
+
+
+def test_verify_amendment_superseded_reads_git_objects(tmp_path):
+    a1, a2 = _chain_repo(tmp_path)
+    probs = fa.verify_amendment(tmp_path, a1, published={}, commit_map={}, superseded_by=a2)
+    assert _only(probs, "current scripts", "proof", "RUN_LOCK", "last commit", "rename record") == []
+    # the same tree checked as if amendment 1 were still the last word: the renamed CLI is not new_blob
+    plain = fa.verify_amendment(tmp_path, a1, published={}, commit_map={}, superseded_by=None)
+    assert _only(plain, "current scripts") and _only(plain, "last commit")
+
+
+def test_verify_amendment_superseded_rejects_a_mismatching_record(tmp_path):
+    a1, a2 = _chain_repo(tmp_path)
+    bad = copy.deepcopy(a2)
+    bad["files"]["cli"]["old_blob"] = "e" * 40
+    assert _only(fa.verify_amendment(tmp_path, a1, published={}, commit_map={}, superseded_by=bad), "rename record")
+    bad = copy.deepcopy(a2)
+    bad["files"]["module"]["old_blob"] = "e" * 40
+    assert _only(fa.verify_amendment(tmp_path, a1, published={}, commit_map={}, superseded_by=bad), "rename record")
+    unreachable = copy.deepcopy(a1)
+    unreachable["old_blob"] = "e" * 40
+    assert _only(fa.verify_amendment(tmp_path, unreachable, published={}, commit_map={}, superseded_by=a2), "proof")
+    wrong_commit = copy.deepcopy(a1)
+    wrong_commit["amendment_commit"][0] = "e" * 40
+    assert _only(fa.verify_amendment(tmp_path, wrong_commit, published={}, commit_map={}, superseded_by=a2), "last commit")
+
+
+def test_verify_amendment_superseded_checks_the_lock_generating_blob(tmp_path):
+    a1, a2 = _chain_repo(tmp_path)
+    lock = tmp_path / fa.LOCK_PATH
+    data = json.loads(lock.read_text())
+    data["arms"]["tuned-pages"]["acceptance_cli_blob_generated"] = "e" * 40
+    lock.write_text(json.dumps(data))
+    assert _only(fa.verify_amendment(tmp_path, a1, published={}, commit_map={}, superseded_by=a2), "RUN_LOCK")
+
+
+def test_verify_amendment_auto_loads_the_record_when_present(tmp_path):
+    a1, a2 = _chain_repo(tmp_path)
+    rec = tmp_path / _ra().AMENDMENT2_PATH
+    rec.parent.mkdir(parents=True, exist_ok=True)
+    rec.write_text(json.dumps(a2))
+    probs = fa.verify_amendment(tmp_path, a1, published={}, commit_map={})
+    assert _only(probs, "current scripts", "proof", "RUN_LOCK", "last commit") == []
+    rec.write_text("{not json")
+    assert _only(fa.verify_amendment(tmp_path, a1, published={}, commit_map={}), "rename amendment record")
+
+
 def test_load_commit_map(tmp_path):
     assert fa.load_commit_map(tmp_path) == {}
     (tmp_path / "RELEASE_HISTORY.json").write_text(json.dumps({"commit_map": {"a": "b"}}))

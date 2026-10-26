@@ -25,6 +25,7 @@ import ast
 import copy
 import io
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -427,6 +428,292 @@ def check_commit_rewrite(
     }
 
 
+# ----------------------------------------------------------------- verification
+
+REGISTRY_DIGEST = "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737"
+LOCK_RENAME_KEYS = frozenset({"acceptance_cli_blob", "acceptance_module_blob", LOCK_NEW_KEY, "freeze_amendment"})
+RECORD_COMMIT_PROOF_EXCEPTIONS = list(COMMIT_EXCEPTIONS)
+
+
+def _reachable(root: Path, sha: object) -> bool:
+    return fa._object_exists(root, sha)
+
+
+def _blob_at(root: Path, rel: str) -> str | None:
+    p = Path(root) / rel
+    return fa._blob_of(p, Path(root)) if p.is_file() else None
+
+
+def _cat_text(root: Path, sha: str) -> str:
+    return fa._git("cat-file", "-p", sha, root=root)
+
+
+def _commit_ok(found: str, recorded: object, cmap: dict) -> bool:
+    """`found` is "<hash> <iso date>"; it must be the recorded commit (or its mapping) with the recorded date."""
+    if not (isinstance(recorded, list | tuple) and len(recorded) == 2):
+        return False
+    try:
+        h, d = found.split()
+    except ValueError:
+        return False
+    return d == recorded[1] and h in (recorded[0], cmap.get(recorded[0]))
+
+
+_KEY_SEG = re.compile(r"\[tag=([^\]]*)\]|\[(\d+)\]|([^.\[\]]+)")
+
+
+def _resolve_record_key(doc, key: str):
+    """Value at a registry change key such as `entries[tag=T].candidate_tag`; (found, value)."""
+    node = doc
+    for m in _KEY_SEG.finditer(key):
+        tag, idx, name = m.groups()
+        if tag is not None:
+            if not isinstance(node, list):
+                return False, None
+            hit = [e for e in node if isinstance(e, dict) and e.get("tag") in (tag, rename_map.rewrite_text(tag))]
+            if len(hit) != 1:
+                return False, None
+            node = hit[0]
+        elif idx is not None:
+            if not isinstance(node, list) or int(idx) >= len(node):
+                return False, None
+            node = node[int(idx)]
+        else:
+            if not isinstance(node, dict) or name not in node:
+                return False, None
+            node = node[name]
+    return True, node
+
+
+def _check_shape(a2: dict, a1: dict, problems: list[str]) -> None:
+    if a2.get("kind") != "rename-only":
+        problems.append("rename record: kind is not rename-only")
+    if a2.get("previous") != fa.AMENDMENT_PATH.as_posix():
+        problems.append("rename record: previous is not amendment 1")
+    if a2.get("token_map") != [list(x) for x in rename_map.TOKEN_MAP]:
+        problems.append("rename record: token_map differs from the token map in rename_map")
+    if a2.get("path_moves") != [list(x) for x in rename_map.PATH_MOVES]:
+        problems.append("rename record: path_moves differs from the moves in rename_map")
+
+
+def _check_frozen_files(root: Path, a2: dict, a1: dict, problems: list[str]) -> None:
+    files = a2.get("files") or {}
+    cli, mod = files.get("cli") or {}, files.get("module") or {}
+    try:
+        cur = _blob_at(root, FROZEN_CLI)
+        if cur != cli.get("new_blob"):
+            problems.append(f"cli: current {FROZEN_CLI} blob is not the recorded new_blob")
+        if cli.get("old_blob") != a1.get("new_blob") or not _reachable(root, cli.get("old_blob")):
+            problems.append("cli: recorded old_blob is not amendment 1's new_blob or is not reachable")
+        else:
+            prove_rename(_cat_text(root, cli["old_blob"]), (Path(root) / FROZEN_CLI).read_text(encoding="utf-8"))
+    except (AmendmentError, OSError) as e:
+        problems.append(f"cli proof: {e}")
+    try:
+        if (Path(root) / OLD_MODULE).exists():
+            problems.append(f"module: {OLD_MODULE} still exists")
+        cur = _blob_at(root, NEW_MODULE)
+        if cur is None:
+            problems.append(f"module: {NEW_MODULE} is missing")
+        elif cur != mod.get("new_blob"):
+            problems.append(f"module: current {NEW_MODULE} blob is not the recorded new_blob")
+        if mod.get("old_blob") != fa.MODULE_BLOB or not _reachable(root, mod.get("old_blob")):
+            problems.append("module: recorded old_blob is not the frozen module blob or is not reachable")
+        elif cur is not None:
+            prove_rename(_cat_text(root, mod["old_blob"]), (Path(root) / NEW_MODULE).read_text(encoding="utf-8"))
+    except (AmendmentError, OSError) as e:
+        problems.append(f"module proof: {e}")
+
+
+def _check_run_lock(root: Path, a2: dict, a1: dict, problems: list[str]) -> None:
+    files = a2.get("files") or {}
+    rl = a2.get("run_lock") or {}
+    p = Path(root) / fa.LOCK_PATH
+    try:
+        arms = json.loads(p.read_text(encoding="utf-8")).get("arms", {})
+    except (OSError, ValueError) as e:
+        problems.append(f"RUN_LOCK unreadable: {e}")
+        return
+    want = {
+        "acceptance_cli_blob": (files.get("cli") or {}).get("new_blob"),
+        "acceptance_module_blob": (files.get("module") or {}).get("new_blob"),
+        "acceptance_cli_blob_generated": a1.get("old_blob"),
+        LOCK_NEW_KEY: fa.MODULE_BLOB,
+        "freeze_amendment": AMENDMENT2_REF,
+    }
+    for arm in fa.ARMS:
+        a = arms.get(arm) or {}
+        for k, v in want.items():
+            if a.get(k) != v:
+                problems.append(f"RUN_LOCK {arm}: {k} is {a.get(k)!r}, expected {v!r}")
+    extra = {c.get("key") for c in rl.get("changes") or []} - LOCK_RENAME_KEYS
+    if extra:
+        problems.append(f"rename record: RUN_LOCK changes touch other keys: {sorted(extra)}")
+    if fa._sha256(p) != rl.get("sha256_after"):
+        problems.append("RUN_LOCK.json sha256 is not the recorded sha256_after")
+
+
+def _check_registry(root: Path, a2: dict, problems: list[str]) -> None:
+    reg = a2.get("registry") or {}
+    try:
+        doc = json.loads((Path(root) / fa.REGISTRY_PATH).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        problems.append(f"REGISTRY.json unreadable: {e}")
+        return
+    entries = doc.get("entries") or []
+    new = [e for e in entries if isinstance(e, dict) and e.get("tag") == NEW_TAG]
+    if not new or any(e.get("ollama_digest") != REGISTRY_DIGEST for e in new):
+        problems.append(f"registry: no entry with tag {NEW_TAG} and the recorded ollama digest")
+    if any(isinstance(e, dict) and e.get("tag") == OLD_TAG for e in entries):
+        problems.append(f"registry: an entry still has tag {OLD_TAG}")
+    changes = reg.get("changes") or []
+    leaves = sorted((str(c.get("key", "")).rsplit(".", 1)[-1], c.get("old"), c.get("new")) for c in changes)
+    want = sorted([("candidate_tag", OLD_CAND_TAG, NEW_CAND_TAG), ("tag", OLD_TAG, NEW_TAG)])
+    if leaves != want:
+        problems.append("registry: the recorded changes are not exactly the tag and candidate_tag leaves")
+        return
+    for c in changes:
+        found, value = _resolve_record_key(doc, c["key"])
+        if not found or value != c["new"]:
+            problems.append(f"registry: {c['key']} does not hold the recorded new value at HEAD")
+
+
+def _check_commits(root: Path, a2: dict, published: dict, cmap: dict, problems: list[str]) -> str | None:
+    """Commit order and dates; returns the (mapped) amendment commit for the rewrite check."""
+    ac = a2.get("amendment_commit")
+    mapped = None
+    if isinstance(ac, list | tuple) and len(ac) == 2:
+        mapped = cmap.get(ac[0]) or ac[0]
+    try:
+        lines = fa._git("log", "--format=%H %cI", "--", NEW_MODULE, root=root).splitlines()
+        if len(lines) != 1 or not _commit_ok(lines[0], ac, cmap):
+            problems.append(f"commits: {NEW_MODULE} is not touched by exactly the recorded amendment commit")
+        last = fa._git("log", "-1", "--format=%H %cI", "--", FROZEN_CLI, root=root).strip()
+        if not _commit_ok(last, ac, cmap):
+            problems.append(f"commits: the last commit touching {FROZEN_CLI} is not the recorded amendment commit")
+    except AmendmentError as e:
+        problems.append(f"commits: {e}")
+    pin = a2.get("module_pin_commit")
+    pub = ((published.get("code_freeze") or {}).get("commits") or {}).get(OLD_MODULE)
+    if not (isinstance(pin, list | tuple) and len(pin) == 2 and list(pin) == list(pub or [])):
+        problems.append("commits: module_pin_commit is not the published code_freeze commit of the module")
+    else:
+        pm = cmap.get(pin[0]) or pin[0]
+        try:
+            if fa._git("rev-parse", f"{pm}:{OLD_MODULE}", root=root).strip() != fa.MODULE_BLOB:
+                problems.append("commits: the module at the pin commit is not the frozen module blob")
+            if fa._git("log", "-1", "--format=%cI", pm, root=root).strip() != pin[1]:
+                problems.append("commits: the pin commit date differs from the recorded one")
+        except AmendmentError as e:
+            problems.append(f"commits: module pin commit not found: {e}")
+    return mapped
+
+
+def _check_rewrite(root: Path, a2: dict, mapped: str | None, info: dict, problems: list[str]) -> None:
+    proof = a2.get("commit_proof") or {}
+    if mapped is None:
+        problems.append("commit rewrite: no amendment commit recorded")
+        return
+    if proof.get("exceptions") != RECORD_COMMIT_PROOF_EXCEPTIONS:
+        problems.append("commit rewrite: recorded exceptions differ from the expected ones")
+    ac = a2.get("amendment_commit")
+    if proof.get("commit") != (ac[0] if ac else None):
+        problems.append("commit rewrite: commit_proof.commit is not the amendment commit")
+    recorded = proof.get("latest_only_rewritten")
+    if not isinstance(recorded, list):
+        problems.append("commit rewrite: commit_proof.latest_only_rewritten is missing")
+        return
+    try:
+        res = check_commit_rewrite(root, mapped, proven_latest_only=recorded)
+    except AmendmentError as e:
+        problems.append(f"commit rewrite: {e}")
+        return
+    info["commit_rewrite"] = res
+    problems += [f"commit rewrite: {p}" for p in res["problems"]]
+    if res["filtered"]:
+        if res["pure_rewrite"] not in (True, "partial"):
+            problems.append("commit rewrite: the rename commit is not a pure rewrite in this clone")
+    else:
+        if res["pure_rewrite"] is not True:
+            problems.append("commit rewrite: the rename commit is not a pure rewrite")
+        if res["latest_only_rewritten"] != recorded:
+            problems.append("commit rewrite: recorded latest_only_rewritten differs from the recomputed list")
+
+
+def _check_exp001(root: Path, a2: dict, problems: list[str]) -> None:
+    new_dir, test = Path(root) / EXP001_NEW, Path(root) / EXP001_TEST
+    if not (new_dir.exists() and test.is_file()):
+        return
+    want = (a2.get("exp001_tree") or {}).get("new_tree")
+    try:
+        got = fa._git("rev-parse", f"HEAD:{EXP001_NEW}", root=root).strip()
+    except AmendmentError as e:
+        problems.append(f"exp001: {e}")
+        return
+    if got != want:
+        problems.append("exp001: tree at HEAD is not the recorded new_tree")
+    m = re.search(r'^EXP001_TREE\s*=\s*"([0-9a-f]+)"', test.read_text(encoding="utf-8"), re.MULTILINE)
+    if not m or m.group(1) != want:
+        problems.append(f"exp001: the tree literal in {EXP001_TEST} is not the recorded new_tree")
+
+
+def _check_recorded_data(root: Path, a2: dict, problems: list[str]) -> None:
+    kept = a2.get("kept_unpinned") or []
+    rewritten = a2.get("rewritten_unpinned") or []
+    both = {e.get("path") for e in kept} & {e.get("path") for e in rewritten}
+    if both:
+        problems.append(f"recorded data: in both kept_unpinned and rewritten_unpinned: {sorted(both)}")
+    for e in list(a2.get("recorded_data_kept") or []) + list(kept):
+        p = Path(root) / e["path"]
+        if p.is_file() and fa._sha256(p) != e.get("sha256"):
+            problems.append(f"recorded data: {e['path']} differs from its recorded sha256")
+    for e in rewritten:
+        p = Path(root) / e["path"]
+        if not p.is_file():
+            continue
+        if fa._sha256(p) != e.get("sha256_after"):
+            problems.append(f"recorded data: {e['path']} differs from its recorded sha256_after")
+        text = p.read_bytes().decode("utf-8", "surrogateescape")
+        if rename_map.rewrite_text(text) != text:
+            problems.append(f"recorded data: {e['path']} still holds an old name")
+
+
+def _check_rerun(a2: dict, problems: list[str]) -> None:
+    r = a2.get("rerun_equivalence") or {}
+    if r.get("compare") != "identical_modulo_amendment" or r.get("differing_keys") != list(RENAME_KEYS):
+        problems.append("rerun: not identical_modulo_amendment with exactly the eight rename keys")
+    if r.get("report_rerender_identical") is not True:
+        problems.append("rerun: the report re-render is not recorded as identical")
+    if r.get("score_exit") != 0 or r.get("cold_cache") is not True:
+        problems.append("rerun: score_exit is not 0 or the cache was not cold")
+
+
+def verify_rename(
+    root: Path,
+    a2: dict,
+    *,
+    a1: dict,
+    published: dict,
+    commit_map: dict | None = None,
+    info: dict | None = None,
+) -> list[str]:
+    """Every problem found when checking the rename record against the tree and git objects (empty when sound)."""
+    root = Path(root)
+    cmap = commit_map or {}
+    info = info if info is not None else {}
+    problems: list[str] = []
+    _check_shape(a2, a1, problems)
+    _check_frozen_files(root, a2, a1, problems)
+    _check_run_lock(root, a2, a1, problems)
+    _check_registry(root, a2, problems)
+    mapped = _check_commits(root, a2, published, cmap, problems)
+    _check_rewrite(root, a2, mapped, info, problems)
+    _check_exp001(root, a2, problems)
+    _check_recorded_data(root, a2, problems)
+    _check_rerun(a2, problems)
+    return problems
+
+
 # -------------------------------------------------------------------- preview
 
 def _blob_of_bytes(data: bytes, path: Path) -> str:
@@ -555,6 +842,9 @@ def main(argv: list[str] | None = None) -> int:
     sp = sub.add_parser("preview")
     sp.add_argument("--out", default=DEFAULT_PREVIEW_DIR)
     sp.set_defaults(fn=cmd_preview)
+    sv = sub.add_parser("verify")
+    sv.add_argument("--history", default=None)
+    sv.set_defaults(fn=fa.cmd_verify)
     a = ap.parse_args(argv)
     try:
         return a.fn(a)
