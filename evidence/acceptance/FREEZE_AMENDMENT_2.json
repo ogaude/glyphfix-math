@@ -1,0 +1,681 @@
+{
+  "amendment_commit": [
+    "d477b10090ca93fbb36b4cdfc94e927a116adbfb",
+    "2026-10-26T21:18:39+01:00"
+  ],
+  "approved": "approved rewrite-sidecars (user replied \"2\" to the numbered options on 2026-10-26)",
+  "commit_proof": {
+    "changed": 238,
+    "commit": "d477b10090ca93fbb36b4cdfc94e927a116adbfb",
+    "exceptions": [
+      "data/benchmark/acceptance/RUN_LOCK.json",
+      "tests/test_frozen_exp001.py"
+    ],
+    "latest_only_rewritten": [
+      {
+        "new_blob": "4575981f31637cdef0dafcc7317ff0a51f599b4b",
+        "path": "data/benchmark/acceptance/tuned_q8.sidecar.jsonl"
+      },
+      {
+        "new_blob": "bf9fd97b779d7f958c956ac2478985071818c077",
+        "path": "data/benchmark/acceptance/tuned_q8_pages.sidecar.jsonl"
+      },
+      {
+        "new_blob": "537a8bd4d614a1df96a5dea35fefa3cc4a41fd85",
+        "path": "data/models/REGISTRY.json"
+      },
+      {
+        "new_blob": "794a2e0c41c3cdf424c486b831eac6a2a77a16b4",
+        "path": "scripts/release/common.py"
+      },
+      {
+        "new_blob": "a1bd2552154151a308347da79942272f557ea89a",
+        "path": "scripts/release/stage_results.py"
+      },
+      {
+        "new_blob": "47c3b80916dbfd66765f0fcf6853169ef26539bb",
+        "path": "tests/test_release_check.py"
+      },
+      {
+        "new_blob": "4239691ed2f67205d724a4f7fbb2b04c632b680f",
+        "path": "tests/test_release_common.py"
+      },
+      {
+        "new_blob": "2b95f18725531ded611de6ae2489ae2a8d87bbe2",
+        "path": "tests/test_release_results.py"
+      }
+    ],
+    "pure_rewrite": true,
+    "renames": [
+      [
+        "experiments/exp001_lighton/Modelfile.lighton",
+        "experiments/exp001_baseline/Modelfile.lighton"
+      ],
+      [
+        "experiments/exp001_lighton/Modelfile.lighton-bf16",
+        "experiments/exp001_baseline/Modelfile.lighton-bf16"
+      ],
+      [
+        "experiments/exp001_lighton/README.md",
+        "experiments/exp001_baseline/README.md"
+      ],
+      [
+        "experiments/exp001_lighton/__init__.py",
+        "experiments/exp001_baseline/__init__.py"
+      ],
+      [
+        "experiments/exp001_lighton/alignment_test.py",
+        "experiments/exp001_baseline/alignment_test.py"
+      ],
+      [
+        "experiments/exp001_lighton/audit_normalizer.py",
+        "experiments/exp001_baseline/audit_normalizer.py"
+      ],
+      [
+        "experiments/exp001_lighton/build_eq_dataset.py",
+        "experiments/exp001_baseline/build_eq_dataset.py"
+      ],
+      [
+        "experiments/exp001_lighton/compare_bf16.py",
+        "experiments/exp001_baseline/compare_bf16.py"
+      ],
+      [
+        "experiments/exp001_lighton/compile_test.py",
+        "experiments/exp001_baseline/compile_test.py"
+      ],
+      [
+        "experiments/exp001_lighton/crop_baseline.py",
+        "experiments/exp001_baseline/crop_baseline.py"
+      ],
+      [
+        "experiments/exp001_lighton/crop_rescore.py",
+        "experiments/exp001_baseline/crop_rescore.py"
+      ],
+      [
+        "experiments/exp001_lighton/score_latex.py",
+        "experiments/exp001_baseline/score_latex.py"
+      ],
+      [
+        "experiments/exp001_lighton/standalone_test.py",
+        "experiments/exp001_baseline/standalone_test.py"
+      ],
+      [
+        "experiments/exp001_lighton/triage.py",
+        "experiments/exp001_baseline/triage.py"
+      ],
+      [
+        "src/lightonocr_math/__init__.py",
+        "src/glyphfix_math/__init__.py"
+      ],
+      [
+        "src/lightonocr_math/_frozen.py",
+        "src/glyphfix_math/_frozen.py"
+      ],
+      [
+        "src/lightonocr_math/acceptance.py",
+        "src/glyphfix_math/acceptance.py"
+      ],
+      [
+        "src/lightonocr_math/authors.py",
+        "src/glyphfix_math/authors.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/__init__.py",
+        "src/glyphfix_math/corpus/__init__.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/_benchmark_frozen.py",
+        "src/glyphfix_math/corpus/_benchmark_frozen.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/_io.py",
+        "src/glyphfix_math/corpus/_io.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/build.py",
+        "src/glyphfix_math/corpus/build.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/canon.py",
+        "src/glyphfix_math/corpus/canon.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/catalog.py",
+        "src/glyphfix_math/corpus/catalog.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/extract.py",
+        "src/glyphfix_math/corpus/extract.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/fetch.py",
+        "src/glyphfix_math/corpus/fetch.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/flags.py",
+        "src/glyphfix_math/corpus/flags.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/freeze.py",
+        "src/glyphfix_math/corpus/freeze.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/gate.py",
+        "src/glyphfix_math/corpus/gate.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/glyphmatch.py",
+        "src/glyphfix_math/corpus/glyphmatch.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/pages.py",
+        "src/glyphfix_math/corpus/pages.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/pilot.py",
+        "src/glyphfix_math/corpus/pilot.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/records.py",
+        "src/glyphfix_math/corpus/records.py"
+      ],
+      [
+        "src/lightonocr_math/corpus/select.py",
+        "src/glyphfix_math/corpus/select.py"
+      ],
+      [
+        "src/lightonocr_math/errors.py",
+        "src/glyphfix_math/errors.py"
+      ],
+      [
+        "src/lightonocr_math/guard.py",
+        "src/glyphfix_math/guard.py"
+      ],
+      [
+        "src/lightonocr_math/ids.py",
+        "src/glyphfix_math/ids.py"
+      ],
+      [
+        "src/lightonocr_math/latex_tokens.py",
+        "src/glyphfix_math/latex_tokens.py"
+      ],
+      [
+        "src/lightonocr_math/leakscan.py",
+        "src/glyphfix_math/leakscan.py"
+      ],
+      [
+        "src/lightonocr_math/mining.py",
+        "src/glyphfix_math/mining.py"
+      ],
+      [
+        "src/lightonocr_math/normalize.py",
+        "src/glyphfix_math/normalize.py"
+      ],
+      [
+        "src/lightonocr_math/paths.py",
+        "src/glyphfix_math/paths.py"
+      ],
+      [
+        "src/lightonocr_math/pixels.py",
+        "src/glyphfix_math/pixels.py"
+      ],
+      [
+        "src/lightonocr_math/preamble.tex",
+        "src/glyphfix_math/preamble.tex"
+      ],
+      [
+        "src/lightonocr_math/render.py",
+        "src/glyphfix_math/render.py"
+      ],
+      [
+        "src/lightonocr_math/report.py",
+        "src/glyphfix_math/report.py"
+      ],
+      [
+        "src/lightonocr_math/score.py",
+        "src/glyphfix_math/score.py"
+      ],
+      [
+        "src/lightonocr_math/splits.py",
+        "src/glyphfix_math/splits.py"
+      ],
+      [
+        "src/lightonocr_math/stats.py",
+        "src/glyphfix_math/stats.py"
+      ],
+      [
+        "src/lightonocr_math/train/__init__.py",
+        "src/glyphfix_math/train/__init__.py"
+      ],
+      [
+        "src/lightonocr_math/train/collate.py",
+        "src/glyphfix_math/train/collate.py"
+      ],
+      [
+        "src/lightonocr_math/train/data.py",
+        "src/glyphfix_math/train/data.py"
+      ],
+      [
+        "src/lightonocr_math/train/infer.py",
+        "src/glyphfix_math/train/infer.py"
+      ],
+      [
+        "src/lightonocr_math/train/lora.py",
+        "src/glyphfix_math/train/lora.py"
+      ],
+      [
+        "src/lightonocr_math/train/patch_embed.py",
+        "src/glyphfix_math/train/patch_embed.py"
+      ],
+      [
+        "src/lightonocr_math/train/prompt.py",
+        "src/glyphfix_math/train/prompt.py"
+      ],
+      [
+        "src/lightonocr_math/train/registry.py",
+        "src/glyphfix_math/train/registry.py"
+      ],
+      [
+        "src/lightonocr_math/train/run.py",
+        "src/glyphfix_math/train/run.py"
+      ],
+      [
+        "src/lightonocr_math/trainset.py",
+        "src/glyphfix_math/trainset.py"
+      ]
+    ]
+  },
+  "effects": [
+    "scripts.acceptance score --mode benchmark refuses when called directly: the module's last commit is the rename commit, later than the generation start; the published-claim rescore runs through scripts.release.frozen_rescore",
+    "scripts.acceptance generate refuses for every arm, as after amendment 1",
+    "results.json, ACCEPTANCE.md and the recorded predictions are unchanged; they describe the run as scored under the old names",
+    "historical commits keep the old names; amendment 1 is verified from git objects"
+  ],
+  "exp001_tree": {
+    "files": [
+      {
+        "new_blob": "cbde04e68c2042752ad653a5f33c506fa7c53dd2",
+        "old_blob": "6057faa397cbafa0448841653a0dc7f83eac3405",
+        "path": "README.md"
+      },
+      {
+        "new_blob": "a2966604b5f1595181c5811a1d267ae6c90d6e8b",
+        "old_blob": "3549aac3a8007725f56b8bf6773bc7038de6b944",
+        "path": "alignment_test.py"
+      },
+      {
+        "new_blob": "3cc544f5b1868991edf10b12a271bd14e3212236",
+        "old_blob": "17ab27d525f3549ef6750e46d127d691c505217b",
+        "path": "audit_normalizer.py"
+      },
+      {
+        "new_blob": "633a79c1acea622c295d7fe342a54f940b757e34",
+        "old_blob": "ee8a105e9c8b1a7697e1cb1c8013d87c77bc7968",
+        "path": "build_eq_dataset.py"
+      },
+      {
+        "new_blob": "ba67ae5b5fafbe3ed4e41b147876c0d65f20da2f",
+        "old_blob": "01b5e6e4ddf9c0e2c5c3f23f9d9c839cec23fdf8",
+        "path": "compare_bf16.py"
+      },
+      {
+        "new_blob": "c0b040b88e4dd5c6f077afc92454becb145d2f04",
+        "old_blob": "91499c4cd6295115bdb68f2cee13531548880324",
+        "path": "compile_test.py"
+      },
+      {
+        "new_blob": "1230d83855a18cdf410aca9e9890ae9f35680ab0",
+        "old_blob": "682b942cd072da62bf3b323f03de663eb548503a",
+        "path": "crop_baseline.py"
+      },
+      {
+        "new_blob": "d31c6cc7b84386a89f062e0b4e555fe60d707936",
+        "old_blob": "ee76adda53c9c82c1b66013e46ff1d585b33409e",
+        "path": "crop_rescore.py"
+      },
+      {
+        "new_blob": "d33bbfbf74e9a90914c37bc4e3847cb18b149f3a",
+        "old_blob": "85695e0e76fc00f15aa839ecc92d21560250a0c3",
+        "path": "score_latex.py"
+      },
+      {
+        "new_blob": "8fd34d7565d2cf41a99458f129b1c782dd00ef5a",
+        "old_blob": "5e92e9a747e7ef793c4a7f8a8398765688e73ea9",
+        "path": "standalone_test.py"
+      },
+      {
+        "new_blob": "d3509b17edc8d67cf02e036ac7c0fd3bb055f22d",
+        "old_blob": "ab98da78d3a5d0bc7fb11e1f710fa1faf5ec4647",
+        "path": "triage.py"
+      }
+    ],
+    "names_only": true,
+    "new_path": "experiments/exp001_baseline",
+    "new_tree": "ca58b4e28b429213b5275316aa8979dba9833e2e",
+    "old_path": "experiments/exp001_lighton",
+    "old_tree": "934e94975a80805ad3c14a5a3f2c6b493ff26736",
+    "test_file": "tests/test_frozen_exp001.py"
+  },
+  "files": {
+    "cli": {
+      "new_blob": "8864ec29937e8fde2506fb8baea26ebb4bc07d0f",
+      "new_path": "scripts/acceptance.py",
+      "old_blob": "611504261674544c9296806ba3b6d51630bcf536",
+      "old_path": "scripts/acceptance.py",
+      "proof": {
+        "ast_equal_after_mapping": true,
+        "changed_lines": [
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          55,
+          62,
+          313
+        ],
+        "changed_tokens": {
+          "NAME": 8,
+          "STRING": 3
+        },
+        "method": "rewrite_text+line-diff+tokenize+ast",
+        "python": "3.12.13 (main, Jun  2 2026, 22:27:15) [Clang 22.1.3 ]",
+        "substitutions": [
+          {
+            "line": 40,
+            "new": "from glyphfix_math import acceptance as accmod",
+            "old": "from lightonocr_math import acceptance as accmod"
+          },
+          {
+            "line": 41,
+            "new": "from glyphfix_math import guard, paths, render, splits",
+            "old": "from lightonocr_math import guard, paths, render, splits"
+          },
+          {
+            "line": 42,
+            "new": "from glyphfix_math.corpus import freeze",
+            "old": "from lightonocr_math.corpus import freeze"
+          },
+          {
+            "line": 43,
+            "new": "from glyphfix_math.guard import GuardError",
+            "old": "from lightonocr_math.guard import GuardError"
+          },
+          {
+            "line": 44,
+            "new": "from glyphfix_math.paths import repo_root",
+            "old": "from lightonocr_math.paths import repo_root"
+          },
+          {
+            "line": 45,
+            "new": "from glyphfix_math.render import RenderInfrastructureError",
+            "old": "from lightonocr_math.render import RenderInfrastructureError"
+          },
+          {
+            "line": 46,
+            "new": "from glyphfix_math.score import score_file",
+            "old": "from lightonocr_math.score import score_file"
+          },
+          {
+            "line": 47,
+            "new": "from glyphfix_math.train import registry as registry_mod",
+            "old": "from lightonocr_math.train import registry as registry_mod"
+          },
+          {
+            "line": 55,
+            "new": "TUNED_TAG = \"glyphfix-math-lora-q8:p4-full-1\"",
+            "old": "TUNED_TAG = \"mathocr-lora-q8:p4-full-1\""
+          },
+          {
+            "line": 62,
+            "new": "FROZEN_CODE = (\"src/glyphfix_math/acceptance.py\", \"scripts/acceptance.py\")",
+            "old": "FROZEN_CODE = (\"src/lightonocr_math/acceptance.py\", \"scripts/acceptance.py\")"
+          },
+          {
+            "line": 313,
+            "new": "sys.executable, \"-m\", \"glyphfix_math.guard\", *GUARD_ARGS, \"--\",",
+            "old": "sys.executable, \"-m\", \"lightonocr_math.guard\", *GUARD_ARGS, \"--\","
+          }
+        ]
+      }
+    },
+    "module": {
+      "new_blob": "6816b5d9bfe69fd2a630acf22faf7d64fc1ed476",
+      "new_path": "src/glyphfix_math/acceptance.py",
+      "old_blob": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac",
+      "old_path": "src/lightonocr_math/acceptance.py",
+      "proof": {
+        "ast_equal_after_mapping": true,
+        "changed_lines": [
+          19,
+          20
+        ],
+        "changed_tokens": {
+          "NAME": 2
+        },
+        "method": "rewrite_text+line-diff+tokenize+ast",
+        "python": "3.12.13 (main, Jun  2 2026, 22:27:15) [Clang 22.1.3 ]",
+        "substitutions": [
+          {
+            "line": 19,
+            "new": "from glyphfix_math import stats",
+            "old": "from lightonocr_math import stats"
+          },
+          {
+            "line": 20,
+            "new": "from glyphfix_math.report import VERSION_KEYS",
+            "old": "from lightonocr_math.report import VERSION_KEYS"
+          }
+        ]
+      }
+    }
+  },
+  "kept_unpinned": [],
+  "kind": "rename-only",
+  "module_pin_commit": [
+    "0a3aff0e66504ff2b8d69f40c61cda7221c28c9d",
+    "2026-10-17T09:59:12+02:00"
+  ],
+  "path_moves": [
+    [
+      "src/lightonocr_math",
+      "src/glyphfix_math"
+    ],
+    [
+      "experiments/exp001_lighton",
+      "experiments/exp001_baseline"
+    ]
+  ],
+  "previous": "evidence/acceptance/FREEZE_AMENDMENT.json",
+  "previous_amendment_commit": [
+    "8bff9421db6ab8f95e69e527b7775f1356e7b25c",
+    "2026-10-18T18:34:42+02:00"
+  ],
+  "reason": "rename the project, package, experiments directory and our Ollama tags to the published names before the first release (user decision 2026-10-26)",
+  "recorded_data_kept": [
+    {
+      "path": "data/benchmark/acceptance/tuned_q8.pred.jsonl",
+      "sha256": "7777c3a9c70e0d25440fa2a5a5520d489d76326235f5c20c2818af47b80c2ce6"
+    },
+    {
+      "path": "data/benchmark/acceptance/tuned_q8.pred.manifest.json",
+      "sha256": "0e2353ac72e0647f4d0f86bd567571b85d59c36025739a39af136f79745e1d19"
+    },
+    {
+      "path": "data/benchmark/acceptance/tuned_q8_pages.pred.jsonl",
+      "sha256": "a30dbdec2711d7903526de068921da430fd6bfa67b6468701b206a4dcb741fca"
+    },
+    {
+      "path": "data/benchmark/acceptance/tuned_q8_pages.pred.manifest.json",
+      "sha256": "fdfd679aea01625620794d5f85027cc360e21ccec0c34a01fd24d1666bb9bf8a"
+    },
+    {
+      "path": "evidence/acceptance/env_check.json",
+      "sha256": "a633a199d94a68d9befce91734c0864316c0da5e7e221a6a7839e75b58adbc8b"
+    },
+    {
+      "path": "evidence/acceptance/results.json",
+      "sha256": "f506e7b408338858f74e6d6a786d85d5faa475f35631ab220e0459f2435ecfa3"
+    }
+  ],
+  "registry": {
+    "changes": [
+      {
+        "key": "entries[tag=mathocr-lora-q8:p4-full-1].candidate_tag",
+        "new": "glyphfix-math-cand:p4-full-1",
+        "old": "mathocr-cand:p4-full-1"
+      },
+      {
+        "key": "entries[tag=mathocr-lora-q8:p4-full-1].tag",
+        "new": "glyphfix-math-lora-q8:p4-full-1",
+        "old": "mathocr-lora-q8:p4-full-1"
+      }
+    ],
+    "path": "data/models/REGISTRY.json",
+    "sha256_after": "53d8bcc664ccedd6199cc558609a7cc62ef0bfaed1852dd798d5f558ecf42001",
+    "sha256_before": "c30002398bbb285dc9e9483b8968224cf53186330c76d459c1a1527de7f67a50"
+  },
+  "rerun_equivalence": {
+    "cold_cache": true,
+    "command": "uv run python -m scripts.release.reproduce --score-only (frozen_rescore harness, cold render cache)",
+    "compare": "identical_modulo_amendment",
+    "differing_keys": [
+      "code_freeze.commits.scripts/acceptance.py",
+      "code_freeze.commits.src/glyphfix_math/acceptance.py",
+      "code_freeze.commits.src/lightonocr_math/acceptance.py",
+      "code_freeze.current_blobs.cli",
+      "code_freeze.current_blobs.module",
+      "code_freeze.lock_blobs.cli",
+      "code_freeze.lock_blobs.module",
+      "tag"
+    ],
+    "fresh_sha256": "09bda6754e276d309077fbea749e2962c196632c5ec9fa2e63ac7b3118b7f59b",
+    "frozen_compare_output": "different: code_freeze.commits.scripts/acceptance.py, code_freeze.commits.src/glyphfix_math/acceptance.py, code_freeze.commits.src/lightonocr_math/acceptance.py, code_freeze.current_blobs.cli, code_freeze.current_blobs.module, code_freeze.lock_blobs.cli, code_freeze.lock_blobs.module, tag",
+    "git_head": "afd7cd9c18a321c5ed8bd45f2698eab2a5c7399f",
+    "harness": "scripts.release.frozen_rescore",
+    "pin_substitution": {
+      "commit": "0a3aff0e66504ff2b8d69f40c61cda7221c28c9d",
+      "date": "2026-10-17T09:59:12+02:00",
+      "path": "src/glyphfix_math/acceptance.py"
+    },
+    "published_sha256": "f506e7b408338858f74e6d6a786d85d5faa475f35631ab220e0459f2435ecfa3",
+    "render_image": "texlive/texlive@sha256:0f4884ca7d287f47ab466d2dd405d4c901c576585363f628863a7ca7eea21301",
+    "report_rerender_identical": true,
+    "report_rerender_note": "identical modulo the git commit stamp and the CPU sensitivity section",
+    "score_exit": 0,
+    "seconds": 204.1
+  },
+  "rewritten_unpinned": [
+    {
+      "path": "data/benchmark/acceptance/tuned_q8.sidecar.jsonl",
+      "sha256_after": "49a77bf07f2546b137ea387397f32070491bd372a5f0126955ac84afe887f0da",
+      "sha256_before": "03a4794b0b591fc35fd5e562a1806209eb2792f6dd1caf5a670e8971e0c7572e"
+    },
+    {
+      "path": "data/benchmark/acceptance/tuned_q8_pages.sidecar.jsonl",
+      "sha256_after": "835b1f0f0590543ca308e48177dd569cec779ce5956f144c8753c25844d8a0bd",
+      "sha256_before": "788fcff445e4f059d91bc5cef49ac502c826217515ef1729f2a4e870a46e991f"
+    }
+  ],
+  "run_lock": {
+    "changes": [
+      {
+        "arm": "tuned-crops",
+        "key": "acceptance_cli_blob",
+        "new": "8864ec29937e8fde2506fb8baea26ebb4bc07d0f",
+        "old": "611504261674544c9296806ba3b6d51630bcf536"
+      },
+      {
+        "arm": "tuned-crops",
+        "key": "acceptance_module_blob",
+        "new": "6816b5d9bfe69fd2a630acf22faf7d64fc1ed476",
+        "old": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac"
+      },
+      {
+        "arm": "tuned-crops",
+        "key": "acceptance_module_blob_generated",
+        "new": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac",
+        "old": null
+      },
+      {
+        "arm": "tuned-crops",
+        "key": "freeze_amendment",
+        "new": "evidence/acceptance/FREEZE_AMENDMENT_2.json",
+        "old": "evidence/acceptance/FREEZE_AMENDMENT.json"
+      },
+      {
+        "arm": "tuned-pages",
+        "key": "acceptance_cli_blob",
+        "new": "8864ec29937e8fde2506fb8baea26ebb4bc07d0f",
+        "old": "611504261674544c9296806ba3b6d51630bcf536"
+      },
+      {
+        "arm": "tuned-pages",
+        "key": "acceptance_module_blob",
+        "new": "6816b5d9bfe69fd2a630acf22faf7d64fc1ed476",
+        "old": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac"
+      },
+      {
+        "arm": "tuned-pages",
+        "key": "acceptance_module_blob_generated",
+        "new": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac",
+        "old": null
+      },
+      {
+        "arm": "tuned-pages",
+        "key": "freeze_amendment",
+        "new": "evidence/acceptance/FREEZE_AMENDMENT_2.json",
+        "old": "evidence/acceptance/FREEZE_AMENDMENT.json"
+      }
+    ],
+    "path": "data/benchmark/acceptance/RUN_LOCK.json",
+    "sha256_after": "3a0d16f159ca8d88622bbd1f0e560b8778355f837dc1df2da06aceac2cc1abfa",
+    "sha256_before": "d17ef655e2cf4b5bc79a8873fadba600646ce45fac7766d4902f144b968f63a4"
+  },
+  "schema": 1,
+  "tags": [
+    {
+      "new": "glyphfix-math-lora-q8:p4-full-1",
+      "old": "mathocr-lora-q8:p4-full-1",
+      "ollama_digest": "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737"
+    },
+    {
+      "new": "glyphfix-math-cand:p4-full-1",
+      "old": "mathocr-cand:p4-full-1",
+      "ollama_digest": null
+    }
+  ],
+  "token_map": [
+    [
+      "mathocr-lora-q8",
+      "glyphfix-math-lora-q8"
+    ],
+    [
+      "mathocr-cand",
+      "glyphfix-math-cand"
+    ],
+    [
+      "mathocr-lora",
+      "glyphfix-math-lora"
+    ],
+    [
+      "exp001_lighton",
+      "exp001_baseline"
+    ],
+    [
+      "lightonocr_math",
+      "glyphfix_math"
+    ],
+    [
+      "LIGHTONOCR_MATH",
+      "GLYPHFIX_MATH"
+    ],
+    [
+      "lightonocr-math",
+      "glyphfix-math"
+    ]
+  ]
+}
