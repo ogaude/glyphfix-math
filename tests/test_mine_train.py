@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math.pixels import PIXEL_POLICY
+from glyphfix_math.pixels import PIXEL_POLICY
 from scripts import baseline_infer
 from scripts import mine_train as mt
 

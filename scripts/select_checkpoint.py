@@ -29,8 +29,8 @@ import re
 import sys
 from pathlib import Path
 
-from lightonocr_math import stats
-from lightonocr_math.errors import CLASSES
+from glyphfix_math import stats
+from glyphfix_math.errors import CLASSES
 
 TIE_DELTA = 0.02
 GLYPH_CLASSES = tuple(c for c in CLASSES if c != "other")
@@ -166,7 +166,7 @@ def _score_dirs(run_dir: Path) -> list[tuple[int, Path]]:
 
 def score_one(pred: Path, out: Path) -> str:
     """Score a prediction file unless an up-to-date result exists; returns "skipped" or "scored"."""
-    from lightonocr_math import score
+    from glyphfix_math import score
 
     res = Path(out) / "results.json"
     if res.is_file():
@@ -332,7 +332,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {e}", file=sys.stderr)
         return EXIT_BAD_INPUT
     except Exception as e:
-        from lightonocr_math.render import RenderInfrastructureError
+        from glyphfix_math.render import RenderInfrastructureError
 
         if isinstance(e, RenderInfrastructureError):
             print(f"error: render infrastructure failure: {e}", file=sys.stderr)

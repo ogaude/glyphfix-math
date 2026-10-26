@@ -14,7 +14,7 @@ from scripts.release import public_paths as pp
 ROOT = Path(__file__).resolve().parent.parent
 
 HISTORY = [
-    "src/lightonocr_math/acceptance.py", "scripts/acceptance.py",
+    "src/glyphfix_math/acceptance.py", "scripts/acceptance.py",
     "scripts/release/freeze_amendment.py", "tests/test_freeze_amendment.py", "tests/test_acceptance.py",
     "pyproject.toml", "uv.lock", ".python-version", ".gitignore", "requirements/train.lock.txt",
     "requirements/export_pins.json",
@@ -33,7 +33,7 @@ OVERLAY = [
 DROPPED = [
     "data/corpus/train/records.jsonl", "data/corpus/dev/records.jsonl", "data/corpus/regression/pool.jsonl",
     "data/corpus/pages_calib/pages.jsonl", "data/train/dev_eval_ids.txt", "scripts/utils/models.py",
-    "experiments/exp001_lighton/triage.py", "experiments/__init__.py", "docs/results/exp002_groupnorm_vs_kept.png",
+    "experiments/exp001_baseline/triage.py", "experiments/__init__.py", "docs/results/exp002_groupnorm_vs_kept.png",
     "docs/results/summary.md", "docs/EXP-001_LightOnOCR-3_Layer1.md", "docs/notes/miopen-patch-embed.md",
     "docs/notes/miopen-patch-embed/run3.sh", "docs/notes/vram-cache-guard-freeze.md", "docs/REPRODUCE.md",
     "docs/REBUILD.md", "ORIGIN.md", "CLAUDE.md", ".planning/STATE.md", ".planning/ROADMAP.md",

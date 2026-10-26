@@ -5,7 +5,7 @@ Usage (from repo root, training venv):
     --sidecar data/spikes/hf/HF.sidecar.jsonl --teacher-force data/spikes/ollama/S1.sidecar.jsonl
 
 Shared GPU: prefer launching under the resource guard, for example
-  uv run python -m lightonocr_math.guard --vram-gb 10 --ram-gb 8 --timeout 1800 --vram-floor-gb 0.1 -- \
+  uv run python -m glyphfix_math.guard --vram-gb 10 --ram-gb 8 --timeout 1800 --vram-floor-gb 0.1 -- \
     .venv-lighton/bin/python -m scripts.spikes.hf_infer ...
 The script also runs a guard preflight (free VRAM and RAM floor) before loading the model. The default
 --max-px is the processor's stock cap (up to about 16k image tokens), kept so the run mirrors stock HF
@@ -25,7 +25,7 @@ import sys
 import time
 from pathlib import Path
 
-from lightonocr_math.paths import repo_root
+from glyphfix_math.paths import repo_root
 from scripts.spikes import common
 
 
@@ -41,7 +41,7 @@ def _margin(model, processor, image, ol_text: str, hf_text: str, min_px: int, ma
     """Teacher-forced forward over prompt + Ollama continuation up to the first divergent token."""
     import torch
 
-    from lightonocr_math.train.prompt import prompt_text, size_kwargs
+    from glyphfix_math.train.prompt import prompt_text, size_kwargs
 
     tok = processor.tokenizer
     a = tok(hf_text, add_special_tokens=False)["input_ids"]
@@ -95,8 +95,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     from PIL import Image
 
-    from lightonocr_math import guard
-    from lightonocr_math.train import infer
+    from glyphfix_math import guard
+    from glyphfix_math.train import infer
 
     try:
         guard.preflight(vram_gb=10, ram_gb=4, timeout_s=900)

@@ -1,6 +1,6 @@
 import pytest
 
-from lightonocr_math import mining as m
+from glyphfix_math import mining as m
 
 
 def _row(i, paper, gt, pred, exact=False, ri=False, classes=None):

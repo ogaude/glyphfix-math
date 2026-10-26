@@ -21,10 +21,10 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-from lightonocr_math.corpus import fetch as F
-from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json
-from lightonocr_math.corpus.records import LICENSE_SPDX
-from lightonocr_math.ids import base_id, is_arxiv_id
+from glyphfix_math.corpus import fetch as F
+from glyphfix_math.corpus._io import read_jsonl, sha256_file, write_json
+from glyphfix_math.corpus.records import LICENSE_SPDX
+from glyphfix_math.ids import base_id, is_arxiv_id
 
 
 def _eligible(rows: list[dict]) -> list[dict]:

@@ -1,4 +1,4 @@
-from lightonocr_math.latex_tokens import detokenize, tokenize
+from glyphfix_math.latex_tokens import detokenize, tokenize
 
 
 def test_frac():

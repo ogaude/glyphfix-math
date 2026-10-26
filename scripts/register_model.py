@@ -10,7 +10,7 @@ Usage (from repo root, uv environment; scoring of the arms is done beforehand wi
       --gates data/models/RUN_ID/gates.json --export data/models/RUN_ID/export.json \
       --trainset-dir DIR --sweep sweep.json --registry data/models/REGISTRY.json
 
-Score directories hold records.jsonl (render_identical, paper_id) written by lightonocr_math.score. Each HF
+Score directories hold records.jsonl (render_identical, paper_id) written by glyphfix_math.score. Each HF
 PRED is OUT_STEM.pred.jsonl with OUT_STEM.sidecar.jsonl and OUT_STEM.score next to it. Ollama arms on the full
 dev split are filtered to the dev-subset ids for the export gate.
 
@@ -37,10 +37,10 @@ import sys
 import time
 from pathlib import Path
 
-from lightonocr_math import score, stats
-from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json
-from lightonocr_math.paths import repo_root
-from lightonocr_math.train import registry
+from glyphfix_math import score, stats
+from glyphfix_math.corpus._io import read_jsonl, sha256_file, write_json
+from glyphfix_math.paths import repo_root
+from glyphfix_math.train import registry
 from scripts.export_merge import merge_verdict
 from scripts.spikes import parity_report
 from scripts.spikes.ollama_infer import DEFAULT_HOST, _model_digest
@@ -66,8 +66,8 @@ GATES = {
     "dev": {"min_delta": 0.0},
 }
 
-FINAL_PREFIX = "mathocr-lora-q8"
-CAND_PREFIX = "mathocr-cand"
+FINAL_PREFIX = "glyphfix-math-lora-q8"
+CAND_PREFIX = "glyphfix-math-cand"
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 EPS = 1e-9
 EXIT_OK, EXIT_GATE, EXIT_BAD = 0, 1, 2

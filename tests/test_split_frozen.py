@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math import _frozen
-from lightonocr_math.splits import (
+from glyphfix_math import _frozen
+from glyphfix_math.splits import (
     LeakageError,
     SplitIntegrityError,
     assert_disjoint,

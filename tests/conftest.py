@@ -2,7 +2,7 @@ import subprocess
 
 import pytest
 
-from lightonocr_math.render import IMAGE
+from glyphfix_math.render import IMAGE
 
 
 @pytest.fixture(scope="session")

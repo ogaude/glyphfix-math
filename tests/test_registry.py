@@ -3,9 +3,9 @@ import json
 
 import pytest
 
-from lightonocr_math import score
-from lightonocr_math.corpus._io import sha256_file
-from lightonocr_math.train import registry as r
+from glyphfix_math import score
+from glyphfix_math.corpus._io import sha256_file
+from glyphfix_math.train import registry as r
 
 
 @pytest.fixture
@@ -19,8 +19,8 @@ def entry(tmp_path):
     gg.write_bytes(b"gguf")
     e = {k: "x" for k in r.REQUIRED_KEYS}
     e.update(
-        tag="mathocr-lora-q8:run1",
-        candidate_tag="mathocr-cand:run1",
+        tag="glyphfix-math-lora-q8:run1",
+        candidate_tag="glyphfix-math-cand:run1",
         adapter_path=str(ad),
         adapter_sha256=sha256_file(ad / "adapter_model.safetensors"),
         trainset_path=str(ts),

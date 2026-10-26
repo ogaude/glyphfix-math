@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-from lightonocr_math import render
-from lightonocr_math.corpus import canon
-from lightonocr_math.corpus.glyphmatch import glyph_equal
+from glyphfix_math import render
+from glyphfix_math.corpus import canon
+from glyphfix_math.corpus.glyphmatch import glyph_equal
 
 
 def _page(*blobs, h=60, w=120):

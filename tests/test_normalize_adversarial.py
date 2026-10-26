@@ -13,8 +13,8 @@ import time
 
 import pytest
 
-from lightonocr_math import normalize as N
-from lightonocr_math.normalize import canonical, equivalent, normalize_tokens
+from glyphfix_math import normalize as N
+from glyphfix_math.normalize import canonical, equivalent, normalize_tokens
 
 MUST_DIFFER = [
     # prime vs l
@@ -149,7 +149,7 @@ def test_rules_version():
 
 
 def test_old_normalizer_holes_are_closed():
-    triage = pytest.importorskip("experiments.exp001_lighton.triage")
+    triage = pytest.importorskip("experiments.exp001_baseline.triage")
 
     assert triage.normalize(r"\mathbf{x}") == triage.normalize("x")
     assert triage.normalize("x_{ab}") == triage.normalize("x_a b")
@@ -184,14 +184,14 @@ def test_unmatched_end_does_not_raise_or_go_negative():
 
 
 def test_env_list_is_shared():
-    from lightonocr_math import latex_tokens, render
+    from glyphfix_math import latex_tokens, render
 
     assert N.DISPLAY_ENVS is latex_tokens.DISPLAY_ENVS
     assert render.DISPLAY_ENVS is latex_tokens.DISPLAY_ENVS
 
 
 def test_every_display_env_strips_like_render_wrap():
-    from lightonocr_math import latex_tokens, render
+    from glyphfix_math import latex_tokens, render
 
     for name in latex_tokens.DISPLAY_ENVS:
         for star in ("", "*"):

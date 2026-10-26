@@ -36,13 +36,13 @@ import time
 from collections import Counter
 from pathlib import Path
 
-from lightonocr_math import mining, score, splits
-from lightonocr_math.corpus import gate
-from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
-from lightonocr_math.errors import CLASSES, ERROR_RULES_VERSION
-from lightonocr_math.guard import GuardError
-from lightonocr_math.pixels import PIXEL_POLICY
-from lightonocr_math.render import RenderInfrastructureError
+from glyphfix_math import mining, score, splits
+from glyphfix_math.corpus import gate
+from glyphfix_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
+from glyphfix_math.errors import CLASSES, ERROR_RULES_VERSION
+from glyphfix_math.guard import GuardError
+from glyphfix_math.pixels import PIXEL_POLICY
+from glyphfix_math.render import RenderInfrastructureError
 from scripts import baseline_infer
 from scripts.spikes.ollama_infer import DEFAULT_HOST, _model_digest
 

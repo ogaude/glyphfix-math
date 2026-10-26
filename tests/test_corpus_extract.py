@@ -6,7 +6,7 @@ import tarfile
 
 import pytest
 
-from lightonocr_math.corpus import extract as X
+from glyphfix_math.corpus import extract as X
 
 
 def _make_tar(path, members, mode="w:gz"):

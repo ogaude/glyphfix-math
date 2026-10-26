@@ -19,10 +19,10 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from lightonocr_math import splits
-from lightonocr_math.corpus import catalog as cat
-from lightonocr_math.corpus._io import read_jsonl, write_json, write_jsonl
-from lightonocr_math.ids import base_id
+from glyphfix_math import splits
+from glyphfix_math.corpus import catalog as cat
+from glyphfix_math.corpus._io import read_jsonl, write_json, write_jsonl
+from glyphfix_math.ids import base_id
 
 FLOOR_MSG = f"--interval must be at least {cat.MIN_INTERVAL_S} s (arXiv asks for at most one request per 3 s)"
 

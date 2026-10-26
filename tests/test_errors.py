@@ -2,9 +2,9 @@ import time
 
 import pytest
 
-from lightonocr_math import errors as E
-from lightonocr_math.errors import CLASSES, classify, notation_present
-from lightonocr_math.normalize import equivalent
+from glyphfix_math import errors as E
+from glyphfix_math.errors import CLASSES, classify, notation_present
+from glyphfix_math.normalize import equivalent
 from tests.test_normalize_adversarial import MUST_DIFFER, MUST_EQUAL
 
 

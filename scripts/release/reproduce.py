@@ -33,7 +33,7 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-from lightonocr_math import guard, render
+from glyphfix_math import guard, render
 from scripts.release import freeze_amendment as fa
 from scripts.release import frozen_rescore
 from scripts.release import rename_amendment as ra
@@ -53,7 +53,7 @@ HISTORY_DEFAULT = Path("RELEASE_HISTORY.json")
 CROPS_REF = "data/benchmark/acceptance/scores/crops_tuned"
 PAGES_REF = "data/benchmark/acceptance/scores/pages_tuned"
 RAM_HEADROOM_BYTES = 4 * guard.GIB
-CACHE_ENV = "LIGHTONOCR_MATH_CACHE"
+CACHE_ENV = "GLYPHFIX_MATH_CACHE"
 HARNESS = "scripts.release.frozen_rescore"
 
 

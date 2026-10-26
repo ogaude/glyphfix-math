@@ -16,7 +16,7 @@ import collections
 import json
 from pathlib import Path
 
-from lightonocr_math import mining
+from glyphfix_math import mining
 
 STOCK_HF = "data/train/dev_eval/base.score/records.jsonl"
 TUNED_HF = "data/train/runs/p4-full-1/dev_eval/step-875.score/records.jsonl"

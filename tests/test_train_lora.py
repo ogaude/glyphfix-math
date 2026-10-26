@@ -4,8 +4,8 @@ pytest.importorskip("torch")
 pytest.importorskip("peft")
 transformers = pytest.importorskip("transformers")
 
-from lightonocr_math.train import lora as L
-from lightonocr_math.train.infer import MODEL_ID, REVISION
+from glyphfix_math.train import lora as L
+from glyphfix_math.train.infer import MODEL_ID, REVISION
 
 
 @pytest.fixture(scope="module")

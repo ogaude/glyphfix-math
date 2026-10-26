@@ -1,7 +1,7 @@
 """Merge an untrained LoRA adapter into the base in bf16 and check every tensor is unchanged.
 
 Usage:
-  uv run python -m lightonocr_math.guard --ram-gb 11 --timeout 1800 -- \
+  uv run python -m glyphfix_math.guard --ram-gb 11 --timeout 1800 -- \
       .venv-lighton/bin/python -m scripts.spikes.merge_untrained [--out DIR] [--rank 32] [--alpha 8]
 
 CPU only. The adapter has the same shape as the real training adapter; lora_B starts at zero, so
@@ -27,7 +27,7 @@ _KEEP_SKIP = {"model.safetensors.index.json", "config.json"}
 def snapshot_dir() -> Path:
     from huggingface_hub import snapshot_download
 
-    from lightonocr_math.train import infer
+    from glyphfix_math.train import infer
 
     return Path(snapshot_download(infer.MODEL_ID, revision=infer.REVISION, local_files_only=True))
 
@@ -124,7 +124,7 @@ def main(argv: list[str] | None = None) -> int:
     import transformers
     from transformers import AutoModelForImageTextToText
 
-    from lightonocr_math.train import infer, lora
+    from glyphfix_math.train import infer, lora
 
     t0 = time.time()
     snap = snapshot_dir()

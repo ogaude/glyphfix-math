@@ -10,8 +10,8 @@ from email.message import Message
 
 import pytest
 
-from lightonocr_math.corpus import fetch as F
-from lightonocr_math.corpus._io import write_jsonl
+from glyphfix_math.corpus import fetch as F
+from glyphfix_math.corpus._io import write_jsonl
 from scripts import corpus_fetch as cli
 
 
@@ -124,7 +124,7 @@ def test_fetch_ok_and_resume(tmp_path):
     assert meta["policy_ack"] == "ack" and meta["license_spdx"] == "CC-BY-4.0" and meta["http_status"] == 200
     d = tmp_path / "2301.01234"
     assert json.loads((d / "fetch.json").read_text())["sha256"] == meta["sha256"]
-    assert op.calls[0].get_header("User-agent").startswith("lightonocr-math-research")
+    assert op.calls[0].get_header("User-agent").startswith("glyphfix-math-research")
     # intact: zero requests
     op2 = _Opener()
     assert F.fetch_one(ROW, tmp_path, limiter=_lim(), policy_ack="ack", opener=op2)["sha256"] == meta["sha256"]

@@ -3,7 +3,7 @@
 import pytest
 from PIL import Image
 
-from lightonocr_math import pixels
+from glyphfix_math import pixels
 
 
 @pytest.mark.parametrize("wh", [(811, 139), (3000, 3000), (100, 40), (5, 5), (4000, 60), (64, 1024)])

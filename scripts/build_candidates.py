@@ -30,12 +30,12 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 
-from lightonocr_math.corpus.catalog import retry_after_seconds
+from glyphfix_math.corpus.catalog import retry_after_seconds
 
 BASE = "https://oaipmh.arxiv.org/oai"
-CONTACT_ENV = "LIGHTONOCR_MATH_CONTACT"
-# arXiv asks for a contact address in the User-Agent: set LIGHTONOCR_MATH_CONTACT to your own before harvesting.
-UA = f"lightonocr-math-research ({os.environ.get(CONTACT_ENV) or 'contact@example.invalid'})"
+CONTACT_ENV = "GLYPHFIX_MATH_CONTACT"
+# arXiv asks for a contact address in the User-Agent: set GLYPHFIX_MATH_CONTACT to your own before harvesting.
+UA = f"glyphfix-math-research ({os.environ.get(CONTACT_ENV) or 'contact@example.invalid'})"
 SETS = ["math", "stat", "physics", "cs", "eess", "q-bio"]
 OK_LICENSES = {
     "http://creativecommons.org/licenses/by/4.0/": "CC-BY-4.0",

@@ -3,7 +3,7 @@
 Usage (in .venv-convert, which has the checkout's gguf package):
   .venv-convert/bin/python -m scripts.spikes.gguf_diff --a A.gguf --b B.gguf --out diff.json
 Memory: tensors are hashed in 64 MiB slices; on the shared machine launch it under the guard, for example
-  uv run python -m lightonocr_math.guard --ram-gb 4 -- .venv-convert/bin/python -m scripts.spikes.gguf_diff ...
+  uv run python -m glyphfix_math.guard --ram-gb 4 -- .venv-convert/bin/python -m scripts.spikes.gguf_diff ...
 """
 
 from __future__ import annotations

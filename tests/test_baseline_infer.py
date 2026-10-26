@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from lightonocr_math import splits
+from glyphfix_math import splits
 from scripts import baseline_infer as bi
 from scripts.spikes import ollama_infer
 from tests.test_ollama_infer import _Resp

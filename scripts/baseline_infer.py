@@ -13,7 +13,7 @@ Usage (from repo root):
   uv run python -m scripts.baseline_infer --suite regression --records data/regression.jsonl ... --resume
   uv run python -m scripts.baseline_infer --suite pages --records data/pages/pages.jsonl ...
   uv run python -m scripts.baseline_infer --suite calib --records data/calib/pages.jsonl ...
-  uv run python -m lightonocr_math.score --pred data/runs/base.pred.jsonl ...   # scoring afterwards
+  uv run python -m glyphfix_math.score --pred data/runs/base.pred.jsonl ...   # scoring afterwards
 
 Behaviour: the manifest (<out stem>.manifest.json) records model digest, GGUF blob sha256s, template and prompt
 hashes, options, pixel policy, scorer and render fingerprints, split rule, records hash, git commit and GPU state.
@@ -36,10 +36,10 @@ from pathlib import Path
 
 from PIL import Image
 
-from lightonocr_math import guard, render, score, splits
-from lightonocr_math.corpus import freeze
-from lightonocr_math.paths import repo_root
-from lightonocr_math.pixels import PIXEL_POLICY, apply_policy
+from glyphfix_math import guard, render, score, splits
+from glyphfix_math.corpus import freeze
+from glyphfix_math.paths import repo_root
+from glyphfix_math.pixels import PIXEL_POLICY, apply_policy
 from scripts.spikes.common import gpu_state, read_jsonl, sha256_file, strip_fences, write_json, write_jsonl
 from scripts.spikes.ollama_infer import (
     DEFAULT_HOST,

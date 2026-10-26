@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from lightonocr_math.corpus import canon
+from glyphfix_math.corpus import canon
 
 FREEZE = Path(__file__).resolve().parents[1] / "data" / "corpus" / "CANON_FREEZE.json"
 

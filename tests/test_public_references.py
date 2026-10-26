@@ -26,7 +26,7 @@ WRITE_ONLY = [
     ("scripts/spikes/common.py", '".planning"', "spike evidence write dir; the readers in train_lora.py, overfit_check.py and train_fit_grid.py fall back when the file is absent"),
 ]
 SCAN_SUFFIXES = (".py", ".sh", ".toml", ".md")
-EXEMPT_PREFIXES = ("scripts/release/", "src/lightonocr_math/leakscan.py")
+EXEMPT_PREFIXES = ("scripts/release/", "src/glyphfix_math/leakscan.py")
 EXEMPT_TESTS = (
     "tests/test_release_", "tests/test_public_", "tests/test_freeze_amendment.py", "tests/test_leak_scan.py",
 )

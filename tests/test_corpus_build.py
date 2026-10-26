@@ -10,9 +10,9 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from lightonocr_math import render, splits
-from lightonocr_math.corpus import build, canon
-from lightonocr_math.corpus.records import EXCLUSION_REASONS, validate_record
+from glyphfix_math import render, splits
+from glyphfix_math.corpus import build, canon
+from glyphfix_math.corpus.records import EXCLUSION_REASONS, validate_record
 
 
 def _pick(side):

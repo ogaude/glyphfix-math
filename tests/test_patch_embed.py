@@ -6,8 +6,8 @@ import pytest
 torch = pytest.importorskip("torch")
 nn = torch.nn
 
-from lightonocr_math.train import infer
-from lightonocr_math.train.patch_embed import linearize_patch_embed
+from glyphfix_math.train import infer
+from glyphfix_math.train.patch_embed import linearize_patch_embed
 
 
 class FakePatchEmbed(nn.Module):

@@ -289,7 +289,7 @@ wheels = [
 ]
 
 [[package]]
-name = "lightonocr-math"
+name = "glyphfix-math"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

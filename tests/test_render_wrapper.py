@@ -2,7 +2,7 @@ import hashlib
 
 import pytest
 
-from lightonocr_math import render
+from glyphfix_math import render
 
 
 def test_default_cache_key_payload_unchanged():

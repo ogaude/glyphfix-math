@@ -1,0 +1,1059 @@
+{
+  "entries": [
+    {
+      "adapter_config": {
+        "alpha": 8,
+        "n_wrapped": 200,
+        "r": 32,
+        "target_regex": ".*language_model\\.layers\\.\\d+\\.(self_attn\\.(q|k|v|o)_proj|linear_attn\\.(in_proj_qkv|in_proj_z|out_proj)|mlp\\.(gate|up|down)_proj)",
+        "trainable": 60948480,
+        "use_rslora": true
+      },
+      "adapter_path": "data/train/runs/p4-full-1/eval/step-875/adapter",
+      "adapter_sha256": "11277e81ecab00881328ad69b29d5d82a21013dd6c3ba754e5ddae15e674cdae",
+      "base_model": {
+        "id": "lightonai/LightOnOCR-3-4B",
+        "revision": "b71010f095dc3735de7ee6b9969bff8f8f50b39a"
+      },
+      "benchmark": {
+        "acceptance_sha256": "7b42234c9078a5b1005352395cfe00300536b749a56c99eb8a3ef447e02aabc2",
+        "evidence": "evidence/acceptance",
+        "headline": {
+          "ci_high": 0.2545726017170586,
+          "ci_low": 0.1983146619432267,
+          "delta": 0.22619047619047622,
+          "stock_rate": 0.4259672619047619,
+          "tuned_rate": 0.6521577380952381
+        },
+        "results_sha256": "f506e7b408338858f74e6d6a786d85d5faa475f35631ab220e0459f2435ecfa3",
+        "scored_at": "2026-10-17T12:13:42+02:00",
+        "status": "scored",
+        "transfer_holds": true,
+        "tuned_preds_sha256": {
+          "crops": "7777c3a9c70e0d25440fa2a5a5520d489d76326235f5c20c2818af47b80c2ce6",
+          "pages": "a30dbdec2711d7903526de068921da430fd6bfa67b6468701b206a4dcb741fca"
+        },
+        "verdict": "pass"
+      },
+      "candidate_tag": "glyphfix-math-cand:p4-full-1",
+      "created": "2026-10-16T18:59:25Z",
+      "gates": {
+        "pass": true,
+        "results": {
+          "dev": {
+            "bootstrap": {
+              "ci_high": 0.2949039353114432,
+              "ci_low": 0.21452385327844753,
+              "delta": 0.2548596112311015,
+              "den": 926.0,
+              "n_papers": 50,
+              "rate_a": 0.3941684665226782,
+              "rate_b": 0.6490280777537797
+            },
+            "candidate_rate": 0.6490280777537797,
+            "delta": 0.2548596112311015,
+            "excluded_none": 0,
+            "flip": {
+              "both_right": 345,
+              "both_wrong": 305,
+              "mcnemar_p": 2.3853783207745994e-53,
+              "n": 926,
+              "right_to_wrong": 20,
+              "wrong_to_right": 256
+            },
+            "n_common": 926,
+            "pass": true,
+            "r2w_ids": [
+              "02e63ec7d8d4a99e",
+              "079d27c1a52e232a",
+              "0d209993687481c2",
+              "0d7f173f72121104",
+              "14b83d5547266c96",
+              "1b952bd4c878b967",
+              "3815352bc4eb625a",
+              "44891793a2327c3b",
+              "694cd9f46b710b37",
+              "739e73c76ea86841",
+              "9690a67f03e7e5ae",
+              "a9190da982bd645b",
+              "abff90fa90278e85",
+              "bbf68ce42a51ec52",
+              "c00db7349c16a92c",
+              "c0712dbf0e5f0576",
+              "c8b7f5486176f660",
+              "d71d2888396a6a46",
+              "d8a90f79d958a16b",
+              "edbfe9f0cd58d40d"
+            ],
+            "reasons": [],
+            "stock_rate": 0.3941684665226782,
+            "w2r_ids": [
+              "0151029d2c448d81",
+              "061901e09ce4fb6b",
+              "06ef491e417b9983",
+              "08d66010f891fb08",
+              "0ad813ffa908f4fe",
+              "0d364ae0dc223d2f",
+              "0d4543f1c048deae",
+              "0e0a4335f56301b1",
+              "0e94415c72a487b8",
+              "0ed472774bd77083",
+              "0f2fd6fe65303e0f",
+              "102a5800fa22b4a8",
+              "1052371733b5c7a2",
+              "10ee449e6a425b4d",
+              "1147fa2bbc8a2bb9",
+              "12847105c6db1010",
+              "1325df433f072bec",
+              "1467cdb612797541",
+              "1702115f64639054",
+              "17558f13d92db24e",
+              "17a919eb244d8fef",
+              "1b2db87528f3d1cf",
+              "1ba93ee8f3b0f014",
+              "1cc8cc4cdafdf8b0",
+              "1d3fc779b0fd8af9",
+              "1e651e9796de6799",
+              "1e9f816134ee3ea4",
+              "201bbf0b8e1f4b53",
+              "20cf3cc40007a404",
+              "20f85e53c9639e61",
+              "21f4b74c30b0abfb",
+              "2521e58173dafa24",
+              "2606d9113c0ef38d",
+              "26760720e4bbf7b6",
+              "271dd84e49e5e9bd",
+              "2864c28f8342f76a",
+              "28e41f1b0473b67e",
+              "28e42ffc8b271236",
+              "2950785853e242c1",
+              "2acdfd5fc0a7acd4",
+              "2b6bedcbbc1d440f",
+              "2bf329d65ea47b71",
+              "2cdfa2e24f4c7922",
+              "2dbfeb7c2aa108e5",
+              "2e87494103c351d6",
+              "2f86c8c317923917",
+              "3018253ae4249d79",
+              "31c63321b31e0855",
+              "31e2831ebd43e65e",
+              "3203b4df71224392",
+              "3276f44f144ce2ba",
+              "32c223485c84354c",
+              "3305e77c311ccac4",
+              "33719d8d87ac5d79",
+              "34f8aa474b93a52f",
+              "37a8900764abd11c",
+              "3b3e1227a2703083",
+              "3ced847554a656f5",
+              "3dc6e78edba75e1d",
+              "3e083f9a87e9d634",
+              "41525fa5f20f8b54",
+              "41714627da5d6234",
+              "4193daabbf61f49b",
+              "420483bc9fdfbd41",
+              "42291dcc43693c0b",
+              "42312a69aa0d8a46",
+              "426c3866fcd85d0b",
+              "428986944a4f3b37",
+              "435b14d40db56000",
+              "446c3fcf45554050",
+              "45b2a9f22a8a7799",
+              "48e9d6152e6c1676",
+              "4aaf1ccb85e3a351",
+              "4b7897c529dc8294",
+              "4b8a8daedb8b9ac5",
+              "4bb52d3a5b8f2c2e",
+              "4d4b5e242a3bcf8a",
+              "4d4cd098591e4cd7",
+              "4e8017f791480136",
+              "4f56925b141891dc",
+              "506e43678f6e9177",
+              "50c156efecf76f39",
+              "50e20ccd28eb5cd2",
+              "53953087aae7467f",
+              "550e0a8af27906a5",
+              "55b45029a91a5a75",
+              "57671edf759ee5e9",
+              "5818dfdd1437ea7a",
+              "591300c4bf272729",
+              "593c0a111890f9cc",
+              "5a30a34830e3317b",
+              "5a4bbf6ba79ad3cd",
+              "5a650e5602ddf8db",
+              "5c231db2986e655e",
+              "5ce03ed5cfd80b6f",
+              "5cf88ebbd3aed207",
+              "5d118782baf5099a",
+              "62a6ecd884caa1a1",
+              "62e2ce0b5c2436ce",
+              "63a02d5983c71bf1",
+              "640c23fcbaecb3ef",
+              "644f5c4a160c197c",
+              "649d19b1861989a4",
+              "64d3cf1ac1098e0e",
+              "66274bda525108f4",
+              "68de480dfbc616bc",
+              "6996c2f4b921e264",
+              "69aaebc33ff79896",
+              "69ad8836939c1ed8",
+              "6a5b7642baa3a039",
+              "6d7ac0799abfaac1",
+              "70ef9b8726fcacf3",
+              "716b4cdf352b56f7",
+              "71fbc2a7b0542774",
+              "720e26ac3e1c1ae8",
+              "737c3d67e7d954c3",
+              "73f80b8a3b05d16e",
+              "75570f7f5b289d93",
+              "755cdb1de0b47b10",
+              "759fd95dd28421ad",
+              "77b376ef14ddfb65",
+              "77bd97651708a68f",
+              "787639e234d34a19",
+              "78c972c4429fd227",
+              "792ee7451578ba35",
+              "79dae069ca24114b",
+              "7b2ebbbf3d836326",
+              "7ba44c628c9631e1",
+              "7c1b2f3c89740461",
+              "7c5ee5868fe1cf18",
+              "7cb4a7a3502cada4",
+              "7cc351c72fd6d6e7",
+              "7cf1a089ad57913d",
+              "7dc9dac7c579487d",
+              "7e878b5510d8d401",
+              "7ec1effa17b4f5eb",
+              "82b05aff9390499d",
+              "837614434811821f",
+              "840debcc37737ad8",
+              "8459f4c76c888cc5",
+              "84f838f0ce1c8eee",
+              "8621a2a92126905c",
+              "865591179e58f2b4",
+              "867e7708fdfc4e61",
+              "88a92abf500e0df2",
+              "894a49b89c2941c0",
+              "8b1d703fe1872a40",
+              "8b3cf67d552a5ea6",
+              "8c27edb9d846c4c6",
+              "8d8cdfd964a796cf",
+              "8dd1d6628c3de05a",
+              "901a19189b7dc807",
+              "9031f580804dfc25",
+              "9330707427a19f3f",
+              "93fdb98efd1de652",
+              "94693ef62be5e2ae",
+              "946ec9ff9372ddab",
+              "9486384525447ab3",
+              "9566161a44345105",
+              "95f5c10399d28886",
+              "967baa65f024025d",
+              "974f308274e63fd8",
+              "988bfb0912546045",
+              "98ac3ca818eb70ba",
+              "992c36614b12b454",
+              "993f9f8a3ced8216",
+              "9a04b599dc4df0de",
+              "9d16905d63580130",
+              "9fcc0d27f3bc556a",
+              "a0b301399743c2b8",
+              "a1d5a45cb6f9417f",
+              "a1fa594786b88375",
+              "a4bb822b4269affe",
+              "a5b57c500b7f541a",
+              "a7e2353ce0962e5c",
+              "a9a3a27bc502241f",
+              "aba7cc86b917795f",
+              "ac51a7bfbd612a7a",
+              "ad6220011ce47efe",
+              "adc40847d21f87ee",
+              "afcceb54666cd7dd",
+              "b0117445b769a2ab",
+              "b14ab16432e9b909",
+              "b1517b4184b62853",
+              "b1e275f6111e9e09",
+              "b2069efc48273f97",
+              "b33e038a453fbdc3",
+              "b6dd0caf2ccc1b5e",
+              "b713ea5f4308e5ab",
+              "b81c795cad3052a2",
+              "b822b5612ab84fcd",
+              "bd1241ded16dabe5",
+              "bde8a1241c6348a0",
+              "bee5897828a6bf51",
+              "bf26c5f9191fe93b",
+              "bf9f57a6106d87fc",
+              "c0f124b5ce5bc051",
+              "c141674105a3523d",
+              "c154a29a2d200e5f",
+              "c158de6595c4a527",
+              "c32e1e1a8d89a51f",
+              "c3895de968cd5c12",
+              "c47f178e4e40e103",
+              "c4ef5dea7c661c93",
+              "c5e5d8b48a3a566b",
+              "c61078017112ccca",
+              "c62d22f616a68116",
+              "c6daeb36da1817b8",
+              "c801c0d33ba17979",
+              "c8910c6655e2ae38",
+              "c89dbfcc6cd0005d",
+              "cb034725d5a36edf",
+              "cbd20e53b2270978",
+              "cbea27c00ca692e9",
+              "cbf3169cbd13e541",
+              "cc15197d776c7601",
+              "cf65516bfabb279b",
+              "cfa5174a7b8b094e",
+              "d123da8bcf362b82",
+              "d3183672a7027b97",
+              "d347c4e5201493fc",
+              "d7c168465a83fddc",
+              "d9f8e81abd6eea34",
+              "da8cd03e07589e5e",
+              "dabd1181d5f62a05",
+              "dae734cb34b7d53e",
+              "dd47a30f73ee13cd",
+              "dd9cd178d7d2b2c2",
+              "dfe47486e65d8d7c",
+              "e12bc5c0cf8b11ba",
+              "e1f767be27af04b4",
+              "e21a8a5733fc7f2b",
+              "e44463525dd7111c",
+              "e46c99d9e8609695",
+              "e7158559d674b068",
+              "e8f50caf618b595a",
+              "eb2c9f95aaaebd8b",
+              "ec7f8c3e5624ded9",
+              "ee3a4eb3afc4c81f",
+              "ef333fd55855b78c",
+              "ef551b951787df2b",
+              "f04c590a8cdcfa10",
+              "f08626a1f1c992ed",
+              "f0dfea8057dfebae",
+              "f36b38b074d7e873",
+              "f3b6d3c896e49a9b",
+              "f4a1265bcb98df2b",
+              "f4f21e364eacd13f",
+              "f56d81c96a045110",
+              "f82e8c8d74c7bbaa",
+              "f86f2d3c29dab606",
+              "f934e650908a8359",
+              "fa0d9ef01147447c",
+              "fa6ce47505ca0dfd",
+              "fdcb0cf49bf3d365",
+              "ff4d3554dfa7b94d"
+            ]
+          },
+          "export": {
+            "diagnostics": {
+              "hf_merged_minus_tuned_render_identical": 0.0,
+              "hf_merged_vs_tuned_raw_identical_frac": 0.9264705882352942,
+              "ollama_cand_vs_hf_merged_categories": {
+                "None": 118,
+                "bug": 18
+              }
+            },
+            "hf_gain": 0.16911764705882348,
+            "measured_frac": 1.0,
+            "merge_pass": true,
+            "modal_offset": 0,
+            "n_changed_outputs": 127,
+            "n_matched": 136,
+            "n_subset": 136,
+            "n_usable": 136,
+            "offset_match_frac": 1.0,
+            "ollama_gain": 0.16176470588235292,
+            "pass": true,
+            "rates_on_matched": {
+              "hf_base": 0.4338235294117647,
+              "hf_tuned": 0.6029411764705882,
+              "ollama_candidate": 0.5955882352941176,
+              "ollama_stock": 0.4338235294117647
+            },
+            "reasons": []
+          },
+          "regression": {
+            "control": {
+              "excluded_none": 0,
+              "mcnemar_p": 0.25,
+              "n": 75,
+              "per_flag": {
+                "decoration": {
+                  "n": 15,
+                  "r2w": 1,
+                  "r2w_ids": [
+                    "9212cc72ae54c470"
+                  ],
+                  "w2r": 0
+                },
+                "greek": {
+                  "n": 15,
+                  "r2w": 0,
+                  "r2w_ids": [],
+                  "w2r": 0
+                },
+                "i_1": {
+                  "n": 15,
+                  "r2w": 1,
+                  "r2w_ids": [
+                    "9eb9a735b022ed0a"
+                  ],
+                  "w2r": 0
+                },
+                "plain": {
+                  "n": 15,
+                  "r2w": 0,
+                  "r2w_ids": [],
+                  "w2r": 0
+                },
+                "prime": {
+                  "n": 15,
+                  "r2w": 1,
+                  "r2w_ids": [
+                    "91119a03d90b36bb"
+                  ],
+                  "w2r": 0
+                }
+              },
+              "r2w": 3,
+              "r2w_ids": [
+                "91119a03d90b36bb",
+                "9212cc72ae54c470",
+                "9eb9a735b022ed0a"
+              ],
+              "w2r": 0
+            },
+            "pass": true,
+            "reasons": [],
+            "target": {
+              "excluded_none": 0,
+              "fixed": 32,
+              "mcnemar_p": 4.656612873077393e-10,
+              "n": 99,
+              "per_class": {
+                "decoration": {
+                  "fixed": 13,
+                  "n_scored": 30,
+                  "r2w": 0,
+                  "required": true,
+                  "rows": 30
+                },
+                "dropped_prime": {
+                  "fixed": 7,
+                  "n_scored": 30,
+                  "r2w": 0,
+                  "required": true,
+                  "rows": 30
+                },
+                "greek_latin": {
+                  "fixed": 10,
+                  "n_scored": 26,
+                  "r2w": 0,
+                  "required": true,
+                  "rows": 26
+                },
+                "i_1": {
+                  "fixed": 1,
+                  "n_scored": 5,
+                  "r2w": 0,
+                  "required": false,
+                  "rows": 5
+                },
+                "prime_l": {
+                  "fixed": 1,
+                  "n_scored": 8,
+                  "r2w": 0,
+                  "required": false,
+                  "rows": 8
+                }
+              },
+              "r2w": 0,
+              "r2w_ids": []
+            }
+          }
+        },
+        "thresholds": {
+          "dev": {
+            "min_delta": 0.0
+          },
+          "export": {
+            "expected_changed_tensors": 200,
+            "max_transfer_gap": 0.03,
+            "min_changed_outputs": 1,
+            "min_measured_frac": 0.9,
+            "min_offset_match_frac": 0.95
+          },
+          "regression": {
+            "max_control_r2w_per_flag": 1,
+            "max_control_r2w_total": 3,
+            "max_target_r2w": 0,
+            "min_fixed_per_class": 1,
+            "min_rows_for_class_requirement": 10,
+            "min_target_fixed_total": 1
+          }
+        }
+      },
+      "gguf_path": "data/models/p4-full-1/text-q8_0.gguf",
+      "gguf_text_sha256": "724e739d505c31d8466b0f9ee88f4d406b8ccd4786f2baef9f4fa5a8b21772be",
+      "git_commit": "d668b0aa3c4943679714ba49aa3c305578e5b8a8",
+      "llama_cpp_commit": "a17e94d229fc7fed1567a799baebd11b771fe5af",
+      "lock_sha256": "53bbdc80957d5fddc4dd5659c2e13b07b3508a6aabdaae61253593d38703bdde",
+      "mining_manifest_sha256": "c23c196e428a52005a57394482cf6d994e5af55403eec5f132a36fad59956667",
+      "ollama_digest": "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737",
+      "projector_sha256": "fd5acde1a7a7439b3f9a720d3cead67378beeaabbecc57fe4b30a7f9b301b102",
+      "run_config": {
+        "alpha": 8,
+        "batch_size": 2,
+        "ckpt_every": 50,
+        "empty_cache_every": 25,
+        "epochs": 2,
+        "eval_every": 125,
+        "final_lr_frac": 0.1,
+        "grad_accum": 8,
+        "keep_resume": 2,
+        "lr": 0.0002,
+        "max_grad_norm": 1.0,
+        "max_opt_steps": null,
+        "max_px": 602112,
+        "min_px": 65536,
+        "rank": 32,
+        "run_id": "p4-full-1",
+        "seed": 0,
+        "trainset": "data/train/sets/full/trainset.jsonl",
+        "trainset_sha256": "4b5e5b3b01e3eeaf42d49531545a791f81fdc6cc905ade9c3cc215c55584e0b0",
+        "warmup_frac": 0.05,
+        "weight_decay": 0.0
+      },
+      "run_id": "p4-full-1",
+      "run_manifest_sha256": "fc1b480bae66029ded40d9f61e6074c01e523046f25c056f7a8b411bd1786adc",
+      "scorer_fingerprint": "6616416ed4841f410166a1daf0e6a0fb403689c98b9fc4884dbf7d7f49c4b7c2",
+      "scorer_version": "1.2.0",
+      "scores": {
+        "dev_full_ollama": {
+          "candidate": 0.6490280777537797,
+          "ci": [
+            0.21452385327844753,
+            0.2949039353114432
+          ],
+          "delta": 0.2548596112311015,
+          "stock": 0.3941684665226782
+        },
+        "dev_mini_eval_hf": {
+          "delta_vs_base": {
+            "ci_high": 0.24031736317538022,
+            "ci_low": 0.1,
+            "delta": 0.16911764705882348,
+            "den": 136.0,
+            "n_papers": 50,
+            "rate_a": 0.4338235294117647,
+            "rate_b": 0.6029411764705882
+          },
+          "per_step": [
+            {
+              "exact": 0.5441176470588235,
+              "glyph_error_mean": 0.10869093231162197,
+              "per_class": {
+                "decoration": {
+                  "ci_high": 0.3617021276595745,
+                  "ci_low": 0.15555555555555556,
+                  "denom": 54,
+                  "errors": 14,
+                  "rate": 0.25925925925925924
+                },
+                "dropped_prime": {
+                  "ci_high": 0.52,
+                  "ci_low": 0.05,
+                  "denom": 29,
+                  "errors": 8,
+                  "rate": 0.27586206896551724
+                },
+                "greek_latin": {
+                  "ci_high": 0.02654867256637168,
+                  "ci_low": 0.0,
+                  "denom": 120,
+                  "errors": 1,
+                  "rate": 0.008333333333333333
+                },
+                "i_1": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 104,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "other": {
+                  "ci_high": 0.5277777777777778,
+                  "ci_low": 0.3284671532846715,
+                  "denom": 136,
+                  "errors": 58,
+                  "rate": 0.4264705882352941
+                },
+                "prime_l": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 29,
+                  "errors": 0,
+                  "rate": 0.0
+                }
+              },
+              "render_identical": 0.5147058823529411,
+              "step": 125
+            },
+            {
+              "exact": 0.5808823529411765,
+              "glyph_error_mean": 0.11706075533661742,
+              "per_class": {
+                "decoration": {
+                  "ci_high": 0.34782608695652173,
+                  "ci_low": 0.1276595744680851,
+                  "denom": 56,
+                  "errors": 13,
+                  "rate": 0.23214285714285715
+                },
+                "dropped_prime": {
+                  "ci_high": 0.5757575757575758,
+                  "ci_low": 0.12121212121212122,
+                  "denom": 29,
+                  "errors": 10,
+                  "rate": 0.3448275862068966
+                },
+                "greek_latin": {
+                  "ci_high": 0.02654867256637168,
+                  "ci_low": 0.0,
+                  "denom": 120,
+                  "errors": 1,
+                  "rate": 0.008333333333333333
+                },
+                "i_1": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 104,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "other": {
+                  "ci_high": 0.4925373134328358,
+                  "ci_low": 0.27971256684491985,
+                  "denom": 136,
+                  "errors": 52,
+                  "rate": 0.38235294117647056
+                },
+                "prime_l": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 29,
+                  "errors": 0,
+                  "rate": 0.0
+                }
+              },
+              "render_identical": 0.5735294117647058,
+              "step": 250
+            },
+            {
+              "exact": 0.5735294117647058,
+              "glyph_error_mean": 0.09153605015673981,
+              "per_class": {
+                "decoration": {
+                  "ci_high": 0.2889035087719296,
+                  "ci_low": 0.08333333333333333,
+                  "denom": 55,
+                  "errors": 10,
+                  "rate": 0.18181818181818182
+                },
+                "dropped_prime": {
+                  "ci_high": 0.52,
+                  "ci_low": 0.05,
+                  "denom": 29,
+                  "errors": 8,
+                  "rate": 0.27586206896551724
+                },
+                "greek_latin": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 119,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "i_1": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 104,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "other": {
+                  "ci_high": 0.5037050960735171,
+                  "ci_low": 0.2922992700729928,
+                  "denom": 136,
+                  "errors": 54,
+                  "rate": 0.39705882352941174
+                },
+                "prime_l": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 29,
+                  "errors": 0,
+                  "rate": 0.0
+                }
+              },
+              "render_identical": 0.5882352941176471,
+              "step": 375
+            },
+            {
+              "exact": 0.5735294117647058,
+              "glyph_error_mean": 0.08423645320197044,
+              "per_class": {
+                "decoration": {
+                  "ci_high": 0.3235492845786961,
+                  "ci_low": 0.1111111111111111,
+                  "denom": 56,
+                  "errors": 12,
+                  "rate": 0.21428571428571427
+                },
+                "dropped_prime": {
+                  "ci_high": 0.36666666666666664,
+                  "ci_low": 0.0625,
+                  "denom": 29,
+                  "errors": 6,
+                  "rate": 0.20689655172413793
+                },
+                "greek_latin": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 119,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "i_1": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 104,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "other": {
+                  "ci_high": 0.5074626865671642,
+                  "ci_low": 0.291044776119403,
+                  "denom": 136,
+                  "errors": 54,
+                  "rate": 0.39705882352941174
+                },
+                "prime_l": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 29,
+                  "errors": 0,
+                  "rate": 0.0
+                }
+              },
+              "render_identical": 0.5514705882352942,
+              "step": 500
+            },
+            {
+              "exact": 0.5808823529411765,
+              "glyph_error_mean": 0.07774294670846396,
+              "per_class": {
+                "decoration": {
+                  "ci_high": 0.2830188679245283,
+                  "ci_low": 0.0851063829787234,
+                  "denom": 55,
+                  "errors": 10,
+                  "rate": 0.18181818181818182
+                },
+                "dropped_prime": {
+                  "ci_high": 0.4,
+                  "ci_low": 0.038461538461538464,
+                  "denom": 29,
+                  "errors": 6,
+                  "rate": 0.20689655172413793
+                },
+                "greek_latin": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 119,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "i_1": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 104,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "other": {
+                  "ci_high": 0.4895141065830721,
+                  "ci_low": 0.29285714285714287,
+                  "denom": 136,
+                  "errors": 53,
+                  "rate": 0.3897058823529412
+                },
+                "prime_l": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 29,
+                  "errors": 0,
+                  "rate": 0.0
+                }
+              },
+              "render_identical": 0.5882352941176471,
+              "step": 625
+            },
+            {
+              "exact": 0.5882352941176471,
+              "glyph_error_mean": 0.0879948914431673,
+              "per_class": {
+                "decoration": {
+                  "ci_high": 0.22916666666666666,
+                  "ci_low": 0.04081632653061224,
+                  "denom": 54,
+                  "errors": 7,
+                  "rate": 0.12962962962962962
+                },
+                "dropped_prime": {
+                  "ci_high": 0.5,
+                  "ci_low": 0.13633292383292409,
+                  "denom": 29,
+                  "errors": 9,
+                  "rate": 0.3103448275862069
+                },
+                "greek_latin": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 119,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "i_1": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 104,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "other": {
+                  "ci_high": 0.4965034965034965,
+                  "ci_low": 0.29927007299270075,
+                  "denom": 136,
+                  "errors": 54,
+                  "rate": 0.39705882352941174
+                },
+                "prime_l": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 29,
+                  "errors": 0,
+                  "rate": 0.0
+                }
+              },
+              "render_identical": 0.6102941176470589,
+              "step": 750
+            },
+            {
+              "exact": 0.5808823529411765,
+              "glyph_error_mean": 0.06730523627075351,
+              "per_class": {
+                "decoration": {
+                  "ci_high": 0.22916666666666666,
+                  "ci_low": 0.04081632653061224,
+                  "denom": 54,
+                  "errors": 7,
+                  "rate": 0.12962962962962962
+                },
+                "dropped_prime": {
+                  "ci_high": 0.36666666666666664,
+                  "ci_low": 0.06060606060606061,
+                  "denom": 29,
+                  "errors": 6,
+                  "rate": 0.20689655172413793
+                },
+                "greek_latin": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 119,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "i_1": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 104,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "other": {
+                  "ci_high": 0.5039385826771653,
+                  "ci_low": 0.30714285714285716,
+                  "denom": 136,
+                  "errors": 55,
+                  "rate": 0.40441176470588236
+                },
+                "prime_l": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 29,
+                  "errors": 0,
+                  "rate": 0.0
+                }
+              },
+              "render_identical": 0.6029411764705882,
+              "step": 875
+            },
+            {
+              "exact": 0.6029411764705882,
+              "glyph_error_mean": 0.06781609195402298,
+              "per_class": {
+                "decoration": {
+                  "ci_high": 0.28,
+                  "ci_low": 0.06,
+                  "denom": 54,
+                  "errors": 9,
+                  "rate": 0.16666666666666666
+                },
+                "dropped_prime": {
+                  "ci_high": 0.3333333333333333,
+                  "ci_low": 0.034482758620689655,
+                  "denom": 29,
+                  "errors": 5,
+                  "rate": 0.1724137931034483
+                },
+                "greek_latin": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 119,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "i_1": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 104,
+                  "errors": 0,
+                  "rate": 0.0
+                },
+                "other": {
+                  "ci_high": 0.48031496062992124,
+                  "ci_low": 0.29007080429251025,
+                  "denom": 136,
+                  "errors": 52,
+                  "rate": 0.38235294117647056
+                },
+                "prime_l": {
+                  "ci_high": 0.0,
+                  "ci_low": 0.0,
+                  "denom": 29,
+                  "errors": 0,
+                  "rate": 0.0
+                }
+              },
+              "render_identical": 0.6176470588235294,
+              "step": 1000
+            }
+          ]
+        },
+        "regression": {
+          "per_group": {
+            "control": {
+              "decoration": {
+                "n": 15,
+                "r2w": 1,
+                "r2w_ids": [
+                  "9212cc72ae54c470"
+                ],
+                "w2r": 0
+              },
+              "greek": {
+                "n": 15,
+                "r2w": 0,
+                "r2w_ids": [],
+                "w2r": 0
+              },
+              "i_1": {
+                "n": 15,
+                "r2w": 1,
+                "r2w_ids": [
+                  "9eb9a735b022ed0a"
+                ],
+                "w2r": 0
+              },
+              "plain": {
+                "n": 15,
+                "r2w": 0,
+                "r2w_ids": [],
+                "w2r": 0
+              },
+              "prime": {
+                "n": 15,
+                "r2w": 1,
+                "r2w_ids": [
+                  "91119a03d90b36bb"
+                ],
+                "w2r": 0
+              }
+            },
+            "target": {
+              "decoration": {
+                "fixed": 13,
+                "n_scored": 30,
+                "r2w": 0,
+                "required": true,
+                "rows": 30
+              },
+              "dropped_prime": {
+                "fixed": 7,
+                "n_scored": 30,
+                "r2w": 0,
+                "required": true,
+                "rows": 30
+              },
+              "greek_latin": {
+                "fixed": 10,
+                "n_scored": 26,
+                "r2w": 0,
+                "required": true,
+                "rows": 26
+              },
+              "i_1": {
+                "fixed": 1,
+                "n_scored": 5,
+                "r2w": 0,
+                "required": false,
+                "rows": 5
+              },
+              "prime_l": {
+                "fixed": 1,
+                "n_scored": 8,
+                "r2w": 0,
+                "required": false,
+                "rows": 8
+              }
+            }
+          }
+        }
+      },
+      "selection": {
+        "chosen_step": 875,
+        "rule": "best dev mini-eval render-identical; steps within 0.02 of the best are tied; ties go to the lowest mean glyph-class error rate, then the earliest step",
+        "tie_delta": 0.02
+      },
+      "sweep": {
+        "path": ".planning/phases/04-error-mining-and-lora-training/evidence/sweep.json",
+        "sha256": "c4f7762d4a657f871d2f27debdefe38789ca897ceeee65e4ee2ebcd8c2489a11",
+        "winner": "sweep-lr2e-4-a8"
+      },
+      "tag": "glyphfix-math-lora-q8:p4-full-1",
+      "taxonomy_sha256": "cf31d7ed26d0acc7498c2c1b9b10d5564f4903ff1889bbea9831ab82b09204d1",
+      "trainset_manifest_sha256": "d13a5379bc026bc30588df395eeb44190c1b2c04a85ce7535e897529f1dd7bc9",
+      "trainset_path": "data/train/sets/full/trainset.jsonl",
+      "trainset_sha256": "4b5e5b3b01e3eeaf42d49531545a791f81fdc6cc905ade9c3cc215c55584e0b0",
+      "versions": {
+        "peft": "0.21.2",
+        "torch": "2.14.1+rocm7.2",
+        "transformers": "5.19.0"
+      }
+    }
+  ],
+  "schema_version": "1"
+}

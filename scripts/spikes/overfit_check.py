@@ -1,7 +1,7 @@
 """Overfit check on 16 legacy train crops: proves masking, template, LoRA targets and gradient paths.
 
 Run in .venv-lighton under the resource guard (shared GPU):
-  uv run python -m lightonocr_math.guard --vram-gb 10 --ram-gb 8 --timeout 1800 --vram-floor-gb 0.1 -- \
+  uv run python -m glyphfix_math.guard --vram-gb 10 --ram-gb 8 --timeout 1800 --vram-floor-gb 0.1 -- \
       .venv-lighton/bin/python -m scripts.spikes.overfit_check
 
 A pass means the training core is correct, not that the model got better. Evidence holds counts and ids only.
@@ -67,9 +67,9 @@ def main(argv: list[str] | None = None) -> int:
     import torch
     from PIL import Image
 
-    from lightonocr_math.normalize import equivalent
-    from lightonocr_math.train import infer, lora
-    from lightonocr_math.train.collate import LabelMaskCollator, label_only_loss
+    from glyphfix_math.normalize import equivalent
+    from glyphfix_math.train import infer, lora
+    from glyphfix_math.train.collate import LabelMaskCollator, label_only_loss
     from scripts.spikes.common import strip_fences
 
     if not torch.cuda.is_available():

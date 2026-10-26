@@ -259,7 +259,7 @@ def _attributed_ids(repo: Repo, attribution: Path | None) -> set[str] | None:
 
 
 def _base(paper: str) -> str | None:
-    from lightonocr_math.ids import base_id, from_safe_id
+    from glyphfix_math.ids import base_id, from_safe_id
 
     for cand in (paper, from_safe_id(paper)):
         try:

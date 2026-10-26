@@ -4,9 +4,9 @@ import re
 
 import pytest
 
-from lightonocr_math import splits
-from lightonocr_math.corpus.records import LICENSE_SPDX
-from lightonocr_math.paths import repo_root
+from glyphfix_math import splits
+from glyphfix_math.corpus.records import LICENSE_SPDX
+from glyphfix_math.paths import repo_root
 
 TD = repo_root() / "data" / "catalog" / "train_dev.jsonl"
 BM = repo_root() / "data" / "benchmark" / "catalog.jsonl"
@@ -15,7 +15,7 @@ pytestmark = pytest.mark.skipif(not TD.exists(), reason="catalog not built (scri
 
 
 def _rows(p):
-    from lightonocr_math.corpus._io import read_jsonl
+    from glyphfix_math.corpus._io import read_jsonl
 
     return read_jsonl(p)
 

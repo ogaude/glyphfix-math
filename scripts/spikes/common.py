@@ -19,9 +19,9 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from lightonocr_math import guard, splits
-from lightonocr_math.ids import base_id
-from lightonocr_math.paths import repo_root
+from glyphfix_math import guard, splits
+from glyphfix_math.ids import base_id
+from glyphfix_math.paths import repo_root
 
 SPIKE_DIR = repo_root() / "data" / "spikes"
 EVIDENCE_DIR = repo_root() / ".planning" / "phases" / "02-feasibility-spikes" / "evidence"

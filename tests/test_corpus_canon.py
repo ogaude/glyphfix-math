@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from lightonocr_math import render
-from lightonocr_math.corpus import canon
-from lightonocr_math.corpus.canon import (
+from glyphfix_math import render
+from glyphfix_math.corpus import canon
+from glyphfix_math.corpus.canon import (
     CANON_FINGERPRINT,
     CANON_GOLDEN_PATH,
     canon_fingerprint,

@@ -24,11 +24,11 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from lightonocr_math import paths
-from lightonocr_math.corpus import extract, freeze, pages
-from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
-from lightonocr_math.corpus.records import side_of
-from lightonocr_math.ids import base_id, safe_id
+from glyphfix_math import paths
+from glyphfix_math.corpus import extract, freeze, pages
+from glyphfix_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
+from glyphfix_math.corpus.records import side_of
+from glyphfix_math.ids import base_id, safe_id
 
 SIDE_FOR = {"benchmark": "benchmark", "calib": "corpus"}
 QUERY_LINES = 6

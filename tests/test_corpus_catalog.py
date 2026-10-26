@@ -10,8 +10,8 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 
-from lightonocr_math import splits
-from lightonocr_math.corpus import catalog as cat
+from glyphfix_math import splits
+from glyphfix_math.corpus import catalog as cat
 from scripts import corpus_catalog as cli
 
 FIX = Path(__file__).parent / "fixtures" / "oai"
@@ -211,7 +211,7 @@ def test_retry_after_seconds_forms():
     import email.utils
     from email.message import Message
 
-    from lightonocr_math.corpus import catalog as C
+    from glyphfix_math.corpus import catalog as C
 
     def hdr(v=None):
         m = Message()

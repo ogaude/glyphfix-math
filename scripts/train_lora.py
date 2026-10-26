@@ -1,10 +1,10 @@
 """LoRA training, out-of-process dev evaluation and the preflight probe on the real model.
 
 Usage (always under the resource guard; the GPU is shared):
-  uv run python -m lightonocr_math.guard --vram-gb 14.5 --ram-gb 8 --timeout 1800 --vram-floor-gb 0.1 -- \
+  uv run python -m glyphfix_math.guard --vram-gb 14.5 --ram-gb 8 --timeout 1800 --vram-floor-gb 0.1 -- \
       .venv-lighton/bin/python -m scripts.train_lora train --run-id lr2e-4-a8 --trainset data/train/sets/full/trainset.jsonl \
       --lr 2e-4 --alpha 8 --rank 32 --epochs 1 [--resume] [--max-opt-steps N]
-  uv run python -m lightonocr_math.guard --vram-gb 14.5 --ram-gb 8 --timeout 1800 --vram-floor-gb 0.1 -- \
+  uv run python -m glyphfix_math.guard --vram-gb 14.5 --ram-gb 8 --timeout 1800 --vram-floor-gb 0.1 -- \
       .venv-lighton/bin/python -m scripts.train_lora eval --base --out-dir data/train/dev_eval
   ... eval --run-dir data/train/runs/RUN [--steps all|100,200]       (every saved eval adapter of a run)
   ... eval --adapter DIR --name NAME --out-dir DIR                   (one adapter)
@@ -14,7 +14,7 @@ Usage (always under the resource guard; the GPU is shared):
 train refuses to start when Ollama holds a model, when the training set does not match its manifest hash, or when a
 row is a dev, dev-mini-eval, regression or non-train record. It wraps the language model with 200 LoRA modules
 (rsLoRA, vision tower frozen), enables gradient checkpointing (use_reentrant False), checks the label mask on the
-first row, and runs the model-agnostic loop in lightonocr_math.train.run. eval writes scorer-format predictions
+first row, and runs the model-agnostic loop in glyphfix_math.train.run. eval writes scorer-format predictions
 ({id, paper_id, gt_latex, pred_latex}) and a sidecar with token counts; it only reads dev papers. probe measures
 peak memory and timing on the longest-target and largest-crop batches and fails above 14.5 GiB.
 
@@ -36,12 +36,12 @@ from pathlib import Path
 os.environ.setdefault("TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL", "1")
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
-from lightonocr_math import splits
-from lightonocr_math.corpus import gate
-from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json
-from lightonocr_math.ids import base_id
-from lightonocr_math.paths import repo_root
-from lightonocr_math.train import data, run
+from glyphfix_math import splits
+from glyphfix_math.corpus import gate
+from glyphfix_math.corpus._io import read_jsonl, sha256_file, write_json
+from glyphfix_math.ids import base_id
+from glyphfix_math.paths import repo_root
+from glyphfix_math.train import data, run
 from scripts.spikes.common import EVIDENCE_DIR, gpu_state, strip_fences
 from scripts.spikes.ollama_infer import DEFAULT_HOST, _loaded_models
 
@@ -199,7 +199,7 @@ def _done_ids(path: Path) -> set[str]:
 
 def generate_file(model, processor, recs: list[dict], out_stem: Path, *, resume: bool) -> int:
     """Generate for every record into OUT_STEM.pred.jsonl and OUT_STEM.sidecar.jsonl; returns rows written."""
-    from lightonocr_math.train import infer
+    from glyphfix_math.train import infer
 
     pred_p = out_stem.with_name(out_stem.name + ".pred.jsonl")
     side_p = out_stem.with_name(out_stem.name + ".sidecar.jsonl")
@@ -270,7 +270,7 @@ def cmd_eval(a: argparse.Namespace) -> int:
     if not _require_gpu():
         return EXIT_REFUSED
 
-    from lightonocr_math.train import infer
+    from glyphfix_math.train import infer
 
     before = _clean_state(gpu_state())
     model, processor = infer.load_base(a.model_dir) if a.model_dir else infer.load_base()
@@ -307,7 +307,7 @@ def cmd_eval(a: argparse.Namespace) -> int:
 def _setup_model(args: argparse.Namespace, fla: str):
     import peft
 
-    from lightonocr_math.train import infer, lora, patch_embed
+    from glyphfix_math.train import infer, lora, patch_embed
 
     model, processor = infer.load_base()
     n_linear = patch_embed.linearize_patch_embed(model, require=True)
@@ -359,8 +359,8 @@ def cmd_train(a: argparse.Namespace) -> int:
     started = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     run.write_manifest(run_dir, run.run_manifest(cfg, outcome="running", started=started, gpu_before=before, fla=fla))
 
-    from lightonocr_math.train import prompt
-    from lightonocr_math.train.collate import LabelMaskCollator, label_only_loss
+    from glyphfix_math.train import prompt
+    from glyphfix_math.train.collate import LabelMaskCollator, label_only_loss
 
     def fail(reason: str, **extra) -> int:
         print(f"FAIL: {reason}", file=sys.stderr)
@@ -438,13 +438,13 @@ def _sha256_text(text: str) -> str:
 
 
 def _model_id() -> str:
-    from lightonocr_math.train.infer import MODEL_ID
+    from glyphfix_math.train.infer import MODEL_ID
 
     return MODEL_ID
 
 
 def _revision() -> str:
-    from lightonocr_math.train.infer import REVISION
+    from glyphfix_math.train.infer import REVISION
 
     return REVISION
 
@@ -475,8 +475,8 @@ def cmd_probe(a: argparse.Namespace) -> int:
     fla = a.fla or _fla_default()
     if fla == "off":
         sys.modules["fla"] = None
-    from lightonocr_math.train import infer
-    from lightonocr_math.train.collate import LabelMaskCollator, label_only_loss
+    from glyphfix_math.train import infer
+    from glyphfix_math.train.collate import LabelMaskCollator, label_only_loss
 
     try:
         pm, processor, info = _setup_model(a, fla)

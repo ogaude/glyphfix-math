@@ -252,7 +252,7 @@ def _gate_counts(train_rows: list[dict], bench_rows: list[dict]) -> None:
 
 
 def _gate_splits(train_rows: list[dict], bench_rows: list[dict]) -> None:
-    from lightonocr_math import splits
+    from glyphfix_math import splits
 
     train_ids = sorted({r["arxiv_id"] for r in train_rows})
     bench_ids = sorted({r["arxiv_id"] for r in bench_rows})
@@ -327,7 +327,7 @@ def stage(out: Path = DATASET_DIR, root: Path = Path(".")) -> dict:
     finally:
         shutil.rmtree(cache, ignore_errors=True)
 
-    from lightonocr_math import leakscan, splits
+    from glyphfix_math import leakscan, splits
 
     leaks = leakscan.scan_file(out / TRAIN_PARQUET, splits.frozen(), TRAIN_PARQUET)
     if leaks:

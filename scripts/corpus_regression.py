@@ -9,7 +9,7 @@ Usage (from repo root):
 
 pool draws, with a fixed seed, up to --per-flag records for each flag (prime, greek, decoration, i_1) and --plain
 records with only the plain flag. A record is pooled once, under the first flag in that order that it carries.
-select takes scored pool rows (stock predictions scored by lightonocr_math.score), assigns each failing row
+select takes scored pool rows (stock predictions scored by glyphfix_math.score), assigns each failing row
 (exact False and render_identical not True) to its rarest known class of errors.CLASSES present in its classes
 (rarity = failing rows carrying the class in the scored pool, ties by errors.CLASSES order),
 keeps up to --per-class per class with at most --max-per-paper per paper, adds clean control rows spread across
@@ -25,12 +25,12 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from lightonocr_math import splits
-from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
-from lightonocr_math.corpus.records import to_score_row
-from lightonocr_math.errors import CLASSES
-from lightonocr_math.ids import base_id
-from lightonocr_math.score import SCORER_FINGERPRINT, SCORER_VERSION
+from glyphfix_math import splits
+from glyphfix_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
+from glyphfix_math.corpus.records import to_score_row
+from glyphfix_math.errors import CLASSES
+from glyphfix_math.ids import base_id
+from glyphfix_math.score import SCORER_FINGERPRINT, SCORER_VERSION
 
 FLAG_ORDER = ("prime", "greek", "decoration", "i_1")
 KNOWN_CLASSES = tuple(c for c in CLASSES if c != "other")

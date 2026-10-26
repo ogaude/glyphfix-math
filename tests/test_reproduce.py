@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math import guard
+from glyphfix_math import guard
 from scripts.release import extract_images as ei
 from scripts.release import freeze_amendment as fa
 from scripts.release import reproduce as rp
@@ -141,17 +141,17 @@ def test_main_identical_exit0_cold_cache(tmp_path, env):
     code, rep, work = run_main(tmp_path)
     assert code == 0 and rep["compare"] == "identical"
     assert rep["cold_cache"] is True and rep["tier"] == 1 and rep["amendment"]["verified"] is True
-    cache = Path(env["env"]["LIGHTONOCR_MATH_CACHE"])
+    cache = Path(env["env"]["GLYPHFIX_MATH_CACHE"])
     assert cache == work / "render-cache" and cache.is_dir() and not any(cache.iterdir())
     assert rep["published_sha256"] and rep["fresh_sha256"]
 
 
 def test_main_warm_cache_keeps_the_environment(tmp_path, env, monkeypatch):
-    monkeypatch.delenv("LIGHTONOCR_MATH_CACHE", raising=False)
+    monkeypatch.delenv("GLYPHFIX_MATH_CACHE", raising=False)
     env["fresh"] = amended()
     code, rep, _ = run_main(tmp_path, "--warm-cache")
     assert code == 0 and rep["compare"] == "identical_modulo_amendment" and rep["cold_cache"] is False
-    assert "LIGHTONOCR_MATH_CACHE" not in env["env"]
+    assert "GLYPHFIX_MATH_CACHE" not in env["env"]
     assert rep["differing_keys"] == list(fa.AMENDED_KEYS)
     assert set(rep["allowed"].values()) == {"amendment"}
 

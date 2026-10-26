@@ -1,7 +1,7 @@
 import pytest
 
-from lightonocr_math import render
-from lightonocr_math.corpus import pages
+from glyphfix_math import render
+from glyphfix_math.corpus import pages
 
 
 def test_latexmk_cmd_is_hardened(tmp_path):
@@ -131,8 +131,8 @@ def test_match_no_predictions():
 
 
 def test_page_score_rows_pass_read_predictions(tmp_path):
-    from lightonocr_math import score
-    from lightonocr_math.corpus._io import write_jsonl
+    from glyphfix_math import score
+    from glyphfix_math.corpus._io import write_jsonl
 
     recs = [{"id": "r1", "latex": "a+b=c"}, {"id": "r2", "latex": "x^2=y"}]
     row = pages.page_score_rows({"page_id": "p1", "arxiv_id": "2301.01234", "paper_id": "2301.01234"}, recs, "$$a+b=c$$")
@@ -207,9 +207,9 @@ import io
 import json
 import tarfile
 
-from lightonocr_math import score, splits
-from lightonocr_math.corpus._io import read_jsonl, write_jsonl
-from lightonocr_math.ids import safe_id
+from glyphfix_math import score, splits
+from glyphfix_math.corpus._io import read_jsonl, write_jsonl
+from glyphfix_math.ids import safe_id
 from scripts import corpus_pages as cli
 
 
@@ -248,7 +248,7 @@ def _shard(shards, aid, n=3):
 
 @pytest.fixture
 def cli_env(tmp_path, monkeypatch):
-    monkeypatch.setenv("LIGHTONOCR_MATH_ROOT", str(tmp_path))
+    monkeypatch.setenv("GLYPHFIX_MATH_ROOT", str(tmp_path))
     bench, corp = _ids()
     sources, shards = tmp_path / "src", tmp_path / "shards"
     for aid in corp:

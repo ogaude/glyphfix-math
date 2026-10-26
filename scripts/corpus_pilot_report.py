@@ -18,9 +18,9 @@ import json
 import sys
 from pathlib import Path
 
-from lightonocr_math import splits
-from lightonocr_math.corpus import pilot
-from lightonocr_math.corpus._io import atomic_write_text, read_jsonl, write_json
+from glyphfix_math import splits
+from glyphfix_math.corpus import pilot
+from glyphfix_math.corpus._io import atomic_write_text, read_jsonl, write_json
 
 
 def main(argv: list[str] | None = None) -> int:

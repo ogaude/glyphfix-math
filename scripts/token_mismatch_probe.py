@@ -23,8 +23,8 @@ from pathlib import Path
 
 from PIL import Image
 
-from lightonocr_math import guard
-from lightonocr_math.pixels import PIXEL_POLICY, apply_policy
+from glyphfix_math import guard
+from glyphfix_math.pixels import PIXEL_POLICY, apply_policy
 from scripts.baseline_infer import CROP_OPTIONS
 from scripts.spikes import common
 from scripts.spikes.ollama_infer import (

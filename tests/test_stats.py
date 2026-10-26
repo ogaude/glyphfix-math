@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from lightonocr_math.stats import (
+from glyphfix_math.stats import (
     cluster_bootstrap,
     flip_table,
     mcnemar_exact,

@@ -6,7 +6,7 @@ Usage (from repo root, project venv):
     --ol-sidecar data/spikes/ollama/S1.sidecar.jsonl [--overrides data/spikes/parity/overrides.json] [--no-render]
 
 Each raw mismatch gets exactly one category (CATEGORIES). Committed outputs carry counts and ids only; the
-texts go to the gitignored data/spikes/parity/mismatches.jsonl. Exit codes follow lightonocr_math.score:
+texts go to the gitignored data/spikes/parity/mismatches.jsonl. Exit codes follow glyphfix_math.score:
 2 invalid input, the guard's own code, 3 render infrastructure failure.
 """
 
@@ -19,10 +19,10 @@ import statistics
 import sys
 from pathlib import Path
 
-from lightonocr_math import score
-from lightonocr_math.guard import GuardError
-from lightonocr_math.paths import repo_root
-from lightonocr_math.render import RenderInfrastructureError
+from glyphfix_math import score
+from glyphfix_math.guard import GuardError
+from glyphfix_math.paths import repo_root
+from glyphfix_math.render import RenderInfrastructureError
 from scripts.spikes import common
 
 CATEGORIES = ("quantization", "preprocessing", "template", "truncation", "bug")

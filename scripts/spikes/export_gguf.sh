@@ -21,7 +21,7 @@ WORK=data/spikes/export/$ARM
 mkdir -p "$WORK"
 OUTTYPE=bf16
 [ "$ARM" = uf16 ] && OUTTYPE=f16
-GUARD="uv run python -m lightonocr_math.guard --ram-gb 10 --timeout 1800 --"
+GUARD="uv run python -m glyphfix_math.guard --ram-gb 10 --timeout 1800 --"
 
 $GUARD .venv-convert/bin/python "$LLAMA_CPP_DIR/convert_hf_to_gguf.py" "$SRC" \
   --outtype "$OUTTYPE" --no-mtp --model-name spike-lighton --outfile "$WORK/text-$OUTTYPE.gguf"

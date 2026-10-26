@@ -209,8 +209,8 @@ def test_user_agent_contact_comes_from_the_environment(monkeypatch):
     import importlib
 
     monkeypatch.delenv(bc.CONTACT_ENV, raising=False)
-    assert importlib.reload(bc).UA == "lightonocr-math-research (contact@example.invalid)"
+    assert importlib.reload(bc).UA == "glyphfix-math-research (contact@example.invalid)"
     monkeypatch.setenv(bc.CONTACT_ENV, "reader@example.org")
-    assert importlib.reload(bc).UA == "lightonocr-math-research (reader@example.org)"
+    assert importlib.reload(bc).UA == "glyphfix-math-research (reader@example.org)"
     monkeypatch.delenv(bc.CONTACT_ENV)
     importlib.reload(bc)

@@ -27,12 +27,12 @@ import time
 from collections import Counter
 from pathlib import Path
 
-from lightonocr_math import splits, trainset
-from lightonocr_math.corpus import gate
-from lightonocr_math.corpus._io import read_jsonl, sha256_bytes, sha256_file, write_json, write_jsonl
-from lightonocr_math.paths import repo_root
-from lightonocr_math.score import SCORER_FINGERPRINT, SCORER_VERSION
-from lightonocr_math.train.infer import MODEL_ID, REVISION
+from glyphfix_math import splits, trainset
+from glyphfix_math.corpus import gate
+from glyphfix_math.corpus._io import read_jsonl, sha256_bytes, sha256_file, write_json, write_jsonl
+from glyphfix_math.paths import repo_root
+from glyphfix_math.score import SCORER_FINGERPRINT, SCORER_VERSION
+from glyphfix_math.train.infer import MODEL_ID, REVISION
 
 SET_FILE = "trainset.jsonl"
 MANIFEST_FILE = "TRAINSET_MANIFEST.json"

@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math.corpus import gate
-from lightonocr_math.corpus._io import read_jsonl
+from glyphfix_math.corpus import gate
+from glyphfix_math.corpus._io import read_jsonl
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS = ROOT / "data" / "corpus"

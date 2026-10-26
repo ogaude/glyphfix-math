@@ -43,6 +43,6 @@ uv pip install --python "$PY" --no-deps -e .
 echo "== (f) verify under the resource guard"
 rocm-smi --showmeminfo vram || true
 ollama ps || true
-uv run python -m lightonocr_math.guard --vram-gb 1 --ram-gb 4 --timeout 600 -- \
+uv run python -m glyphfix_math.guard --vram-gb 1 --ram-gb 4 --timeout 600 -- \
   env HF_HUB_OFFLINE=1 TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1 "$PY" scripts/verify_train_env.py \
   --lock "$LOCK" --out .planning/phases/02-feasibility-spikes/evidence/env_verify.json

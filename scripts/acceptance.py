@@ -37,14 +37,14 @@ import urllib.error
 from datetime import datetime
 from pathlib import Path
 
-from lightonocr_math import acceptance as accmod
-from lightonocr_math import guard, paths, render, splits
-from lightonocr_math.corpus import freeze
-from lightonocr_math.guard import GuardError
-from lightonocr_math.paths import repo_root
-from lightonocr_math.render import RenderInfrastructureError
-from lightonocr_math.score import score_file
-from lightonocr_math.train import registry as registry_mod
+from glyphfix_math import acceptance as accmod
+from glyphfix_math import guard, paths, render, splits
+from glyphfix_math.corpus import freeze
+from glyphfix_math.guard import GuardError
+from glyphfix_math.paths import repo_root
+from glyphfix_math.render import RenderInfrastructureError
+from glyphfix_math.score import score_file
+from glyphfix_math.train import registry as registry_mod
 from scripts.acceptance_report import render_acceptance_md
 from scripts.baseline_infer import model_blobs
 from scripts.select_checkpoint import glyph_error_mean
@@ -52,14 +52,14 @@ from scripts.spikes.common import gpu_state, read_jsonl, write_json
 from scripts.spikes.ollama_infer import DEFAULT_HOST, OllamaError, _get, _model_digest, _post
 from scripts.spikes.parity_report import modal_template_offset
 
-TUNED_TAG = "mathocr-lora-q8:p4-full-1"
+TUNED_TAG = "glyphfix-math-lora-q8:p4-full-1"
 STOCK_TAG = "lighton-ocr3-q8-16k"
 ACC_DIR = Path("data/benchmark/acceptance")
 EVIDENCE_DIR = Path("evidence/acceptance")
 REPORT_PATH = Path("evidence/acceptance/ACCEPTANCE.md")
 LOCK_PATH = ACC_DIR / "RUN_LOCK.json"
 REGISTRY_PATH = Path("data/models/REGISTRY.json")
-FROZEN_CODE = ("src/lightonocr_math/acceptance.py", "scripts/acceptance.py")
+FROZEN_CODE = ("src/glyphfix_math/acceptance.py", "scripts/acceptance.py")
 STOCK_PARAMS = {"num_ctx": 32768, "num_predict": 24576}
 ENV_PREFIXES = ("OLLAMA_", "HIP_", "ROCR_", "HSA_", "GGML_", "CUDA_", "GPU_")
 # Same floors baseline_infer uses for its own preflight, with the guard watchdog added around the whole run.
@@ -310,7 +310,7 @@ def _by_id(path: Path) -> dict:
 
 def _guarded_infer(*, suite: str, records: Path, model: str, out: Path, sidecar: Path, host: str, ids_file: Path | None = None, resume: bool = False) -> list[str]:
     cmd = [
-        sys.executable, "-m", "lightonocr_math.guard", *GUARD_ARGS, "--",
+        sys.executable, "-m", "glyphfix_math.guard", *GUARD_ARGS, "--",
         sys.executable, "-m", "scripts.baseline_infer", "--suite", suite, "--records", str(records), "--model", model,
         "--out", str(out), "--sidecar", str(sidecar), "--host", host,
     ]

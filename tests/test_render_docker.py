@@ -2,7 +2,7 @@ import subprocess
 
 import pytest
 
-from lightonocr_math import render
+from glyphfix_math import render
 
 pytestmark = pytest.mark.docker
 

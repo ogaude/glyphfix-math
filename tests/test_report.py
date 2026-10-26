@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math import report as R
-from lightonocr_math import score as S
+from glyphfix_math import report as R
+from glyphfix_math import score as S
 
 FIX = Path(__file__).parent / "fixtures" / "adversarial_predictions.jsonl"
 

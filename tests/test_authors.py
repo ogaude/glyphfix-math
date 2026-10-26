@@ -1,4 +1,4 @@
-from lightonocr_math.authors import AUTHOR_RULE, author_keys, normalize_author, quarantine
+from glyphfix_math.authors import AUTHOR_RULE, author_keys, normalize_author, quarantine
 
 
 def test_normalize_folds_and_splits_hyphens():

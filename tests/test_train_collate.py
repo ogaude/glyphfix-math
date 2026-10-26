@@ -8,8 +8,8 @@ pytest.importorskip("peft")
 
 from PIL import Image
 
-from lightonocr_math.train import infer
-from lightonocr_math.train.collate import LabelMaskCollator, label_only_loss
+from glyphfix_math.train import infer
+from glyphfix_math.train.collate import LabelMaskCollator, label_only_loss
 
 MIN_PX, MAX_PX = 65536, 401408
 TARGETS = ["```latex\nx^{\\prime} = \\Upsilon + 1\n```", "```latex\n\\bar{a}\n```"]
@@ -90,7 +90,7 @@ def test_label_only_loss_matches_full_logits(processor, real_config, monkeypatch
     import torch.nn.functional as F
     from peft import get_peft_model
 
-    from lightonocr_math.train.lora import lora_config
+    from glyphfix_math.train.lora import lora_config
 
     model = _tiny_model(real_config, monkeypatch)
     batch = LabelMaskCollator(processor, min_px=MIN_PX, max_px=MAX_PX)(_samples())

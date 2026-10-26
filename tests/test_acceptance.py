@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math import acceptance as a
+from glyphfix_math import acceptance as a
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -249,7 +249,7 @@ def test_comparability_reports_each_difference():
 
 
 def test_results_problems_version_keys_and_render_image():
-    from lightonocr_math.report import VERSION_KEYS
+    from glyphfix_math.report import VERSION_KEYS
 
     s = {k: "v" for k in VERSION_KEYS}
     s["render"] = {"image": "img"}

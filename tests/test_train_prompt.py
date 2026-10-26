@@ -3,8 +3,8 @@ import sys
 
 import pytest
 
-from lightonocr_math.train import prompt as P
-from lightonocr_math.train.infer import MODEL_ID, REVISION
+from glyphfix_math.train import prompt as P
+from glyphfix_math.train.infer import MODEL_ID, REVISION
 
 
 @pytest.fixture(scope="module")
@@ -62,7 +62,7 @@ def test_resize_to_budget():
 
 def test_import_is_torch_free():
     r = subprocess.run(
-        [sys.executable, "-c", "import lightonocr_math, sys; assert 'torch' not in sys.modules"],
+        [sys.executable, "-c", "import glyphfix_math, sys; assert 'torch' not in sys.modules"],
         check=False,
         capture_output=True,
     )

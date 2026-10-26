@@ -7,8 +7,8 @@ import tarfile
 import pytest
 from PIL import Image
 
-from lightonocr_math import splits
-from lightonocr_math.corpus import build
+from glyphfix_math import splits
+from glyphfix_math.corpus import build
 
 pytestmark = pytest.mark.docker
 

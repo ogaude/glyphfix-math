@@ -45,7 +45,7 @@ This dataset is an independent project. It is not affiliated with, endorsed by, 
 
 The splits are disjoint by paper. The benchmark split is an evaluation set: it is held out by paper and was frozen
 before any mining or training. Do not train on it; a model trained on it can no longer be compared on this benchmark.
-The leak scan that enforces this lives in the code repository (`python -m lightonocr_math.leakscan`).
+The leak scan that enforces this lives in the code repository (`python -m glyphfix_math.leakscan`).
 
 The train split is the training set of the released LoRA and nothing else: other crops that were mined or considered
 during development are not released. The mining labels in the code repository cover {{mined_records}} mined train

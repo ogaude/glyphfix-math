@@ -1,0 +1,42 @@
+{
+  "arms": {
+    "tuned-crops": {
+      "acceptance_cli_blob": "8864ec29937e8fde2506fb8baea26ebb4bc07d0f",
+      "acceptance_cli_blob_generated": "9eb9e4bb6fbc015eb402246f794ab7f36434e29b",
+      "acceptance_commit": "0a3aff0e66504ff2b8d69f40c61cda7221c28c9d",
+      "acceptance_module_blob": "6816b5d9bfe69fd2a630acf22faf7d64fc1ed476",
+      "acceptance_module_blob_generated": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac",
+      "acceptance_sha256": "7b42234c9078a5b1005352395cfe00300536b749a56c99eb8a3ef447e02aabc2",
+      "completed": true,
+      "finished": "2026-10-17T09:37:17Z",
+      "freeze_amendment": "evidence/acceptance/FREEZE_AMENDMENT_2.json",
+      "git_commit": "0118c29cc0b5db89c29e8f09bffd2f47906f16dc",
+      "model": "mathocr-lora-q8:p4-full-1",
+      "model_digest": "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737",
+      "n_error": 0,
+      "n_ok": 2688,
+      "out": "data/benchmark/acceptance/tuned_q8.pred.jsonl",
+      "server_env_sha256": "6fd9c3c0bec9c0cb92455f8d9dd2a8531111b4da0be5b7f303856e44eea3c346",
+      "started": "2026-10-17T08:23:33Z"
+    },
+    "tuned-pages": {
+      "acceptance_cli_blob": "8864ec29937e8fde2506fb8baea26ebb4bc07d0f",
+      "acceptance_cli_blob_generated": "9eb9e4bb6fbc015eb402246f794ab7f36434e29b",
+      "acceptance_commit": "0a3aff0e66504ff2b8d69f40c61cda7221c28c9d",
+      "acceptance_module_blob": "6816b5d9bfe69fd2a630acf22faf7d64fc1ed476",
+      "acceptance_module_blob_generated": "c7cbaf36158a9e091e1f9f80ca1da81ad4e2a3ac",
+      "acceptance_sha256": "7b42234c9078a5b1005352395cfe00300536b749a56c99eb8a3ef447e02aabc2",
+      "completed": true,
+      "finished": "2026-10-17T10:05:52Z",
+      "freeze_amendment": "evidence/acceptance/FREEZE_AMENDMENT_2.json",
+      "git_commit": "0118c29cc0b5db89c29e8f09bffd2f47906f16dc",
+      "model": "mathocr-lora-q8:p4-full-1",
+      "model_digest": "c06474f6789e896e8acbddf0cb91dad88b0a29c563ee58d76bd31d846351e737",
+      "n_error": 0,
+      "n_ok": 50,
+      "out": "data/benchmark/acceptance/tuned_q8_pages.pred.jsonl",
+      "server_env_sha256": "6fd9c3c0bec9c0cb92455f8d9dd2a8531111b4da0be5b7f303856e44eea3c346",
+      "started": "2026-10-17T09:41:18Z"
+    }
+  }
+}

@@ -198,7 +198,7 @@ def check_staging_allow_list(cfg: Config) -> dict:
 
 
 def check_records_license(cfg: Config, t: Tables) -> dict:
-    from lightonocr_math.ids import is_arxiv_id
+    from glyphfix_math.ids import is_arxiv_id
 
     problems = _need(t, "train", "benchmark")
     for split in ("train", "benchmark"):
@@ -243,7 +243,7 @@ def check_records_fields(cfg: Config, t: Tables) -> dict:
 
 def _fs(cfg: Config):
     if cfg.fs is None:
-        from lightonocr_math import splits
+        from glyphfix_math import splits
 
         cfg.fs = splits.frozen()
     return cfg.fs
@@ -256,7 +256,7 @@ def _jsonl_ids(path: Path, key: str = "id") -> list[str] | None:
 
 
 def check_splits(cfg: Config, t: Tables) -> dict:
-    from lightonocr_math import splits
+    from glyphfix_math import splits
 
     problems = _need(t, "train", "benchmark")
     train, bench = t.rows("train") or [], t.rows("benchmark") or []
@@ -384,7 +384,7 @@ def check_attribution(cfg: Config, t: Tables) -> dict:
 
 
 def check_leak(cfg: Config, t: Tables) -> dict:
-    from lightonocr_math import leakscan
+    from glyphfix_math import leakscan
 
     p = t.path("train")
     if not p.is_file():
@@ -394,7 +394,7 @@ def check_leak(cfg: Config, t: Tables) -> dict:
 
 
 def check_render_sample(cfg: Config, t: Tables, *, render_n: int, render: bool) -> dict:
-    from lightonocr_math import render as R
+    from glyphfix_math import render as R
 
     problems: list[str] = []
     image = cfg.render_image or R.IMAGE

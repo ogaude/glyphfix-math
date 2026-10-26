@@ -31,10 +31,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from lightonocr_math import acceptance as accmod
-from lightonocr_math import guard, score
-from lightonocr_math.corpus import freeze
-from lightonocr_math.paths import repo_root
+from glyphfix_math import acceptance as accmod
+from glyphfix_math import guard, score
+from glyphfix_math.corpus import freeze
+from glyphfix_math.paths import repo_root
 from scripts.baseline_infer import crop_png
 from scripts.spikes.common import gpu_state, read_jsonl, strip_fences, write_json, write_jsonl
 

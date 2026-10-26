@@ -4,8 +4,8 @@ import random
 import pytest
 from PIL import Image
 
-from lightonocr_math import pixels
-from lightonocr_math.train import data
+from glyphfix_math import pixels
+from glyphfix_math.train import data
 
 MIN_PX, MAX_PX = 65536, 602112
 
@@ -81,7 +81,7 @@ def test_lr_schedule():
 
 
 def test_agrees_with_trainset_target_text():
-    ts = pytest.importorskip("lightonocr_math.trainset")
+    ts = pytest.importorskip("glyphfix_math.trainset")
     for s in ("a_1", "x^{\\prime}", ""):
         assert ts.target_text(s) == data.target_text(s)
 
@@ -89,9 +89,9 @@ def test_agrees_with_trainset_target_text():
 def test_processor_resize_is_noop_on_policy_output():
     pytest.importorskip("torch")
     transformers = pytest.importorskip("transformers")
-    from lightonocr_math.paths import repo_root
-    from lightonocr_math.train import infer
-    from lightonocr_math.train.prompt import prompt_text, size_kwargs
+    from glyphfix_math.paths import repo_root
+    from glyphfix_math.train import infer
+    from glyphfix_math.train.prompt import prompt_text, size_kwargs
 
     try:
         proc = transformers.AutoProcessor.from_pretrained(infer.MODEL_ID, revision=infer.REVISION, local_files_only=True)

@@ -3,10 +3,10 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from lightonocr_math import splits
-from lightonocr_math.corpus import _benchmark_frozen
-from lightonocr_math.corpus._io import read_jsonl, sha256_file
-from lightonocr_math.corpus.records import validate_record
+from glyphfix_math import splits
+from glyphfix_math.corpus import _benchmark_frozen
+from glyphfix_math.corpus._io import read_jsonl, sha256_file
+from glyphfix_math.corpus.records import validate_record
 
 ROOT = Path(__file__).resolve().parent.parent
 BENCH = ROOT / "data" / "benchmark"
@@ -78,7 +78,7 @@ def test_pages_freeze_matches_pinned_digest():
 
 
 def test_pages_match_freeze():
-    from lightonocr_math.corpus import pages as pages_mod
+    from glyphfix_math.corpus import pages as pages_mod
 
     f = _pages_freeze()
     rows = read_jsonl(PAGES_ROWS)

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math import acceptance as accmod
+from glyphfix_math import acceptance as accmod
 from scripts import acceptance as acc
 
 STOCK_MANIFEST = {
@@ -14,7 +14,7 @@ STOCK_MANIFEST = {
     "template_sha256": "tpl",
 }
 ENV = {"OLLAMA_HOST": "127.0.0.1:11434", "HIP_VISIBLE_DEVICES": "0"}
-BLOB = {"src/lightonocr_math/acceptance.py": "blob-mod", "scripts/acceptance.py": "blob-cli"}
+BLOB = {"src/glyphfix_math/acceptance.py": "blob-mod", "scripts/acceptance.py": "blob-cli"}
 
 
 class Server:
@@ -193,7 +193,7 @@ def test_precheck_passes(env, tmp_path, monkeypatch):
     assert res["server_env_sha256"] and res["ollama_version"] == "0.40.1"
     assert [c[c.index("--model") + 1] for c in calls] == [acc.TUNED_TAG, acc.TUNED_TAG, acc.STOCK_TAG]
     assert (tmp_path / "work" / "precheck_ids.txt").read_text().split() == ids
-    assert all(c[:3] == [acc.sys.executable, "-m", "lightonocr_math.guard"] and "scripts.baseline_infer" in c and "--suite" in c for c in calls)
+    assert all(c[:3] == [acc.sys.executable, "-m", "glyphfix_math.guard"] and "scripts.baseline_infer" in c and "--suite" in c for c in calls)
     assert all(c[c.index("--suite") + 1] == "dev" for c in calls)
 
 
@@ -305,7 +305,7 @@ def test_generate_writes_lock_then_runs(gen):
     assert entry["acceptance_sha256"] == accmod.ACCEPTANCE_SHA256 and entry["server_env_sha256"] == acc.env_sha(ENV)
     assert entry["git_commit"] == "headcommit" and entry["acceptance_commit"] == "abc123"
     cmd = calls[0]
-    assert cmd[:3] == [acc.sys.executable, "-m", "lightonocr_math.guard"] and "--vram-gb" in cmd and "--" in cmd
+    assert cmd[:3] == [acc.sys.executable, "-m", "glyphfix_math.guard"] and "--vram-gb" in cmd and "--" in cmd
     assert cmd[cmd.index("--suite") + 1] == "benchmark" and cmd[cmd.index("--model") + 1] == acc.TUNED_TAG
     assert "--resume" not in cmd and "shell" not in cmd
     assert (acc.ACC_DIR / "tuned_q8.pred.run_env.json").is_file()
@@ -919,7 +919,7 @@ def test_compare_lists_differing_keys(sc, rend, tmp_path, capsys):
 
 
 def _registry_entry_for_validate(path):
-    from lightonocr_math.train import registry as reg
+    from glyphfix_math.train import registry as reg
 
     entry = {k: "x" for k in reg.REQUIRED_KEYS}
     entry.update(

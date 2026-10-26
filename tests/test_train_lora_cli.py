@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math import splits
-from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_jsonl
-from lightonocr_math.train import data
+from glyphfix_math import splits
+from glyphfix_math.corpus._io import read_jsonl, sha256_file, write_jsonl
+from glyphfix_math.train import data
 from scripts import train_lora as tl
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -147,7 +147,7 @@ def test_eval_row_keys_and_fence_stripping():
 
 def test_generate_file_resume_skips_written(tmp_path, monkeypatch):
     pytest.importorskip("torch")
-    from lightonocr_math.train import infer
+    from glyphfix_math.train import infer
 
     calls = []
 

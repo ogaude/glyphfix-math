@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from lightonocr_math import splits
+from glyphfix_math import splits
 from scripts import corpus_regression as cr
 
 BENCH_ID = "2604.22670"

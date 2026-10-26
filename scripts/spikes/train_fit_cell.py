@@ -89,8 +89,8 @@ def main(argv: list[str] | None = None) -> int:
         import transformers
         from PIL import Image
 
-        from lightonocr_math.train import infer, lora, prompt
-        from lightonocr_math.train.collate import LabelMaskCollator, label_only_loss
+        from glyphfix_math.train import infer, lora, prompt
+        from glyphfix_math.train.collate import LabelMaskCollator, label_only_loss
 
         row["versions"] = {"torch": torch.__version__, "transformers": transformers.__version__, "peft": peft.__version__}
         try:

@@ -29,14 +29,14 @@ import json
 import sys
 from pathlib import Path
 
-from lightonocr_math import paths, splits
-from lightonocr_math.corpus import freeze as FZ
-from lightonocr_math.corpus import gate as G
-from lightonocr_math.corpus import select as S
-from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
-from lightonocr_math.corpus.flags import FLAG_RULES_VERSION
-from lightonocr_math.corpus.records import BUILDER_VERSION, Exclusion, exclusion_row, side_root, validate_record
-from lightonocr_math.ids import base_id
+from glyphfix_math import paths, splits
+from glyphfix_math.corpus import freeze as FZ
+from glyphfix_math.corpus import gate as G
+from glyphfix_math.corpus import select as S
+from glyphfix_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
+from glyphfix_math.corpus.flags import FLAG_RULES_VERSION
+from glyphfix_math.corpus.records import BUILDER_VERSION, Exclusion, exclusion_row, side_root, validate_record
+from glyphfix_math.ids import base_id
 
 
 def _load_side(root: Path) -> tuple[dict[str, list[dict]], list[str], dict[str, dict]]:

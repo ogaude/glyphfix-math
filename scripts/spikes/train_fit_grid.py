@@ -22,8 +22,8 @@ import threading
 import time
 from pathlib import Path
 
-from lightonocr_math import guard as guardmod
-from lightonocr_math.paths import repo_root
+from glyphfix_math import guard as guardmod
+from glyphfix_math.paths import repo_root
 from scripts.spikes.common import EVIDENCE_DIR, _rocm_vram, gpu_state, read_jsonl, write_jsonl
 
 GATE_GIB = 14.5

@@ -194,7 +194,7 @@ def test_register_fail_removes_candidate_and_leaves_registry(tmp_path, monkeypat
     rec = _Recorder()
     monkeypatch.setattr(rm.subprocess, "run", rec)
     assert rm.cmd_register(a) == rm.EXIT_GATE
-    assert rec.calls == [["ollama", "rm", "mathocr-cand:run1"]]
+    assert rec.calls == [["ollama", "rm", "glyphfix-math-cand:run1"]]
     reg = json.loads((tmp_path / "registration.json").read_text())
     assert reg["outcome"] == "rejected" and reg["failing"]["regression"] == ["x"]
     assert not (tmp_path / "REGISTRY.json").exists()
@@ -203,18 +203,18 @@ def test_register_fail_removes_candidate_and_leaves_registry(tmp_path, monkeypat
 def test_register_pass_copies_tag_and_appends_once(tmp_path, monkeypatch):
     a = _args(tmp_path)
     (tmp_path / "gates.json").write_text(json.dumps({"pass": True}))
-    (tmp_path / "export.json").write_text(json.dumps({"candidate_tag": "mathocr-cand:run1"}))
+    (tmp_path / "export.json").write_text(json.dumps({"candidate_tag": "glyphfix-math-cand:run1"}))
     rec = _Recorder()
     monkeypatch.setattr(rm.subprocess, "run", rec)
     monkeypatch.setattr(rm, "_model_digest", lambda host, model: "digest123")
-    monkeypatch.setattr(rm, "build_entry", lambda *args, **kw: {"tag": "mathocr-lora-q8:run1"})
+    monkeypatch.setattr(rm, "build_entry", lambda *args, **kw: {"tag": "glyphfix-math-lora-q8:run1"})
     monkeypatch.setattr(rm.registry, "validate", lambda e: [])
     monkeypatch.setattr(rm.registry, "verify_hashes", lambda e, root: [])
     appended = []
     monkeypatch.setattr(rm.registry, "append_entry", lambda p, e: appended.append((p, e)))
     assert rm.cmd_register(a) == rm.EXIT_OK
-    assert ["ollama", "cp", "mathocr-cand:run1", "mathocr-lora-q8:run1"] in rec.calls
-    assert len(appended) == 1 and appended[0][1]["tag"] == "mathocr-lora-q8:run1"
+    assert ["ollama", "cp", "glyphfix-math-cand:run1", "glyphfix-math-lora-q8:run1"] in rec.calls
+    assert len(appended) == 1 and appended[0][1]["tag"] == "glyphfix-math-lora-q8:run1"
 
 
 def test_bad_run_id_exits_2(capsys):

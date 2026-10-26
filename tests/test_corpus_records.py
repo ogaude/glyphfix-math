@@ -2,8 +2,8 @@ import hashlib
 
 import pytest
 
-from lightonocr_math import splits
-from lightonocr_math.corpus import records as R
+from glyphfix_math import splits
+from glyphfix_math.corpus import records as R
 
 
 def test_record_id_matches_definition_and_uses_base_id():

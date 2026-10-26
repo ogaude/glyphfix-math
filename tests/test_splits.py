@@ -3,8 +3,8 @@ import json
 
 import pytest
 
-from lightonocr_math import _frozen, splits
-from lightonocr_math.splits import (
+from glyphfix_math import _frozen, splits
+from glyphfix_math.splits import (
     LeakageError,
     SplitIntegrityError,
     SplitNotFrozenError,

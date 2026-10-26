@@ -97,7 +97,7 @@ class Rehearsal:
         env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
         (self.work / "cache" / "render").mkdir(parents=True, exist_ok=True)
         (self.work / "cache" / "xdg").mkdir(parents=True, exist_ok=True)
-        env["LIGHTONOCR_MATH_CACHE"] = str(self.work / "cache" / "render")
+        env["GLYPHFIX_MATH_CACHE"] = str(self.work / "cache" / "render")
         env["XDG_CACHE_HOME"] = str(self.work / "cache" / "xdg")
         # The development checkout's virtualenv must not leak into the clone through PATH.
         env["PATH"] = os.pathsep.join(d for d in env.get("PATH", "").split(os.pathsep) if not re.search(r"/\.venv[^/]*/bin/?$", d))
@@ -154,7 +154,7 @@ def rehearse(repo: Path, work: Path, skip_reproduce: bool = False) -> dict:
             ["uv", "run", "--frozen", "pytest", "-q", "-rs", "-p", "no:cacheprovider", "tests/test_rename_amendment.py"],
         )
         report["rename_amendment_tests"] = {**parse_pytest_summary(out), "exit": code}
-    report["leakscan_exit"], _ = h.run("leakscan", ["uv", "run", "--frozen", "python", "-m", "lightonocr_math.leakscan"])
+    report["leakscan_exit"], _ = h.run("leakscan", ["uv", "run", "--frozen", "python", "-m", "glyphfix_math.leakscan"])
     report["amendment_verify_exit"], _ = h.run(
         "amendment_verify", ["uv", "run", "--frozen", "python", "-m", "scripts.release.freeze_amendment", "verify"]
     )

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
+from glyphfix_math.corpus._io import read_jsonl, sha256_file, write_json, write_jsonl
 from scripts import build_trainset as bt
 
 ROOT = Path(__file__).resolve().parents[1]

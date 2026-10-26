@@ -152,7 +152,7 @@ def test_sweep_exact_tie_prefers_lower_lr(tmp_path):
 
 
 def test_score_skips_unchanged_predictions(tmp_path, monkeypatch):
-    from lightonocr_math import score
+    from glyphfix_math import score
 
     pred = tmp_path / "step-1.pred.jsonl"
     pred.write_text('{"id": "a"}\n', encoding="utf-8")

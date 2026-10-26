@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from lightonocr_math import guard, render
+from glyphfix_math import guard, render
 
 
 @pytest.fixture(autouse=True)

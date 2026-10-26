@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math import score as S
+from glyphfix_math import score as S
 
 FIX = Path(__file__).parent / "fixtures" / "adversarial_predictions.jsonl"
 
@@ -114,7 +114,7 @@ def test_score_file_with_render(tmp_path):
 
 
 def test_cli_reports_guard_and_render_errors_without_traceback(tmp_path, monkeypatch, capsys):
-    from lightonocr_math import guard, render
+    from glyphfix_math import guard, render
 
     pred = tmp_path / "p.jsonl"
     pred.write_text(json.dumps({"id": "a", "paper_id": "p", "gt_latex": "x", "pred_latex": "x"}) + "\n", encoding="utf-8")
@@ -134,7 +134,7 @@ def test_cli_reports_guard_and_render_errors_without_traceback(tmp_path, monkeyp
 
 
 def test_gt_status_breakdown_separates_rejected_from_compile_failed(tmp_path, monkeypatch):
-    from lightonocr_math import render
+    from glyphfix_math import render
 
     recs = [
         {"id": f"i{n}", "paper_id": f"p{n}", "gt_latex": "x", "pred_latex": "x"} for n in range(4)

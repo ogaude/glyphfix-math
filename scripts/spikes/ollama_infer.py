@@ -23,8 +23,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from lightonocr_math import guard
-from lightonocr_math.paths import repo_root
+from glyphfix_math import guard
+from glyphfix_math.paths import repo_root
 from scripts.spikes import common
 
 DEFAULT_HOST = "http://localhost:11434"

@@ -3,11 +3,11 @@ import subprocess
 
 import pytest
 
-from lightonocr_math import _frozen
-from lightonocr_math.ids import safe_id
-from lightonocr_math.leakscan import ALLOW_PREFIXES, scan_repo
-from lightonocr_math.paths import repo_root
-from lightonocr_math.splits import freeze, frozen, load_frozen, split_of_with_salt
+from glyphfix_math import _frozen
+from glyphfix_math.ids import safe_id
+from glyphfix_math.leakscan import ALLOW_PREFIXES, scan_repo
+from glyphfix_math.paths import repo_root
+from glyphfix_math.splits import freeze, frozen, load_frozen, split_of_with_salt
 
 SALT = "1234abcd1234abcd"
 

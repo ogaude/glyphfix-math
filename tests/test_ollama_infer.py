@@ -3,7 +3,7 @@
 import base64
 import json
 
-from lightonocr_math import score
+from glyphfix_math import score
 from scripts.spikes import common, compare_raw, ollama_infer
 
 F = "`" * 3

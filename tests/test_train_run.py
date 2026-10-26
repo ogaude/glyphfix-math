@@ -6,7 +6,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from lightonocr_math.train import run
+from glyphfix_math.train import run
 
 X = torch.linspace(-1, 1, 24).reshape(12, 2).repeat(1, 2)  # 12 rows x 4 features
 Y = (X.sum(1, keepdim=True) * 0.5) + 0.1

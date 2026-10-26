@@ -4,7 +4,7 @@ Usage (from repo root):
   python scripts/crop_scale_final.py --ratio ratio.json --out reports/crop_scale_final.json
 
 Reads image sizes from the PNG headers listed in data/benchmark/records.jsonl and data/corpus/{train,dev}/records.jsonl,
-applies lightonocr_math.pixels.smart_resize_dims, and writes per-split distributions. --ratio is the output of
+applies glyphfix_math.pixels.smart_resize_dims, and writes per-split distributions. --ratio is the output of
 `corpus_pages.py crop-scale` on the frozen benchmark page set (crop ink height over page ink height). Read-only on data/.
 Exit codes: 0 ok, 2 missing input.
 """
@@ -20,7 +20,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from lightonocr_math.pixels import PIXEL_POLICY, smart_resize_dims
+from glyphfix_math.pixels import PIXEL_POLICY, smart_resize_dims
 
 SPLITS = {
     "benchmark": "data/benchmark/records.jsonl",

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from lightonocr_math import acceptance as accmod
+from glyphfix_math import acceptance as accmod
 from scripts import acceptance_sensitivity as sens
 
 RESULTS = {"headline": {"r2w_ids": ["c", "a"], "w2r_ids": ["z", "b"]}}

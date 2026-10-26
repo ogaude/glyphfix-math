@@ -5,9 +5,9 @@ import pytest
 from rapidfuzz import process
 from rapidfuzz.distance import Levenshtein
 
-from lightonocr_math import normalize, splits
-from lightonocr_math.corpus import gate as G
-from lightonocr_math.corpus.records import record_id
+from glyphfix_math import normalize, splits
+from glyphfix_math.corpus import gate as G
+from glyphfix_math.corpus.records import record_id
 
 BASE = "a_1 + a_2 + a_3 + a_4 + a_5 + a_6 + a_7 + a_8 + a_9 + a_{10} + a_{11} + a_{12}"
 
@@ -236,7 +236,7 @@ def test_corpus_select_script_end_to_end(tmp_path, monkeypatch):
     import importlib.util
 
     splits.frozen()
-    monkeypatch.setenv("LIGHTONOCR_MATH_ROOT", str(tmp_path))
+    monkeypatch.setenv("GLYPHFIX_MATH_ROOT", str(tmp_path))
     spec = importlib.util.spec_from_file_location("corpus_select_script", "scripts/corpus_select.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -272,7 +272,7 @@ def test_corpus_select_script_end_to_end(tmp_path, monkeypatch):
 def test_corpus_select_requires_recheck_or_explicit_skip(tmp_path, monkeypatch, capsys):
     import importlib.util
 
-    monkeypatch.setenv("LIGHTONOCR_MATH_ROOT", str(tmp_path))
+    monkeypatch.setenv("GLYPHFIX_MATH_ROOT", str(tmp_path))
     spec = importlib.util.spec_from_file_location("corpus_select_script2", "scripts/corpus_select.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -289,7 +289,7 @@ def test_corpus_select_rejects_invalid_shard_record(tmp_path, monkeypatch, capsy
     import importlib.util
 
     splits.frozen()
-    monkeypatch.setenv("LIGHTONOCR_MATH_ROOT", str(tmp_path))
+    monkeypatch.setenv("GLYPHFIX_MATH_ROOT", str(tmp_path))
     spec = importlib.util.spec_from_file_location("corpus_select_script3", "scripts/corpus_select.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

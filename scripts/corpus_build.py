@@ -18,11 +18,11 @@ import json
 import sys
 from pathlib import Path
 
-from lightonocr_math import guard, paths, render
-from lightonocr_math.corpus import build
-from lightonocr_math.corpus._io import read_jsonl, write_json
-from lightonocr_math.corpus.records import BUILDER_VERSION, side_of, side_root
-from lightonocr_math.ids import base_id, safe_id
+from glyphfix_math import guard, paths, render
+from glyphfix_math.corpus import build
+from glyphfix_math.corpus._io import read_jsonl, write_json
+from glyphfix_math.corpus.records import BUILDER_VERSION, side_of, side_root
+from glyphfix_math.ids import base_id, safe_id
 
 
 def _summarize(root: Path) -> dict:

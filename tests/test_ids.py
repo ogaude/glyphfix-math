@@ -1,7 +1,7 @@
 import pytest
 
-from lightonocr_math.ids import base_id, from_safe_id, is_arxiv_id, safe_id
-from lightonocr_math.paths import repo_root
+from glyphfix_math.ids import base_id, from_safe_id, is_arxiv_id, safe_id
+from glyphfix_math.paths import repo_root
 
 
 def test_base_id():
@@ -25,5 +25,5 @@ def test_safe_id_roundtrip():
 
 def test_repo_root(tmp_path, monkeypatch):
     assert (repo_root() / "pyproject.toml").is_file()
-    monkeypatch.setenv("LIGHTONOCR_MATH_ROOT", str(tmp_path))
+    monkeypatch.setenv("GLYPHFIX_MATH_ROOT", str(tmp_path))
     assert repo_root() == tmp_path

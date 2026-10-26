@@ -3,11 +3,11 @@
 #
 # Usage: scripts/export_lora.sh RUN_ID MERGED_DIR
 #   bf16 intermediate (--no-mtp), Q8_0, stock Modelfile with only the text FROM line replaced,
-#   ollama create mathocr-cand:RUN_ID, then data/models/RUN_ID/export.json.
+#   ollama create glyphfix-math-cand:RUN_ID, then data/models/RUN_ID/export.json.
 # Env: LLAMA_CPP_DIR (default $HOME/src/llama.cpp).
 # Exit codes: 2 bad arguments, 3 llama.cpp not at the pin, 4 blobs not identified or projector hash differs,
 #             5 Modelfile differs from stock in other than one line.
-# Only the tag mathocr-cand:RUN_ID is removed or created. The stock tag is read with `ollama show` only.
+# Only the tag glyphfix-math-cand:RUN_ID is removed or created. The stock tag is read with `ollama show` only.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -22,12 +22,12 @@ PIN=$(python3 -c "import json;print(json.load(open('requirements/export_pins.jso
 
 WORK=data/models/$RUN_ID
 mkdir -p "$WORK"
-GUARD="uv run python -m lightonocr_math.guard --ram-gb 10 --timeout 1800 --"
+GUARD="uv run python -m glyphfix_math.guard --ram-gb 10 --timeout 1800 --"
 STOCK=lighton-ocr3-q8-16k
-CAND=mathocr-cand:$RUN_ID
+CAND=glyphfix-math-cand:$RUN_ID
 
 $GUARD .venv-convert/bin/python "$LLAMA_CPP_DIR/convert_hf_to_gguf.py" "$SRC" \
-  --outtype bf16 --no-mtp --model-name mathocr-lora --outfile "$WORK/text-bf16.gguf"
+  --outtype bf16 --no-mtp --model-name glyphfix-math-lora --outfile "$WORK/text-bf16.gguf"
 $GUARD nice -n 10 "$LLAMA_CPP_DIR/build/bin/llama-quantize" "$WORK/text-bf16.gguf" "$WORK/text-q8_0.gguf" Q8_0
 sha256sum "$WORK/text-bf16.gguf" "$WORK/text-q8_0.gguf" > "$WORK/sha256.txt"
 

@@ -4,7 +4,7 @@ import importlib.resources
 import numpy as np
 import pytest
 
-from lightonocr_math import render
+from glyphfix_math import render
 
 
 def test_wrap_equivalent_layouts():
@@ -109,7 +109,7 @@ def test_compare_requires_rendered(tmp_path):
 
 
 def test_config_and_hash():
-    raw = (importlib.resources.files("lightonocr_math") / "preamble.tex").read_bytes()
+    raw = (importlib.resources.files("glyphfix_math") / "preamble.tex").read_bytes()
     assert render.PREAMBLE_SHA256 == hashlib.sha256(raw).hexdigest()
     c = render.render_config()
     assert c["preamble_sha256"] == render.PREAMBLE_SHA256

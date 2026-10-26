@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math import splits
-from lightonocr_math import trainset as ts
+from glyphfix_math import splits
+from glyphfix_math import trainset as ts
 
 BENCH_ID = "2604.22670"
 CLASSES = ["prime_l", "dropped_prime", "decoration", "other"]
@@ -226,7 +226,7 @@ def test_controls_carry_glyph_and_round_robin(real_ids):
     rows, _ = ts.build(recs, labels, TAX, [], set(), token_len=_token_len, total=60, seed=0)
     controls = [r for r in rows if r["group"] == "control"]
     assert controls and all(r["control_glyph"] in ts.CONTROL_GLYPHS for r in controls)
-    from lightonocr_math.latex_tokens import tokenize
+    from glyphfix_math.latex_tokens import tokenize
 
     for r in controls:
         assert r["control_glyph"] in tokenize(r["latex"])

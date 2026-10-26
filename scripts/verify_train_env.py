@@ -116,7 +116,7 @@ def tf_probe(arm: str) -> dict:
 
 def gpu_state() -> dict:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-    from lightonocr_math import guard
+    from glyphfix_math import guard
 
     r = subprocess.run(["rocm-smi", "--showmeminfo", "vram", "--json"], check=False, capture_output=True, text=True)
     try:

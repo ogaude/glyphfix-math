@@ -1,7 +1,7 @@
 import pytest
 
-from lightonocr_math.corpus import flags as flags_mod
-from lightonocr_math.corpus.flags import FLAGS, flags
+from glyphfix_math.corpus import flags as flags_mod
+from glyphfix_math.corpus.flags import FLAGS, flags
 
 
 @pytest.mark.parametrize(
@@ -56,7 +56,7 @@ def test_prime_not_folded():
 
 
 def test_reuses_error_tables():
-    from lightonocr_math import errors
+    from glyphfix_math import errors
 
     assert flags_mod.GREEK is errors.GREEK
     assert flags_mod.DECORATION_COMMANDS is errors.DECORATION_COMMANDS

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from lightonocr_math.corpus import select as S
+from glyphfix_math.corpus import select as S
 
 
 def _rec(paper, n, flags, split="train"):

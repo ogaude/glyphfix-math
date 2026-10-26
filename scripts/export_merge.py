@@ -1,7 +1,7 @@
 """Merge a trained LoRA adapter into the bf16 base on CPU and prove which tensors changed.
 
 Usage:
-  uv run python -m lightonocr_math.guard --ram-gb 11 --timeout 1800 -- \
+  uv run python -m glyphfix_math.guard --ram-gb 11 --timeout 1800 -- \
       .venv-lighton/bin/python -m scripts.export_merge --adapter DIR \
       --out data/models/RUN_ID/merged-hf --evidence data/models/RUN_ID/merge_check.json
 
@@ -72,8 +72,8 @@ def main(argv: list[str] | None = None) -> int:
     from safetensors import safe_open
     from transformers import AutoModelForImageTextToText
 
-    from lightonocr_math.corpus._io import sha256_file, write_json
-    from lightonocr_math.train import infer, lora
+    from glyphfix_math.corpus._io import sha256_file, write_json
+    from glyphfix_math.train import infer, lora
     from scripts.spikes.merge_untrained import _KEEP_SKIP, _config_diff, compare_safetensors, snapshot_dir
 
     t0 = time.time()

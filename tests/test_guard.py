@@ -5,8 +5,8 @@ import time
 
 import pytest
 
-from lightonocr_math import guard as G
-from lightonocr_math.guard import GIB, Sampler
+from glyphfix_math import guard as G
+from glyphfix_math.guard import GIB, Sampler
 
 
 def fake(mem=100 * GIB, vram=100 * GIB, holders="holder-info"):

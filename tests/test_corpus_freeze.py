@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from lightonocr_math.corpus import freeze
-from lightonocr_math.corpus._io import read_jsonl, write_jsonl
+from glyphfix_math.corpus import freeze
+from glyphfix_math.corpus._io import read_jsonl, write_jsonl
 
 BENCH = Path(__file__).resolve().parent.parent / "data" / "benchmark"
 
@@ -80,7 +80,7 @@ def test_baseline_infer_refuses_drifted_frozen_records(tmp_path, monkeypatch):
 
 
 def test_pinned_content_digests_match_freeze_files():
-    from lightonocr_math.corpus import _benchmark_frozen as pin
+    from glyphfix_math.corpus import _benchmark_frozen as pin
 
     assert pin.BENCHMARK_RECORDS_SHA256 == json.loads((BENCH / "BENCHMARK_FREEZE.json").read_text())["records_sha256"]
     assert pin.PAGES_JSONL_SHA256 == json.loads((BENCH / "pages" / "PAGES_FREEZE.json").read_text())["pages_sha256"]
