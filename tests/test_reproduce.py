@@ -114,7 +114,7 @@ def test_per_class_change_is_different():
 def env(tmp_path, monkeypatch):
     monkeypatch.setattr(rp, "docker_image_ok", lambda image=None: True)
     monkeypatch.setattr(guard, "mem_available_bytes", lambda *a, **k: 20 * guard.GIB)
-    monkeypatch.setattr(rp.fa, "verify_amendment", lambda *a, **k: [])
+    monkeypatch.setattr(rp.fa, "verify_chain", lambda *a, **k: [])
     seen: dict = {}
 
     def fake_score(work, env, cwd=None):
@@ -173,7 +173,7 @@ def test_main_different_exit1(tmp_path, env):
 
 
 def test_main_unverified_amendment_stops_before_scoring(tmp_path, env, monkeypatch):
-    monkeypatch.setattr(rp.fa, "verify_amendment", lambda *a, **k: ["proof: broken"])
+    monkeypatch.setattr(rp.fa, "verify_chain", lambda *a, **k: ["proof: broken"])
     called = []
     monkeypatch.setattr(rp, "run_score", lambda *a, **k: called.append(1) or 0)
     code, rep, _ = run_main(tmp_path)
@@ -202,7 +202,7 @@ def test_main_scorer_failure_passes_the_exit_code(tmp_path, env):
 
 def test_score_command_is_an_argument_list_with_the_phase5_flags(tmp_path):
     cmd = rp.score_command(tmp_path)
-    assert isinstance(cmd, list) and cmd[1:6] == ["-m", "scripts.acceptance", "score", "--mode", "benchmark"]
+    assert isinstance(cmd, list) and cmd[1:6] == ["-m", "scripts.release.frozen_rescore", "score", "--mode", "benchmark"]
     assert "--ref-score-crops-tuned" in cmd and "--ref-score-pages-tuned" in cmd
 
 
@@ -210,6 +210,114 @@ def test_reproduce_source_has_no_shell_and_no_frozen_edit():
     src = Path("scripts/release/reproduce.py").read_text(encoding="utf-8")
     assert "shell=True" not in src and "os.system" not in src
     assert "write_text(" not in src.replace("(work / \"reproduce_report.json\").write_text", "")
+
+
+def test_preflight_reports_missing_image_and_low_ram(monkeypatch):
+    monkeypatch.setattr(guard, "mem_available_bytes", lambda *a, **k: 20 * guard.GIB)
+    monkeypatch.setattr(rp, "docker_image_ok", lambda image=None: False)
+    assert rp.preflight()[0] == rp.EXIT_NO_IMAGE
+    monkeypatch.setattr(rp, "docker_image_ok", lambda image=None: True)
+    assert rp.preflight() == (0, "")
+    monkeypatch.setattr(guard, "mem_available_bytes", lambda *a, **k: guard.RAM_FLOOR_BYTES + guard.GIB)
+    code, msg = rp.preflight()
+    assert code == rp.EXIT_LOW_RAM and "below" in msg
+
+
+def test_cold_env_points_the_cache_into_work_unless_warm(tmp_path, monkeypatch):
+    monkeypatch.delenv(rp.CACHE_ENV, raising=False)
+    cold = rp.cold_env(tmp_path, False)
+    assert Path(cold[rp.CACHE_ENV]) == tmp_path / "render-cache" and (tmp_path / "render-cache").is_dir()
+    assert rp.CACHE_ENV not in rp.cold_env(tmp_path, True)
+
+
+def test_score_command_goes_through_the_harness(tmp_path):
+    assert rp.score_command(tmp_path)[1:3] == ["-m", "scripts.release.frozen_rescore"]
+
+
+def test_main_with_a_rename_record_verifies_the_chain_and_compares_with_it(tmp_path, env, monkeypatch):
+    rec = {"marker": "rename"}
+    (tmp_path / rp.ra.AMENDMENT2_PATH).parent.mkdir(parents=True)
+    (tmp_path / rp.ra.AMENDMENT2_PATH).write_text(json.dumps(rec), encoding="utf-8")
+    calls = {}
+    monkeypatch.setattr(rp.fa, "verify_chain", lambda *a, **k: calls.setdefault("chain", []) or [])
+    seen = {}
+
+    def compare(published, fresh, commit_map=None, amendment=None, rename=None):
+        seen["rename"] = rename
+        return {"compare": "identical_modulo_history_and_amendment", "differing_keys": [], "allowed": {}, "history_mapped": {}, "problems": []}
+
+    monkeypatch.setattr(rp, "compare_results", compare)
+    env["fresh"] = copy.deepcopy(PUB)
+    code, rep, _ = run_main(tmp_path)
+    assert code == 0 and seen["rename"] == rec
+    assert rep["amendment"]["rename_present"] is True and rep["amendment"]["rename_verified"] is True
+    assert rep["harness"] == "scripts.release.frozen_rescore" and rep["pin_substitution"] is None
+
+
+def test_main_rename_record_not_verified_stops_before_scoring(tmp_path, env, monkeypatch):
+    (tmp_path / rp.ra.AMENDMENT2_PATH).parent.mkdir(parents=True)
+    (tmp_path / rp.ra.AMENDMENT2_PATH).write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(rp.fa, "verify_chain", lambda *a, **k: ["rename: broken"])
+    called = []
+    monkeypatch.setattr(rp, "run_score", lambda *a, **k: called.append(1) or 0)
+    code, rep, _ = run_main(tmp_path)
+    assert code == 1 and not called and rep["amendment"]["rename_verified"] is False
+
+
+def test_main_renamed_tree_records_the_pin_substitution(tmp_path, env, monkeypatch):
+    new = tmp_path / rp.ra.NEW_MODULE
+    new.parent.mkdir(parents=True)
+    new.write_text("x", encoding="utf-8")
+    sub = {"path": rp.ra.NEW_MODULE, "commit": "c" * 40, "date": "d", "module_blob_before": "b", "proof_changed_lines": [1]}
+    monkeypatch.setattr(rp.frozen_rescore, "pin_substitution", lambda *a, **k: sub)
+    env["fresh"] = copy.deepcopy(PUB)
+    _, rep, _ = run_main(tmp_path)
+    assert rep["pin_substitution"] == {"path": sub["path"], "commit": sub["commit"], "date": "d"}
+
+
+def test_main_refused_pin_substitution_stops_before_scoring(tmp_path, env, monkeypatch):
+    new = tmp_path / rp.ra.NEW_MODULE
+    new.parent.mkdir(parents=True)
+    new.write_text("x", encoding="utf-8")
+
+    def refuse(*a, **k):
+        raise rp.frozen_rescore.SubstitutionRefused("no")
+
+    monkeypatch.setattr(rp.frozen_rescore, "pin_substitution", refuse)
+    called = []
+    monkeypatch.setattr(rp, "run_score", lambda *a, **k: called.append(1) or 0)
+    code, rep, _ = run_main(tmp_path)
+    assert code == 1 and not called and rep["compare"] == "not_run: pin substitution refused"
+
+
+def test_score_only_never_verifies_or_compares(tmp_path, env, monkeypatch):
+    def boom(*a, **k):
+        raise AssertionError("must not be called")
+
+    for name in ("verify_chain", "compare_published"):
+        monkeypatch.setattr(rp.fa, name, boom)
+    monkeypatch.setattr(rp, "compare_results", boom)
+    env["fresh"] = {"anything": 1}
+    work = tmp_path / "work"
+    assert rp.main(["--work", str(work), "--score-only"]) == 0
+    rep = json.loads((work / "reproduce_report.json").read_text(encoding="utf-8"))
+    assert rep["compare"] == "not_run: score-only" and rep["score_exit"] == 0
+    assert rep["harness"] == "scripts.release.frozen_rescore" and rep["pin_substitution"] is None
+    assert rep["compare"] not in rp.IDENTICAL and rep["fresh_sha256"] is None
+    assert Path(env["env"][rp.CACHE_ENV]) == work / "render-cache"
+
+
+def test_score_only_passes_the_score_exit_code_and_honours_preflight(tmp_path, env, monkeypatch):
+    env["fresh"] = {}
+    env["exit"] = 5
+    assert rp.main(["--work", str(tmp_path / "w1"), "--score-only"]) == 5
+    monkeypatch.setattr(rp, "docker_image_ok", lambda image=None: False)
+    assert rp.main(["--work", str(tmp_path / "w2"), "--score-only"]) == 3
+
+
+def test_score_only_help_text():
+    with pytest.raises(SystemExit):
+        rp.main(["--help"])
 
 
 # ----------------------------------------------------------------------------------------- extract_images
