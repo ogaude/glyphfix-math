@@ -41,15 +41,15 @@ The published model files and the benchmark rerun do not depend on a particular 
 
 ## Evidence
 
-`evidence/acceptance/` holds the published `results.json`, `flips.jsonl`, `ACCEPTANCE.md`, `sensitivity.json` and `env_check.json` at the paths the frozen scorer reads, and `evidence/acceptance/FREEZE_AMENDMENT.json`. The latter is the record of the one change made to the frozen scorer after scoring: two path constants in `scripts/acceptance.py` moved from the development repository's planning folder (not published) to `evidence/acceptance/`. The change was approved, was proven to alter nothing else, and a cold rescore afterwards matched the published numbers.
+`evidence/acceptance/` holds the published `results.json`, `flips.jsonl`, `ACCEPTANCE.md`, `sensitivity.json` and `env_check.json` at the paths the frozen scorer reads, and `evidence/acceptance/FREEZE_AMENDMENT.json`. The latter is the record of the one change made to the frozen scorer after scoring: two path constants in `scripts/acceptance.py` moved from the development repository's planning folder (not published) to `evidence/acceptance/`. The change was approved, was proven to alter nothing else, and a cold rescore afterwards matched the published numbers. `evidence/acceptance/FREEZE_AMENDMENT_2.json` is the record of the rename made before the first release, in which the project, the Python package and our Ollama tags got their published names. The two frozen scoring files changed in names only, proven token by token from the git objects, and a cold rescore matched the published numbers.
 
-`results/` holds the error-mining and development reports, `PINS.md` and an index of the result files whose rerun record cites the cold rescore in `evidence/acceptance/FREEZE_AMENDMENT.json`.
+`results/` holds the error-mining and development reports, `PINS.md` and an index of the result files whose rerun record cites the cold rescores in `evidence/acceptance/FREEZE_AMENDMENT.json` and `evidence/acceptance/FREEZE_AMENDMENT_2.json`.
 
-The Python import package is still named `lightonocr_math` because the frozen scoring code imports it and renaming it would change the pinned blobs.
+The Python package was renamed from `lightonocr_math` to `glyphfix_math` before the first release; `FREEZE_AMENDMENT_2.json` records it.
 
 ## History
 
-This history was filtered from the development repository to leave out unreleased data rows, so the commit hashes differ from those recorded inside `results.json`. `RELEASE_HISTORY.json` maps them. The reproduce command checks that mapping and the freeze amendment, which is why it reports `identical_modulo_history_and_amendment` rather than `identical`.
+This history was filtered from the development repository to leave out unreleased data rows, so the commit hashes differ from those recorded inside `results.json`. `RELEASE_HISTORY.json` maps them. The reproduce command checks that mapping and both freeze amendments, which is why it reports `identical_modulo_history_and_amendment` rather than `identical`. Commits before the rename keep the old names because the published results were scored from them.
 
 ## Licenses
 

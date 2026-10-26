@@ -24,11 +24,13 @@ The first run renders from a cold cache and takes minutes, not seconds. The comm
 What the verdicts mean:
 
 - `identical`: the new `results.json` equals the published one except for the volatile keys (creation time, timings, git commit, output paths).
-- `identical_modulo_history`: additionally, only the commit hash of `src/lightonocr_math/acceptance.py` differs. `RELEASE_HISTORY.json` maps the published hash to the hash in this repository and the committer dates are equal.
-- `identical_modulo_amendment` and `identical_modulo_history_and_amendment`: additionally, the three `code_freeze` keys of the recorded freeze amendment differ exactly as `evidence/acceptance/FREEZE_AMENDMENT.json` predicts. Before comparing, the command proves again from the git objects that the frozen `scripts/acceptance.py` changed only in its two path constants. A clone of the public repository reports `identical_modulo_history_and_amendment`.
+- `identical_modulo_history`: additionally, only the commit hash of the frozen acceptance module differs. `RELEASE_HISTORY.json` maps the published hash to the hash in this repository and the committer dates are equal.
+- `identical_modulo_amendment` and `identical_modulo_history_and_amendment`: additionally, the `code_freeze` keys (and the tag) of the recorded freeze amendments differ exactly as they predict. Amendment 1 (`evidence/acceptance/FREEZE_AMENDMENT.json`) changed two path constants and moves three keys. Amendment 2 (`evidence/acceptance/FREEZE_AMENDMENT_2.json`) is the rename: the CLI commit, the module path key moving to its new path with the same commit and date, the CLI and module blobs in `current_blobs` and `lock_blobs`, and the tag; eight keys in total. Before comparing, the command proves again from the git objects that each frozen file changed only as its record says. A clone of the public repository reports `identical_modulo_history_and_amendment`.
 - `different`: anything else, including any changed number, input digest, module blob, pin time or lock time. The differing keys are listed in the report.
 
-The frozen `uv run python -m scripts.acceptance compare-results` stays strict on purpose. Given the published file and a fresh one, it lists the three amended keys and nothing more; `scripts.release.reproduce` is the comparison that knows the amendment and the history mapping.
+The command runs the frozen scorer through `scripts.release.frozen_rescore`. The frozen scorer refuses to score when its module's last commit is later than the prediction run, and the rename moved the module (renamed from `src/lightonocr_math/acceptance.py` to `src/glyphfix_math/acceptance.py`), so the wrapper supplies the module's pre-rename commit after proving from git objects that the module is that pinned file with only names changed. Calling `scripts.acceptance score --mode benchmark` directly refuses for that reason.
+
+The frozen `uv run python -m scripts.acceptance compare-results` stays strict on purpose. Given the published file and a fresh one, it lists the keys of the amendments (eight after the rename) and nothing more; `scripts.release.reproduce` is the comparison that knows the amendment and the history mapping.
 
 ## Tier 2: regenerate the predictions (documented, not pass or fail)
 
