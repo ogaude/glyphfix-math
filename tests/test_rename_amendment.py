@@ -956,6 +956,117 @@ def test_check_record_inputs_refuses_an_unknown_commit(tmp_path):
     assert any("amendment commit" in p for p in problems) and draft == {}
 
 
+# ------------------------------------------------------------------ build_record
+
+def _build(s, **kw):
+    problems, draft = _check(s)
+    assert problems == []
+    return ra.build_record(s.repo, draft, approved="approved (test)", amendment_commit=s.commit), draft
+
+
+def test_build_record_has_exactly_the_schema_keys_and_the_proof_of_the_commit(tmp_path):
+    s = _record_setup(tmp_path)
+    rec, draft = _build(s)
+    assert set(rec) == SCHEMA_KEYS and rec["schema"] == 1 and rec["kind"] == "rename-only"
+    assert rec["amendment_commit"] == [s.commit, git(s.repo, "log", "-1", "--format=%cI", s.commit)]
+    assert rec["commit_proof"] == {k: draft["commit_rewrite"][k] for k in ra.COMMIT_PROOF_KEYS}
+    assert rec["commit_proof"]["pure_rewrite"] is True
+    assert rec["commit_proof"]["latest_only_rewritten"][0]["path"] == REG
+    assert rec["tags"] == [
+        {"old": ra.OLD_TAG, "new": ra.NEW_TAG, "ollama_digest": DIGEST},
+        {"old": ra.OLD_CAND_TAG, "new": ra.NEW_CAND_TAG, "ollama_digest": None},
+    ]
+    assert rec["files"]["cli"]["proof"]["changed_lines"] and rec["files"]["module"]["proof"]["changed_lines"]
+    assert rec["module_pin_commit"] == s.published["code_freeze"]["commits"][ra.OLD_MODULE]
+    assert rec["previous_amendment_commit"] == s.a1["amendment_commit"]
+    assert len(rec["effects"]) == 4 and "frozen_rescore" in rec["effects"][0]
+    assert {c["key"] for c in rec["run_lock"]["changes"]} == set(ra.LOCK_RENAME_KEYS)
+    assert [c["new"] for c in rec["registry"]["changes"] if c["key"].endswith("candidate_tag")] == [ra.NEW_CAND_TAG]
+    re = rec["rerun_equivalence"]
+    assert re["compare"] == "identical_modulo_amendment" and re["differing_keys"] == list(ra.RENAME_KEYS)
+    assert re["frozen_compare_output"] == "different: " + ", ".join(ra.RENAME_KEYS)
+    assert re["published_sha256"] == fa._sha256(s.repo / "evidence/acceptance/results.json")
+    assert re["fresh_sha256"] == fa._sha256(s.rerun / "evidence/results.json")
+    assert re["report_rerender_identical"] is True and re["harness"] == "scripts.release.frozen_rescore"
+    json.dumps(rec)
+
+
+def test_build_record_kept_data_lists(tmp_path):
+    s = _record_setup(tmp_path, sidecar="kept")
+    rec, _ = _build(s)
+    paths = [e["path"] for e in rec["recorded_data_kept"]]
+    assert paths == sorted([PRED, "evidence/acceptance/env_check.json", "evidence/acceptance/results.json"])
+    assert [e["path"] for e in rec["kept_unpinned"]] == [SIDECAR] and rec["rewritten_unpinned"] == []
+    assert rec["kept_unpinned"][0]["sha256"] == fa._sha256(s.repo / SIDECAR)
+
+
+def test_build_record_rewritten_sidecar_moves_to_rewritten_unpinned(tmp_path):
+    s = _record_setup(tmp_path, sidecar="rewritten")
+    rec, _ = _build(s)
+    assert rec["kept_unpinned"] == []
+    (entry,) = rec["rewritten_unpinned"]
+    assert entry["path"] == SIDECAR and entry["sha256_after"] == fa._sha256(s.repo / SIDECAR)
+    assert entry["sha256_before"] != entry["sha256_after"]
+    assert SIDECAR not in [e["path"] for e in rec["recorded_data_kept"]]
+
+
+def test_build_record_default_has_no_unpinned_entries(tmp_path):
+    rec, _ = _build(_record_setup(tmp_path))
+    assert rec["kept_unpinned"] == [] and rec["rewritten_unpinned"] == []
+
+
+@pytest.mark.parametrize("sidecar", [None, "kept", "rewritten"])
+def test_a_built_record_passes_verify_rename(tmp_path, sidecar):
+    s = _record_setup(tmp_path, sidecar=sidecar)
+    rec, _ = _build(s)
+    assert ra.verify_rename(s.repo, rec, a1=s.a1, published=s.published) == []
+
+
+def test_build_record_refuses_another_commit(tmp_path):
+    s = _record_setup(tmp_path)
+    _, draft = _check(s)
+    with pytest.raises(ra.AmendmentError):
+        ra.build_record(s.repo, draft, approved="x", amendment_commit="0" * 7)
+
+
+# ------------------------------------------------------------------ record CLI
+
+def _record_cli(s, monkeypatch, *extra):
+    monkeypatch.chdir(s.repo)
+    monkeypatch.setattr(ra, "_run_compare", lambda root, p, f: fake_compare(p, f))
+    return ra.main(["record", "--rerun", str(s.rerun), "--approved", "approved (test)", "--amendment-commit", s.commit,
+                    "--preview", str(s.preview), *extra])
+
+
+def test_record_cli_writes_only_the_record_and_never_overwrites(tmp_path, monkeypatch, capsys):
+    s = _record_setup(tmp_path)
+    assert _record_cli(s, monkeypatch) == 0
+    assert git(s.repo, "status", "--porcelain") == f"?? {ra.AMENDMENT2_REF}"
+    first = (s.repo / ra.AMENDMENT2_PATH).read_bytes()
+    assert set(json.loads(first)) == SCHEMA_KEYS
+    capsys.readouterr()
+    assert _record_cli(s, monkeypatch) == 2
+    assert "record exists" in capsys.readouterr().err
+    assert (s.repo / ra.AMENDMENT2_PATH).read_bytes() == first
+
+
+def test_record_cli_refuses_and_writes_nothing(tmp_path, monkeypatch, capsys):
+    s = _record_setup(tmp_path)
+    _report(s, score_exit=1)
+    assert _record_cli(s, monkeypatch) == 2
+    err = capsys.readouterr().err
+    assert "REFUSED" in err and "score_exit" in err
+    assert not (s.repo / ra.AMENDMENT2_PATH).exists()
+    assert git(s.repo, "status", "--porcelain") == ""
+
+
+def test_record_help_lists_its_options(capsys):
+    with pytest.raises(SystemExit):
+        ra.main(["record", "--help"])
+    out = capsys.readouterr().out
+    assert all(o in out for o in ("--rerun", "--approved", "--amendment-commit", "--preview"))
+
+
 def test_verify_rename_real_repository():
     if not (ROOT / ra.AMENDMENT2_PATH).exists():
         pytest.skip("record not written yet")

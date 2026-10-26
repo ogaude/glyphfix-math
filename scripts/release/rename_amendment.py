@@ -1069,6 +1069,114 @@ def check_record_inputs(
     return problems, draft
 
 
+# --------------------------------------------------------------------- record
+
+def build_record(root: Path, draft: dict, *, approved: str, amendment_commit: str) -> dict:
+    """The amendment 2 record (all schema keys) from the values check_record_inputs collected."""
+    root = Path(root)
+    full = draft["commit"]
+    if not full.startswith(amendment_commit):
+        raise AmendmentError(f"amendment commit {amendment_commit} is not the checked commit {full}")
+    a1, blobs, report = draft["a1"], draft["blobs"], draft["report"]
+    published, cmp = draft["published"], draft["compare"]
+    lock_path, reg_path = fa.LOCK_PATH.as_posix(), fa.REGISTRY_PATH.as_posix()
+
+    old_lock_bytes = _cat_blob_at(root, f"{full}~1", lock_path)
+    new_lock = _load_json(root / fa.LOCK_PATH)
+    old_reg_bytes = _cat_blob_at(root, f"{full}~1", reg_path)
+    old_reg, new_reg = old_reg_bytes.decode("utf-8"), draft["registry_new_bytes"].decode("utf-8")
+    digest = None
+    for entry in json.loads(old_reg).get("entries") or []:
+        if isinstance(entry, dict) and entry.get("tag") == OLD_TAG:
+            digest = entry.get("ollama_digest")
+    exp = draft["exp001"]
+    proof = draft["commit_rewrite"]
+
+    return {
+        "schema": 1,
+        "kind": "rename-only",
+        "previous": fa.AMENDMENT_PATH.as_posix(),
+        "reason": RECORD_REASON,
+        "approved": approved,
+        "token_map": [list(x) for x in rename_map.TOKEN_MAP],
+        "path_moves": [list(x) for x in rename_map.PATH_MOVES],
+        "files": {
+            "cli": {
+                "old_path": FROZEN_CLI, "new_path": FROZEN_CLI,
+                "old_blob": CLI_OLD_BLOB, "new_blob": blobs["cli_new"], "proof": draft["proofs"]["cli"],
+            },
+            "module": {
+                "old_path": OLD_MODULE, "new_path": NEW_MODULE,
+                "old_blob": MODULE_OLD_BLOB, "new_blob": blobs["module_new"], "proof": draft["proofs"]["module"],
+            },
+        },
+        "module_pin_commit": list(published["code_freeze"]["commits"][OLD_MODULE]),
+        "previous_amendment_commit": list(a1.get("amendment_commit") or PREVIOUS_COMMIT),
+        "amendment_commit": list(draft["amendment_commit"]),
+        "tags": [
+            {"old": OLD_TAG, "new": NEW_TAG, "ollama_digest": digest},
+            {"old": OLD_CAND_TAG, "new": NEW_CAND_TAG, "ollama_digest": None},
+        ],
+        "run_lock": {
+            "path": lock_path,
+            "sha256_before": _sha256_bytes(old_lock_bytes),
+            "sha256_after": fa._sha256(root / fa.LOCK_PATH),
+            "changes": fa._lock_changes(json.loads(old_lock_bytes), new_lock),
+        },
+        "registry": {
+            "path": reg_path,
+            "sha256_before": _sha256_bytes(old_reg_bytes),
+            "sha256_after": _sha256_bytes(draft["registry_new_bytes"]),
+            "changes": registry_changes(old_reg, new_reg),
+        },
+        "exp001_tree": {
+            "test_file": EXP001_TEST,
+            "old_path": EXP001_OLD,
+            "new_path": EXP001_NEW,
+            "old_tree": exp.get("old_tree", EXP001_OLD_TREE),
+            "new_tree": exp["predicted_new_tree"],
+            "files": exp.get("files", []),
+            "names_only": True,
+        },
+        "commit_proof": {k: proof[k] for k in COMMIT_PROOF_KEYS},
+        "recorded_data_kept": draft["recorded_data_kept"],
+        "kept_unpinned": draft["kept_unpinned"],
+        "rewritten_unpinned": draft["rewritten_unpinned"],
+        "rerun_equivalence": {
+            "harness": report["harness"],
+            "command": "uv run python -m scripts.release.reproduce --score-only (frozen_rescore harness, cold render cache)",
+            "pin_substitution": report.get("pin_substitution"),
+            "score_exit": report["score_exit"],
+            "cold_cache": report["cold_cache"],
+            "seconds": report.get("seconds"),
+            "compare": cmp["compare"],
+            "differing_keys": cmp["differing_keys"],
+            "frozen_compare_output": draft["frozen_compare_output"],
+            "published_sha256": draft["published_sha256"],
+            "fresh_sha256": draft["fresh_sha256"],
+            "git_head": report.get("git_head"),
+            "render_image": report.get("render_image"),
+            "report_rerender_identical": True,
+        },
+        "effects": list(RECORD_EFFECTS),
+    }
+
+
+def cmd_record(args: argparse.Namespace) -> int:
+    root = Path(".")
+    if (root / AMENDMENT2_PATH).exists():
+        raise AmendmentError(f"record exists: {AMENDMENT2_PATH} is never overwritten")
+    problems, draft = check_record_inputs(
+        root, Path(args.rerun), preview_dir=Path(args.preview), amendment_commit=args.amendment_commit, approved=args.approved
+    )
+    if problems:
+        raise AmendmentError("\n  ".join(["the record preconditions do not hold:", *problems]))
+    rec = build_record(root, draft, approved=args.approved, amendment_commit=args.amendment_commit)
+    write_json(root / AMENDMENT2_PATH, rec)
+    print(f"wrote {AMENDMENT2_PATH}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="rename_amendment", description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -1078,6 +1186,12 @@ def main(argv: list[str] | None = None) -> int:
     sv = sub.add_parser("verify")
     sv.add_argument("--history", default=None)
     sv.set_defaults(fn=fa.cmd_verify)
+    sr = sub.add_parser("record")
+    sr.add_argument("--rerun", required=True)
+    sr.add_argument("--approved", required=True)
+    sr.add_argument("--amendment-commit", required=True)
+    sr.add_argument("--preview", default=DEFAULT_PREVIEW_DIR)
+    sr.set_defaults(fn=cmd_record)
     a = ap.parse_args(argv)
     try:
         return a.fn(a)
