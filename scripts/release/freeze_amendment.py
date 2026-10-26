@@ -192,7 +192,83 @@ def amended_lock(lock: dict, *, old_blob: str, new_blob: str, module_blob: str =
 
 # ----------------------------------------------------------------- comparison
 
-def compare_published(published: dict, fresh: dict, *, amendment: dict | None = None, commit_map: dict | None = None) -> dict:
+def _compare_renamed(published: dict, fresh: dict, *, amendment: dict | None, commit_map: dict | None, rename: dict) -> dict:
+    """Comparison when the later rename amendment is in force: exactly eight keys may differ, each by a predicted value."""
+    from scripts.release import rename_amendment as ra
+
+    cmap = commit_map or {}
+    diff = _diff(_comparable(published, published.get("scores_dir")), _comparable(fresh, fresh.get("scores_dir")))
+    pcf, fcf = published.get("code_freeze") or {}, fresh.get("code_freeze") or {}
+    am = amendment or {}
+    files = rename.get("files") or {}
+    cli_new = (files.get("cli") or {}).get("new_blob")
+    mod_new = (files.get("module") or {}).get("new_blob")
+    rc = rename.get("amendment_commit")
+    allowed: dict[str, str] = {}
+    history_mapped: dict[str, dict] = {}
+    problems: list[str] = []
+
+    def commit(cf: dict, path: str):
+        v = (cf.get("commits") or {}).get(path)
+        return list(v) if isinstance(v, list | tuple) and len(v) == 2 else None
+
+    def blob(cf: dict, part: str, which: str):
+        return (cf.get(part) or {}).get(which)
+
+    expected = set(ra.RENAME_KEYS)
+    for key in diff:
+        if key not in expected:
+            problems.append(f"{key}: differs")
+            continue
+        ok = False
+        if key == f"code_freeze.commits.{FROZEN_CLI}":
+            p, f = commit(pcf, FROZEN_CLI), commit(fcf, FROZEN_CLI)
+            oc = am.get("old_commit")
+            ok = bool(p and f and oc and rc and len(rc) == 2 and p == list(oc) and f[1] == rc[1] and f[0] in (rc[0], cmap.get(rc[0])))
+            if ok and f[0] != rc[0]:
+                history_mapped[FROZEN_CLI] = {"source_commit": rc[0], "public_commit": f[0], "committer_date": f[1]}
+        elif key == f"code_freeze.commits.{ra.OLD_MODULE}":
+            ok = commit(pcf, ra.OLD_MODULE) is not None and ra.OLD_MODULE not in (fcf.get("commits") or {})
+        elif key == f"code_freeze.commits.{ra.NEW_MODULE}":
+            p, f = commit(pcf, ra.OLD_MODULE), commit(fcf, ra.NEW_MODULE)
+            ok = bool(p and f and ra.NEW_MODULE not in (pcf.get("commits") or {}) and f[1] == p[1] and f[0] in (p[0], cmap.get(p[0])))
+            if ok and f[0] != p[0]:
+                history_mapped[ra.NEW_MODULE] = {"source_commit": p[0], "public_commit": f[0], "committer_date": f[1]}
+        elif key in ("code_freeze.current_blobs.cli", "code_freeze.lock_blobs.cli"):
+            part = key.split(".")[1]
+            ok = bool(cli_new) and blob(pcf, part, "cli") == am.get("old_blob") and blob(fcf, part, "cli") == cli_new
+        elif key in ("code_freeze.current_blobs.module", "code_freeze.lock_blobs.module"):
+            part = key.split(".")[1]
+            ok = (
+                bool(mod_new)
+                and blob(pcf, part, "module") == am.get("module_blob", MODULE_BLOB)
+                and blob(fcf, part, "module") == mod_new
+            )
+        elif key == "tag":
+            ok = published.get("tag") == ra.OLD_TAG and fresh.get("tag") == ra.NEW_TAG
+        if ok:
+            allowed[key] = "amendment"
+        else:
+            problems.append(f"{key}: published and fresh values are not the ones the rename predicts")
+    if diff and not problems and set(diff) != expected:
+        problems.append(f"rename keys missing from the difference: {sorted(expected - set(diff))}")
+
+    if problems:
+        compare = "different"
+    elif not diff:
+        compare = "identical"
+    elif history_mapped:
+        compare = "identical_modulo_history_and_amendment"
+    else:
+        compare = "identical_modulo_amendment"
+    return {"compare": compare, "differing_keys": diff, "allowed": allowed, "history_mapped": history_mapped, "problems": problems}
+
+
+def compare_published(
+    published: dict, fresh: dict, *, amendment: dict | None = None, commit_map: dict | None = None, rename: dict | None = None
+) -> dict:
+    if rename is not None:
+        return _compare_renamed(published, fresh, amendment=amendment, commit_map=commit_map, rename=rename)
     cmap = commit_map or {}
     diff = _diff(_comparable(published, published.get("scores_dir")), _comparable(fresh, fresh.get("scores_dir")))
     pcf, fcf = published.get("code_freeze") or {}, fresh.get("code_freeze") or {}

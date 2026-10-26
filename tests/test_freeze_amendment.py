@@ -205,6 +205,110 @@ def test_compare_rejects_wrong_published_cli_commit():
     assert r["compare"] == "different"
 
 
+# ---- compare_published with the rename record
+
+A2 = "b" * 40
+D2 = "2026-10-26T10:00:00+02:00"
+NEW_CLI = "c" * 40
+NEW_MOD = "d" * 40
+RN = {"files": {"cli": {"new_blob": NEW_CLI}, "module": {"new_blob": NEW_MOD}}, "amendment_commit": [A2, D2]}
+
+
+def _ra():
+    from scripts.release import rename_amendment
+
+    return rename_amendment
+
+
+def _published_with_tag():
+    p = _res()
+    p["tag"] = _ra().OLD_TAG
+    return p
+
+
+def _rename(p):
+    ra = _ra()
+    r = copy.deepcopy(p)
+    cf = r["code_freeze"]
+    cf["commits"][fa.FROZEN_CLI] = [A2, D2]
+    cf["commits"][ra.NEW_MODULE] = list(p["code_freeze"]["commits"][ra.OLD_MODULE])
+    del cf["commits"][ra.OLD_MODULE]
+    for part in ("current_blobs", "lock_blobs"):
+        cf[part]["cli"] = NEW_CLI
+        cf[part]["module"] = NEW_MOD
+    r["tag"] = ra.NEW_TAG
+    return r
+
+
+def test_compare_rename_modulo_amendment():
+    p = _published_with_tag()
+    r = fa.compare_published(p, _rename(p), amendment=AM, rename=RN)
+    assert r["compare"] == "identical_modulo_amendment", r["problems"]
+    assert r["differing_keys"] == list(_ra().RENAME_KEYS)
+    assert set(r["allowed"].values()) == {"amendment"} and len(r["allowed"]) == 8
+    assert r["history_mapped"] == {}
+
+
+def test_compare_rename_modulo_history_and_amendment():
+    ra = _ra()
+    p = _published_with_tag()
+    f = _rename(p)
+    f["code_freeze"]["commits"][fa.FROZEN_CLI][0] = "q" * 40
+    f["code_freeze"]["commits"][ra.NEW_MODULE][0] = "z" * 40
+    cmap = {A2: "q" * 40, p["code_freeze"]["commits"][ra.OLD_MODULE][0]: "z" * 40}
+    r = fa.compare_published(p, f, amendment=AM, commit_map=cmap, rename=RN)
+    assert r["compare"] == "identical_modulo_history_and_amendment", r["problems"]
+    assert set(r["history_mapped"]) == {fa.FROZEN_CLI, ra.NEW_MODULE}
+    for v in r["history_mapped"].values():
+        assert set(v) == {"source_commit", "public_commit", "committer_date"}
+    assert fa.compare_published(p, f, amendment=AM, rename=RN)["compare"] == "different"
+
+
+def test_compare_rename_identical_when_nothing_differs():
+    p = _published_with_tag()
+    assert fa.compare_published(p, copy.deepcopy(p), amendment=AM, rename=RN)["compare"] == "identical"
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda f: f.__setitem__("tag", "other:tag"),
+        lambda f: f["code_freeze"]["commits"][_ra().NEW_MODULE].__setitem__(1, "other-date"),
+        lambda f: f["code_freeze"]["commits"][_ra().NEW_MODULE].__setitem__(0, "y" * 40),
+        lambda f: f["code_freeze"]["current_blobs"].update(module="e" * 40),
+        lambda f: f["code_freeze"]["lock_blobs"].update(module="e" * 40),
+        lambda f: f["code_freeze"]["current_blobs"].update(cli="e" * 40),
+        lambda f: f["code_freeze"]["lock_blobs"].update(cli="e" * 40),
+        lambda f: f["code_freeze"]["commits"].__setitem__(_ra().OLD_MODULE, ["m" * 40, "2026-10-17T09:59:12+02:00"]),
+        lambda f: f["code_freeze"].update(pin_commit_time="x"),
+        lambda f: f["code_freeze"].update(lock_started="x"),
+        lambda f: f["code_freeze"]["commits"][fa.FROZEN_CLI].__setitem__(0, "y" * 40),
+        lambda f: f["headline"].update(delta=0.3),
+        lambda f: f["per_class"].update(a=2),
+        lambda f: f["transfer"].update(holds=False),
+        lambda f: f["spacing"].update(x=2),
+        lambda f: f["inputs"]["crops"].update(sha256="t"),
+    ],
+    ids=[
+        "tag", "module-date", "module-hash", "current-module", "lock-module", "current-cli", "lock-cli",
+        "old-module-kept", "pin-time", "lock-started", "cli-commit", "headline", "per-class", "transfer",
+        "spacing", "inputs",
+    ],
+)
+def test_compare_rename_rejects(mutate):
+    p = _published_with_tag()
+    f = _rename(p)
+    mutate(f)
+    r = fa.compare_published(p, f, amendment=AM, rename=RN)
+    assert r["compare"] == "different" and r["problems"]
+
+
+def test_compare_rename_rejected_without_the_record():
+    p = _published_with_tag()
+    r = fa.compare_published(p, _rename(p), amendment=AM)
+    assert r["compare"] == "different"
+
+
 def test_load_commit_map(tmp_path):
     assert fa.load_commit_map(tmp_path) == {}
     (tmp_path / "RELEASE_HISTORY.json").write_text(json.dumps({"commit_map": {"a": "b"}}))
