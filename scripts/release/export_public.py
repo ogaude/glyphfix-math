@@ -2,7 +2,7 @@
 
 Usage:
   python -m scripts.release.export_public [--source .] [--out release/code] [--overlay release/code/overlay]
-      [--published-results PATH] [--amendment PATH] [--identity-email ADDR]
+      [--published-results PATH] [--amendment PATH] [--amendment2 PATH] [--identity-email ADDR]
 
 The development repository is only read. History is rewritten with `git filter-branch` in a throwaway clone that has
 no remote: every commit keeps the paths the allow-list classifies as `history`, or `latest-only` where the blob equals
@@ -31,6 +31,7 @@ from scripts.release import public_paths
 TOOL_ROOT = Path(__file__).resolve().parents[2]
 RELEASE_COMMIT_MESSAGE = "release: add release documents and results"
 OVERLAY_SKIP = {"SHA256SUMS"}
+AMENDMENT2_NAME = "FREEZE_AMENDMENT_2.json"
 
 
 class ExportError(RuntimeError):
@@ -143,12 +144,19 @@ def _read_map(path: Path) -> list[tuple[str, str]]:
     return [tuple(line.split()) for line in path.read_text().splitlines() if line.strip()]  # type: ignore[misc]
 
 
-def _published_hashes(published: Path, amendment: Path) -> dict[str, str]:
-    """Source commit hash -> role, for every commit RELEASE_HISTORY.json must map."""
+def _published_hashes(published: Path, amendment: Path, amendment2: Path | None = None) -> dict[str, str]:
+    """Source commit hash -> role, for every commit RELEASE_HISTORY.json must map.
+
+    The rename amendment record is read from `amendment2`, by default the file next to the first amendment record;
+    without that file there is no rename role.
+    """
     res = json.loads(Path(published).read_text(encoding="utf-8"))
     am = json.loads(Path(amendment).read_text(encoding="utf-8"))
     roles = {v[0]: f"code_freeze:{k}" for k, v in (res.get("code_freeze") or {}).get("commits", {}).items()}
     roles[am["amendment_commit"][0]] = "amendment_commit"
+    second = Path(amendment2) if amendment2 else Path(amendment).parent / AMENDMENT2_NAME
+    if second.is_file():
+        roles[json.loads(second.read_text(encoding="utf-8"))["amendment_commit"][0]] = "rename_amendment_commit"
     return roles
 
 
@@ -168,6 +176,7 @@ def export(
     overlay: Path | None = None,
     published_results: Path = Path("evidence/acceptance/results.json"),
     amendment: Path = Path("evidence/acceptance/FREEZE_AMENDMENT.json"),
+    amendment2: Path | None = None,
     spec_path: Path | None = None,
     identity_email: str | None = None,
     scrub=None,
@@ -186,6 +195,10 @@ def export(
         published_results = source / published_results
     if not amendment.is_absolute():
         amendment = source / amendment
+    if amendment2 is not None:
+        amendment2 = Path(amendment2)
+        if not amendment2.is_absolute():
+            amendment2 = source / amendment2
 
     top = Path(git(source, "rev-parse", "--show-toplevel")).resolve()
     if top != source:
@@ -198,7 +211,7 @@ def export(
 
     spec = public_paths.load_spec(spec_path)
     files = _overlay_files(overlay, spec)
-    roles = _published_hashes(published_results, amendment)
+    roles = _published_hashes(published_results, amendment, amendment2)
     before = snapshot(source)
 
     out.mkdir(parents=True, exist_ok=True)
@@ -343,6 +356,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--overlay")
     ap.add_argument("--published-results", default="evidence/acceptance/results.json")
     ap.add_argument("--amendment", default="evidence/acceptance/FREEZE_AMENDMENT.json")
+    ap.add_argument("--amendment2", help="rename amendment record (default: FREEZE_AMENDMENT_2.json next to --amendment)")
     ap.add_argument("--identity-email")
     args = ap.parse_args(argv)
     if args.cmd == "index-filter":
@@ -350,7 +364,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         rep = export(
             Path(args.source), Path(args.out), Path(args.overlay) if args.overlay else None,
-            Path(args.published_results), Path(args.amendment), identity_email=args.identity_email,
+            Path(args.published_results), Path(args.amendment),
+            Path(args.amendment2) if args.amendment2 else None, identity_email=args.identity_email,
         )
     except ExportError as e:
         print(f"export failed: {e}", file=sys.stderr)
