@@ -1,0 +1,567 @@
+"""Recorded amendment 2 of the frozen acceptance files: the project rename changes names only.
+
+Amendment 1 (scripts/release/freeze_amendment.py) changed two path literals in the frozen CLI. The project rename
+changes the package name in the same two frozen files (the CLI scripts/acceptance.py and the module
+acceptance.py inside the package). This tool proves, mechanically, that the new text differs from the old text only by
+the token map of scripts/release/rename_map.py (byte substitution, line diff, token stream and AST with identifiers
+and string constants mapped), builds the amended RUN_LOCK.json and REGISTRY.json, predicts the git tree of the moved
+experiments directory, and checks a whole commit as a pure rename-rewrite.
+
+  uv run python -m scripts.release.rename_amendment preview [--out DIR]
+  uv run python -m scripts.release.rename_amendment verify    (chain verification)
+  uv run python -m scripts.release.rename_amendment record    (writes the amendment record)
+
+`preview` changes nothing tracked: it writes the renamed frozen files, their blobs, the amended lock and registry,
+the predicted experiments tree and the rewrite plan under data/runs/rename-amendment/preview.
+
+This file spells the old names as data (derived from freeze_amendment and rename_map where possible) and is on the
+rename allow-list. It never imports the project package, so it works before and after the rename.
+"""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import copy
+import io
+import json
+import subprocess
+import sys
+import tempfile
+import tokenize
+from pathlib import Path
+
+from scripts.release import freeze_amendment as fa
+from scripts.release import public_paths, rename_map
+from scripts.spikes.common import write_json
+
+AmendmentError = fa.AmendmentError
+
+AMENDMENT2_PATH = fa.NEW_EVIDENCE_DIR / "FREEZE_AMENDMENT_2.json"
+AMENDMENT2_REF = AMENDMENT2_PATH.as_posix()
+FROZEN_CLI = fa.FROZEN_CLI
+OLD_MODULE = fa.FROZEN_MODULE
+NEW_MODULE = rename_map.map_path(OLD_MODULE)
+assert NEW_MODULE == "src/glyphfix_math/acceptance.py", NEW_MODULE
+
+CLI_OLD_BLOB = "611504261674544c9296806ba3b6d51630bcf536"
+CLI_GENERATED_BLOB = fa.OLD_CLI_BLOB
+MODULE_OLD_BLOB = fa.MODULE_BLOB
+OLD_TAG = "mathocr-lora-q8:p4-full-1"
+NEW_TAG = rename_map.rewrite_text(OLD_TAG)
+OLD_CAND_TAG = "mathocr-cand:p4-full-1"
+NEW_CAND_TAG = rename_map.rewrite_text(OLD_CAND_TAG)
+EXP001_OLD = "experiments/exp001_lighton"
+EXP001_NEW = rename_map.map_path(EXP001_OLD)
+EXP001_TEST = "tests/test_frozen_exp001.py"
+EXP001_OLD_TREE = "934e94975a80805ad3c14a5a3f2c6b493ff26736"
+COMMIT_EXCEPTIONS = (fa.LOCK_PATH.as_posix(), EXP001_TEST)
+PREVIOUS_COMMIT = ("8bff9421db6ab8f95e69e527b7775f1356e7b25c", "2026-10-18T18:34:42+02:00")
+MODULE_PIN_COMMIT = ("0a3aff0e66504ff2b8d69f40c61cda7221c28c9d", "2026-10-17T09:59:12+02:00")
+LOCK_NEW_KEY = "acceptance_module_blob_generated"
+
+# the keys scripts.acceptance._diff reports between the published and a fresh results.json, in its sorted order
+RENAME_KEYS = (
+    f"code_freeze.commits.{FROZEN_CLI}",
+    f"code_freeze.commits.{NEW_MODULE}",
+    f"code_freeze.commits.{OLD_MODULE}",
+    "code_freeze.current_blobs.cli",
+    "code_freeze.current_blobs.module",
+    "code_freeze.lock_blobs.cli",
+    "code_freeze.lock_blobs.module",
+    "tag",
+)
+assert list(RENAME_KEYS) == sorted(RENAME_KEYS) and len(RENAME_KEYS) == 8
+
+DEFAULT_PREVIEW_DIR = "data/runs/rename-amendment/preview"
+
+
+# ---------------------------------------------------------------------- proof
+
+_NAME_FIELDS = ("id", "attr", "name", "asname", "module", "arg")
+
+
+def _map_tree(tree: ast.AST) -> None:
+    """Map identifiers and string constants of a tree through the rename, in place."""
+    for node in ast.walk(tree):
+        for f in _NAME_FIELDS:
+            v = getattr(node, f, None)
+            if isinstance(v, str):
+                setattr(node, f, rename_map.rewrite_text(v))
+        if isinstance(node, ast.Global | ast.Nonlocal):
+            node.names = [rename_map.rewrite_text(n) for n in node.names]
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            node.value = rename_map.rewrite_text(node.value)
+
+
+_MAPPED_TOKEN_TYPES = {tokenize.NAME, tokenize.STRING, getattr(tokenize, "FSTRING_MIDDLE", tokenize.STRING)}
+
+
+def prove_rename(old_text: str, new_text: str) -> dict:
+    """Prove new_text is old_text with exactly the project's old names mapped, and nothing else."""
+    expected = rename_map.rewrite_text(old_text)
+    if old_text == new_text:
+        raise AmendmentError("new text equals old text: nothing was renamed")
+    if new_text != expected:
+        raise AmendmentError("byte substitution: new text differs from rewrite_text(old text)")
+
+    old_lines = old_text.splitlines(keepends=True)
+    new_lines = new_text.splitlines(keepends=True)
+    if len(old_lines) != len(new_lines):
+        raise AmendmentError("line count differs")
+    changed = [i + 1 for i, (a, b) in enumerate(zip(old_lines, new_lines, strict=True)) if a != b]
+    should = [i + 1 for i, a in enumerate(old_lines) if rename_map.rewrite_text(a) != a]
+    if changed != should:
+        raise AmendmentError(f"changed lines {changed} are not the lines the token map changes {should}")
+
+    ot = list(tokenize.generate_tokens(io.StringIO(old_text).readline))
+    nt = list(tokenize.generate_tokens(io.StringIO(new_text).readline))
+    if len(ot) != len(nt):
+        raise AmendmentError("token count differs")
+    changed_tokens: dict[str, int] = {}
+    substitutions: list[dict] = []
+    for a, b in zip(ot, nt, strict=True):
+        if a.type != b.type or a.start[0] != b.start[0]:
+            raise AmendmentError(f"token type or line differs at line {a.start[0]}")
+        if a.string != b.string:
+            if a.type not in _MAPPED_TOKEN_TYPES or b.string != rename_map.rewrite_text(a.string):
+                raise AmendmentError(f"unexpected token change at line {a.start[0]}: {a.string!r} -> {b.string!r}")
+            name = tokenize.tok_name[a.type]
+            changed_tokens[name] = changed_tokens.get(name, 0) + 1
+    for n in changed:
+        substitutions.append({"line": n, "old": old_lines[n - 1].strip(), "new": new_lines[n - 1].strip()})
+
+    otree, ntree = ast.parse(old_text), ast.parse(new_text)
+    _map_tree(otree)
+    if ast.dump(otree, include_attributes=False) != ast.dump(ntree, include_attributes=False):
+        raise AmendmentError("AST differs after mapping identifiers and string constants")
+
+    return {
+        "method": "rewrite_text+line-diff+tokenize+ast",
+        "changed_lines": changed,
+        "changed_tokens": changed_tokens,
+        "substitutions": substitutions,
+        "ast_equal_after_mapping": True,
+        "python": sys.version,
+    }
+
+
+# ------------------------------------------------------------ record edits
+
+def amended_lock_rename(lock: dict, *, cli_new: str, module_new: str) -> dict:
+    """RUN_LOCK with both arms re-pinned to the renamed frozen files; the generating blobs are kept next to them."""
+    out = copy.deepcopy(lock)
+    arms = out.get("arms") or {}
+    for arm in fa.ARMS:
+        if arm not in arms:
+            raise AmendmentError(f"RUN_LOCK has no arm {arm}")
+        a = arms[arm]
+        if a.get("acceptance_cli_blob") != CLI_OLD_BLOB:
+            raise AmendmentError(f"{arm}: acceptance_cli_blob {a.get('acceptance_cli_blob')} is not {CLI_OLD_BLOB}")
+        if a.get("acceptance_module_blob") != MODULE_OLD_BLOB:
+            raise AmendmentError(f"{arm}: acceptance_module_blob {a.get('acceptance_module_blob')} is not {MODULE_OLD_BLOB}")
+        if a.get("acceptance_cli_blob_generated") != CLI_GENERATED_BLOB:
+            raise AmendmentError(
+                f"{arm}: acceptance_cli_blob_generated {a.get('acceptance_cli_blob_generated')} is not {CLI_GENERATED_BLOB}"
+            )
+        a["acceptance_cli_blob"] = cli_new
+        a["acceptance_module_blob"] = module_new
+        a[LOCK_NEW_KEY] = MODULE_OLD_BLOB
+        a["freeze_amendment"] = AMENDMENT2_REF
+    return out
+
+
+def _leaf_changes(a, b, path: tuple = ()) -> list[tuple[tuple, object, object]]:
+    if isinstance(a, dict) and isinstance(b, dict):
+        out = []
+        for k in sorted(set(a) | set(b)):
+            if k not in a or k not in b:
+                out.append((path + (k,), a.get(k), b.get(k)))
+            else:
+                out += _leaf_changes(a[k], b[k], path + (k,))
+        return out
+    if isinstance(a, list) and isinstance(b, list) and len(a) == len(b):
+        out = []
+        for i, (x, y) in enumerate(zip(a, b, strict=True)):
+            out += _leaf_changes(x, y, path + (i,))
+        return out
+    return [] if a == b else [(path, a, b)]
+
+
+def registry_changes(old_text: str, new_text: str) -> list[dict]:
+    """Changed leaves of the registry as [{key, old, new}], entries addressed by their tag."""
+    old, new = json.loads(old_text), json.loads(new_text)
+    out = []
+    for path, a, b in _leaf_changes(old, new):
+        key = ""
+        node = old
+        for p in path:
+            if isinstance(p, int):
+                tag = node[p].get("tag") if isinstance(node[p], dict) else None
+                key += f"[tag={tag}]" if tag is not None else f"[{p}]"
+            else:
+                key += ("." if key else "") + str(p)
+            node = node[p] if not isinstance(node, dict) or p in node else None
+        out.append({"key": key, "old": a, "new": b})
+    return out
+
+
+def renamed_registry_text(text: str) -> str:
+    """The registry text after the rename; refuses unless exactly the tag and candidate_tag leaves change."""
+    new = rename_map.rewrite_text(text)
+    changes = _leaf_changes(json.loads(text), json.loads(new))
+    got = sorted((str(p[-1]), a, b) for p, a, b in changes)
+    want = sorted([("candidate_tag", OLD_CAND_TAG, NEW_CAND_TAG), ("tag", OLD_TAG, NEW_TAG)])
+    if got != want:
+        raise AmendmentError(f"registry changes are not exactly the tag and candidate_tag leaves: {got}")
+    return new
+
+
+# ------------------------------------------------------------------ git helpers
+
+def _run(root: Path, *args: str, input: bytes | None = None, check: bool = True) -> subprocess.CompletedProcess:
+    r = subprocess.run(["git", *args], cwd=root, capture_output=True, input=input, check=False)
+    if check and r.returncode != 0:
+        raise AmendmentError(f"git {' '.join(args)} failed: {r.stderr.decode('utf-8', 'replace').strip()}")
+    return r
+
+
+def _cat_blob(root: Path, sha: str) -> bytes:
+    return _run(root, "cat-file", "blob", sha).stdout
+
+
+def _ls_tree(root: Path, tree: str, recursive: bool = False) -> dict[str, tuple[str, str, str]]:
+    """path -> (mode, type, sha); with recursive, blobs of the whole tree (no tree entries)."""
+    args = ["ls-tree", "-z"] + (["-r"] if recursive else []) + [tree]
+    out = _run(root, *args).stdout
+    res: dict[str, tuple[str, str, str]] = {}
+    for rec in out.split(b"\0"):
+        if not rec:
+            continue
+        meta, _, name = rec.partition(b"\t")
+        mode, typ, sha = meta.decode().split()
+        res[name.decode("utf-8", "surrogateescape")] = (mode, typ, sha)
+    return res
+
+
+def predict_tree(root: Path, tree: str, *, base: str = EXP001_OLD, report: list | None = None) -> str:
+    """Tree id the directory `tree` would have after the rename; objects go to the object store only.
+
+    Every regular blob goes through rename_map.rewrite_blob at its post-move path, the same decision `apply` makes.
+    `report` receives {path, old_blob, new_blob} for each blob that changes.
+    """
+    root = Path(root)
+
+    def walk(t: str, prefix: str) -> str:
+        entries = []
+        for name, (mode, typ, sha) in sorted(_ls_tree(root, t).items(), key=lambda kv: kv[0].encode("utf-8", "surrogateescape")):
+            rel = f"{prefix}/{name}" if prefix else name
+            if typ == "tree":
+                new_sha = walk(sha, rel)
+            elif typ == "blob" and mode in ("100644", "100755"):
+                data = _cat_blob(root, sha)
+                new = rename_map.rewrite_blob(rename_map.map_path(f"{base}/{rel}"), data)
+                if new == data:
+                    new_sha = sha
+                else:
+                    new_sha = _run(root, "hash-object", "-w", "--stdin", input=new).stdout.decode().strip()
+                    if report is not None:
+                        report.append({"path": rel, "old_blob": sha, "new_blob": new_sha})
+            else:
+                new_sha = sha
+            entries.append(f"{mode} {typ} {new_sha}\t{name}\0".encode("utf-8", "surrogateescape"))
+        return _run(root, "mktree", "-z", input=b"".join(entries)).stdout.decode().strip()
+
+    return walk(tree, "")
+
+
+# ------------------------------------------------------- whole-commit check
+
+def _load_spec(root: Path, spec, head: str):
+    if spec is not None:
+        return public_paths.load_spec(Path(spec)) if isinstance(spec, str | Path) else spec
+    r = _run(root, "show", f"{head}:scripts/release/public_paths.txt", check=False)
+    if r.returncode != 0:
+        return None
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / "public_paths.txt"
+        p.write_bytes(r.stdout)
+        return public_paths.load_spec(p)
+
+
+def _name_status(root: Path, commit: str) -> dict[str, str]:
+    out = _run(root, "diff", "--name-status", "--no-renames", "-z", f"{commit}~1", commit).stdout.split(b"\0")
+    res: dict[str, str] = {}
+    i = 0
+    while i + 1 < len(out):
+        status, path = out[i].decode(), out[i + 1].decode("utf-8", "surrogateescape")
+        res[path] = status[0]
+        i += 2
+    return res
+
+
+def _expected_blob(old: bytes) -> bytes:
+    if rename_map.is_binary(old):
+        return old
+    return rename_map.rewrite_text(old.decode("utf-8", "surrogateescape")).encode("utf-8", "surrogateescape")
+
+
+def check_commit_rewrite(
+    root: Path,
+    commit: str,
+    exceptions=COMMIT_EXCEPTIONS,
+    *,
+    filtered: bool | None = None,
+    spec=None,
+    head: str = "HEAD",
+    proven_latest_only: list | None = None,
+) -> dict:
+    """Check that `commit` is a pure rename-rewrite of its parent.
+
+    A deleted path pairs with an added path only when map_path(old) == new (git similarity is never used). Each
+    pair and each in-place modification outside `exceptions` must equal rewrite_text of the parent blob (binary blobs
+    byte-identical, same mode). In a filtered public clone an unpaired latest-only addition is accepted only when it
+    equals the blob at `head`, holds no old name and is listed in `proven_latest_only` (the development repository's
+    commit_proof.latest_only_rewritten).
+    """
+    root = Path(root)
+    exceptions = tuple(exceptions)
+    full = _run(root, "rev-parse", commit).stdout.decode().strip()
+    status = _name_status(root, full)
+    parent_blobs = _ls_tree(root, f"{full}~1", recursive=True)
+    new_blobs = _ls_tree(root, full, recursive=True)
+
+    if filtered is None:
+        filtered = _run(root, "cat-file", "-e", f"{head}:RELEASE_HISTORY.json", check=False).returncode == 0
+    rules = _load_spec(root, spec, head)
+    problems: list[str] = []
+    if filtered and rules is None:
+        problems.append("public_paths.txt is missing at head: cannot apply the filtered-history rule")
+
+    deleted = sorted(p for p, s in status.items() if s == "D")
+    added = {p for p, s in status.items() if s == "A"}
+    modified = sorted(p for p, s in status.items() if s not in ("A", "D"))
+
+    pairs: list[tuple[str, str]] = []
+    unpaired_deleted: list[str] = []
+    for d in deleted:
+        m = rename_map.map_path(d)
+        if m != d and m in added:
+            pairs.append((d, m))
+            added.discard(m)
+        else:
+            unpaired_deleted.append(d)
+    for d in unpaired_deleted:
+        problems.append(f"deletion without a paired addition: {d}")
+
+    latest_only: list[dict] = []
+
+    def check_rewrite(old_path: str, new_path: str) -> None:
+        if new_path in exceptions:
+            return
+        om, nm = parent_blobs.get(old_path), new_blobs.get(new_path)
+        if om is None or nm is None:
+            problems.append(f"{new_path}: missing on one side")
+            return
+        if om[0] != nm[0]:
+            problems.append(f"{new_path}: file mode {om[0]} -> {nm[0]}")
+            return
+        if _expected_blob(_cat_blob(root, om[2])) != _cat_blob(root, nm[2]):
+            problems.append(f"{new_path}: content is not rewrite_text of {old_path}")
+            return
+        if rules is not None and public_paths.classify(new_path, rules) == "latest-only":
+            latest_only.append({"path": new_path, "new_blob": nm[2]})
+
+    for old_path, new_path in pairs:
+        check_rewrite(old_path, new_path)
+    for m in modified:
+        if rename_map.map_path(m) != m:
+            problems.append(f"{m}: modified inside a moved directory")
+            continue
+        check_rewrite(m, m)
+
+    accepted: list[dict] = []
+    proven = {(e.get("path"), e.get("new_blob")) for e in (proven_latest_only or [])}
+    for a in sorted(added):
+        if a in exceptions:
+            continue
+        if not filtered:
+            problems.append(f"addition without a paired deletion: {a}")
+            continue
+        if rules is None or public_paths.classify(a, rules) != "latest-only":
+            problems.append(f"addition without a paired deletion (not latest-only): {a}")
+            continue
+        blob = new_blobs[a][2]
+        h = _run(root, "rev-parse", f"{head}:{a}", check=False)
+        if h.returncode != 0 or h.stdout.decode().strip() != blob:
+            problems.append(f"latest-only addition {a} differs from the blob at head")
+            continue
+        data = _cat_blob(root, blob)
+        if rename_map.is_binary(data) or rename_map.rewrite_text(data.decode("utf-8", "surrogateescape")) != data.decode(
+            "utf-8", "surrogateescape"
+        ):
+            problems.append(f"latest-only addition {a} still holds an old name")
+            continue
+        if (a, blob) not in proven:
+            problems.append(f"latest-only addition not proven in the development repository record: {a}")
+            continue
+        accepted.append({"path": a, "blob": blob})
+
+    if problems:
+        pure: bool | str = False
+    elif accepted:
+        pure = "partial"
+    else:
+        pure = True
+    return {
+        "commit": full,
+        "changed": len(status),
+        "pure_rewrite": pure,
+        "exceptions": list(exceptions),
+        "renames": sorted([o, n] for o, n in pairs),
+        "latest_only_rewritten": sorted(latest_only, key=lambda e: e["path"]),
+        "accepted_latest_only": accepted,
+        "latest_only_unproven_in_clone": [e["path"] for e in accepted],
+        "filtered": bool(filtered),
+        "problems": problems,
+    }
+
+
+# -------------------------------------------------------------------- preview
+
+def _blob_of_bytes(data: bytes, path: Path) -> str:
+    path.write_bytes(data)
+    return fa._blob_of(path)
+
+
+def _require(cond: bool, msg: str) -> None:
+    if not cond:
+        raise AmendmentError(msg)
+
+
+def cmd_preview(args: argparse.Namespace) -> int:
+    out = Path(args.out)
+    _require(fa._blob_of(Path(FROZEN_CLI)) == CLI_OLD_BLOB, f"{FROZEN_CLI} is not at the amendment-1 blob {CLI_OLD_BLOB}")
+    _require(Path(OLD_MODULE).is_file() and fa._blob_of(Path(OLD_MODULE)) == MODULE_OLD_BLOB,
+             f"{OLD_MODULE} is missing or not at blob {MODULE_OLD_BLOB}")
+    _require(not Path(NEW_MODULE).exists(), f"{NEW_MODULE} already exists: the rename is applied")
+    _require(fa._git("rev-parse", f"HEAD:{EXP001_OLD}").strip() == EXP001_OLD_TREE,
+             f"{EXP001_OLD} is not at tree {EXP001_OLD_TREE}")
+    before = fa._git("status", "--porcelain", "--untracked-files=no")
+
+    out.mkdir(parents=True, exist_ok=True)
+    cli_old = Path(FROZEN_CLI).read_text(encoding="utf-8")
+    mod_old = Path(OLD_MODULE).read_text(encoding="utf-8")
+    cli_new, mod_new = rename_map.rewrite_text(cli_old), rename_map.rewrite_text(mod_old)
+    cli_path, mod_path = out / "acceptance.py", out / "acceptance_module.py"
+    cli_path.write_text(cli_new, encoding="utf-8")
+    mod_path.write_text(mod_new, encoding="utf-8")
+    proof_cli, proof_mod = prove_rename(cli_old, cli_new), prove_rename(mod_old, mod_new)
+    for name, p in (("proof_cli.json", proof_cli), ("proof_module.json", proof_mod)):
+        (out / name).write_text(json.dumps(p, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    blobs = {
+        "cli_old": CLI_OLD_BLOB,
+        "cli_new": fa._blob_of(cli_path),
+        "module_old": MODULE_OLD_BLOB,
+        "module_new": fa._blob_of(mod_path),
+    }
+    (out / "blobs.json").write_text(json.dumps(blobs, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    lock = json.loads(fa.LOCK_PATH.read_text(encoding="utf-8"))
+    write_json(out / "RUN_LOCK.json", amended_lock_rename(lock, cli_new=blobs["cli_new"], module_new=blobs["module_new"]))
+    reg_text = fa.REGISTRY_PATH.read_text(encoding="utf-8")
+    (out / "REGISTRY.json").write_text(renamed_registry_text(reg_text), encoding="utf-8")
+
+    changed_files: list[dict] = []
+    new_tree = predict_tree(Path("."), EXP001_OLD_TREE, report=changed_files)
+    (out / "exp001.json").write_text(
+        json.dumps({"old_tree": EXP001_OLD_TREE, "predicted_new_tree": new_tree, "files": changed_files}, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    plan = rename_map.apply(Path("."), write=False)
+    (out / "rewrite_plan.json").write_text(json.dumps(plan, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    fa._unified_diff(Path(FROZEN_CLI), cli_path, out / "acceptance.py.diff")
+    fa._unified_diff(Path(OLD_MODULE), mod_path, out / "acceptance_module.py.diff")
+    fa._unified_diff(fa.LOCK_PATH, out / "RUN_LOCK.json", out / "RUN_LOCK.json.diff")
+    fa._unified_diff(fa.REGISTRY_PATH, out / "REGISTRY.json", out / "REGISTRY.json.diff")
+
+    (out / "SUMMARY.txt").write_text(_summary(blobs, proof_cli, proof_mod, new_tree, plan, changed_files), encoding="utf-8")
+    after = fa._git("status", "--porcelain", "--untracked-files=no")
+    _require(before == after, "preview changed a tracked file")
+    print(f"preview written to {out}; cli {blobs['cli_new']}, module {blobs['module_new']}, experiments tree {new_tree}")
+    return 0
+
+
+def _summary(blobs: dict, proof_cli: dict, proof_mod: dict, new_tree: str, plan: dict, exp_files: list[dict]) -> str:
+    L = ["RENAME AMENDMENT PREVIEW (nothing tracked has changed)", "", "Moves (git mv, content rewritten by the token map):"]
+    L += [f"  {m['from']} -> {m['to']} ({m['files']} files)" for m in plan["moves"]]
+    L += [
+        "",
+        "Frozen files (names only, proven by byte substitution, line diff, token stream and AST):",
+        f"  {FROZEN_CLI}: blob {blobs['cli_old']} -> {blobs['cli_new']}, lines {proof_cli['changed_lines']}",
+        f"  {OLD_MODULE} -> {NEW_MODULE}: blob {blobs['module_old']} -> {blobs['module_new']}, lines {proof_mod['changed_lines']}",
+        "",
+        (f"{fa.LOCK_PATH}: in both arms acceptance_cli_blob and acceptance_module_blob take the new blobs, "
+        f"{LOCK_NEW_KEY} (the generating module blob) and the freeze_amendment pointer ({AMENDMENT2_REF}) are added; "
+        "acceptance_cli_blob_generated stays. The model field keeps the tag that generated the predictions."),
+        (f"{fa.REGISTRY_PATH}: tag {OLD_TAG} -> {NEW_TAG}; candidate_tag {OLD_CAND_TAG} -> {NEW_CAND_TAG}. "
+        "Its sha256 is recorded in amendment 1 (registry.sha256_after), so that field stops equalling the file; "
+        "amendment 2 records the new hash."),
+        "",
+        (f"{EXP001_OLD}: tree {EXP001_OLD_TREE} -> predicted {new_tree} at {EXP001_NEW} "
+        f"({len(exp_files)} files change). {EXP001_TEST} updates its tree constant."),
+        "",
+        (f"Rewrite totals: {len(plan['files'])} files, {plan['total_replacements']} replacements "
+        "(planning prose and planning evidence are rewritten in commit C)."),
+    ]
+    per_token: dict[str, int] = {}
+    for counts in plan["files"].values():
+        for tok, n in counts.items():
+            per_token[tok] = per_token.get(tok, 0) + n
+    L += [f"  {tok}: {n}" for tok, n in sorted(per_token.items(), key=lambda kv: -kv[1])]
+    kept = plan["skipped_allowed"]
+    phase = [p for p in kept if p.startswith(rename_map.PHASE_DIR)]
+    others = [p for p in kept if not p.startswith(rename_map.PHASE_DIR)]
+    L += ["", f"Allow-listed files kept byte-identical with old names ({len(kept)}; {len(phase)} are this phase's own documents):"]
+    unpinned = []
+    for p in others:
+        e = rename_map.allowed_entry(p)
+        reason, pinned = (e[1], e[2]) if e else ("", "")
+        L.append(f"  {p}: {reason} (pinned by: {pinned})")
+        if pinned.startswith("none"):
+            unpinned.append(p)
+    L += ["", "Kept with old names without a hash pin (needs your acceptance):"]
+    L += [f"  {p}" for p in unpinned] or ["  (none)"]
+    L += [
+        "Also kept: the model field of RUN_LOCK.json, and history lines (\"renamed from\" statements and the protected phase title).",
+        "",
+        f"Ollama re-tag to perform: {OLD_TAG} -> {NEW_TAG} (same digest).",
+        "",
+        ("The frozen scorer refuses benchmark scoring when the module's last commit is later than the generation start "
+        "(scripts/acceptance.py lines 612-614). Moving the module makes the rename commit that last commit, so the frozen "
+        "logic cannot score after the rename. The frozen files change in names only. The rescore and the public reproduce "
+        "command run the frozen scorer through scripts.release.frozen_rescore, which supplies the module's pre-rename pin "
+        f"commit {MODULE_PIN_COMMIT[0][:7]} ({MODULE_PIN_COMMIT[1]}) after proving from git objects that the current module "
+        f"is blob {MODULE_OLD_BLOB[:8]} renamed. Calling scripts.acceptance score --mode benchmark directly will refuse; "
+        "that is recorded as an effect of the amendment."),
+    ]
+    return "\n".join(L) + "\n"
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(prog="rename_amendment", description=__doc__)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sp = sub.add_parser("preview")
+    sp.add_argument("--out", default=DEFAULT_PREVIEW_DIR)
+    sp.set_defaults(fn=cmd_preview)
+    a = ap.parse_args(argv)
+    try:
+        return a.fn(a)
+    except AmendmentError as e:
+        print(f"REFUSED: {e}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
