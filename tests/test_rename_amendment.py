@@ -474,7 +474,7 @@ def _vr_lock(renamed: dict | None = None) -> str:
 
 
 SIDECAR = "data/benchmark/acceptance/tuned_q8.sidecar.jsonl"
-NOTE = "docs/note.txt"
+NOTE = "extra/note.txt"
 
 
 def _build_verify_repo(
