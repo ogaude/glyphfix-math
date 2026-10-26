@@ -16,6 +16,7 @@ from pathlib import Path
 from scripts.release import common as C
 from scripts.release import freeze_amendment as FA
 from scripts.release import public_paths
+from scripts.release import rename_amendment as RA
 from scripts.release.release_check import overall, result
 
 BINARY_SUFFIXES = (".png", ".pdf", ".gguf", ".safetensors", ".bin", ".pt", ".parquet")
@@ -28,6 +29,7 @@ BENCH_RECORDS = "data/benchmark/records.jsonl"
 TRAINSET = Path("data/train/sets/full/trainset.jsonl")
 HISTORY_FILE = "RELEASE_HISTORY.json"
 AMENDMENT_FILE = FA.AMENDMENT_PATH.as_posix()
+AMENDMENT2_FILE = RA.AMENDMENT2_REF
 RESULTS_FILE = C.RESULTS_JSON.as_posix()
 
 
@@ -338,14 +340,20 @@ def _published(repo: Repo, published_results) -> dict | None:
     return repo.show_json(f"HEAD:{RESULTS_FILE}")
 
 
+def _module_path(repo: Repo) -> str:
+    """The frozen acceptance module path at HEAD: the renamed one when the rename commit is in the history."""
+    return RA.NEW_MODULE if repo.blob_id(f"HEAD:{RA.NEW_MODULE}") else FA.FROZEN_MODULE
+
+
 def check_frozen_code(repo: Repo) -> dict:
     problems: list[str] = []
     lock = repo.show_json(f"HEAD:{LOCK_PATH}")
     arm = ((lock or {}).get("arms") or {}).get("tuned-crops")
     if not arm:
         return result("frozen_code", [f"{LOCK_PATH} or its tuned-crops arm is missing at HEAD"])
-    if repo.blob_id(f"HEAD:{FA.FROZEN_MODULE}") != arm.get("acceptance_module_blob"):
-        problems.append(f"{FA.FROZEN_MODULE} blob differs from RUN_LOCK.json")
+    module = _module_path(repo)
+    if repo.blob_id(f"HEAD:{module}") != arm.get("acceptance_module_blob"):
+        problems.append(f"{module} blob differs from RUN_LOCK.json")
     if repo.blob_id(f"HEAD:{FA.FROZEN_CLI}") != arm.get("acceptance_cli_blob"):
         problems.append(f"{FA.FROZEN_CLI} blob differs from RUN_LOCK.json")
     freeze = repo.show_json(f"HEAD:{FREEZE_PATH}")
@@ -370,6 +378,9 @@ def check_freeze_amendment(repo: Repo, published_results) -> dict:
         return result("freeze_amendment", ["published results.json or RUN_LOCK.json is unreadable"])
     cf = pub.get("code_freeze") or {}
     arms = [(lock.get("arms") or {}).get(a) or {} for a in FA.ARMS]
+    a2 = repo.show_json(f"HEAD:{AMENDMENT2_FILE}")
+    if a2 is not None:
+        return _check_amendment_chain(repo, pub, lock, a2)
     cli_head = repo.blob_id(f"HEAD:{FA.FROZEN_CLI}")
     mod_head = repo.blob_id(f"HEAD:{FA.FROZEN_MODULE}")
     pub_mod = {(cf.get("current_blobs") or {}).get("module"), (cf.get("lock_blobs") or {}).get("module")}
@@ -429,6 +440,165 @@ def check_freeze_amendment(repo: Repo, published_results) -> dict:
     return result("freeze_amendment", problems)
 
 
+def _commit_at(repo: Repo, *args: str) -> list[str]:
+    return repo.text("log", "--format=%H %cI", *args, check=False).splitlines()
+
+
+def _same_commit(found: str, recorded, cmap: dict | None) -> bool:
+    """`found` is "<hash> <iso date>"; it must be the recorded commit's public counterpart with the recorded date."""
+    if not (isinstance(recorded, list | tuple) and len(recorded) == 2):
+        return False
+    parts = found.split()
+    mapped = recorded[0] if cmap is None else cmap.get(recorded[0])
+    return len(parts) == 2 and bool(mapped) and parts[0] == mapped and parts[1] == recorded[1]
+
+
+def _registry_problems(repo: Repo, a2: dict) -> list[str]:
+    problems: list[str] = []
+    doc = repo.show_json(f"HEAD:{FA.REGISTRY_PATH.as_posix()}")
+    if not isinstance(doc, dict):
+        return [f"registry: {FA.REGISTRY_PATH.as_posix()} is missing or unreadable at HEAD"]
+    entries = doc.get("entries") or []
+    new = [e for e in entries if isinstance(e, dict) and e.get("tag") == RA.NEW_TAG]
+    if not new or any(e.get("ollama_digest") != RA.REGISTRY_DIGEST for e in new):
+        problems.append(f"registry: no entry with tag {RA.NEW_TAG} and the recorded ollama digest")
+    if any(isinstance(e, dict) and e.get("tag") == RA.OLD_TAG for e in entries):
+        problems.append(f"registry: an entry still has tag {RA.OLD_TAG}")
+    changes = (a2.get("registry") or {}).get("changes") or []
+    leaves = sorted((str(c.get("key", "")).rsplit(".", 1)[-1], c.get("old"), c.get("new")) for c in changes)
+    want = sorted([("candidate_tag", RA.OLD_CAND_TAG, RA.NEW_CAND_TAG), ("tag", RA.OLD_TAG, RA.NEW_TAG)])
+    if leaves != want:
+        problems.append("registry: the recorded changes are not exactly the tag and candidate_tag leaves")
+        return problems
+    for c in changes:
+        found, value = RA._resolve_record_key(doc, c["key"])
+        if not found or value != c["new"]:
+            problems.append(f"registry: {c['key']} does not hold the recorded new value at HEAD")
+    return problems
+
+
+def _check_amendment_chain(repo: Repo, pub: dict, lock: dict, a2: dict) -> dict:
+    """Amendment 1 and amendment 2 recomputed from the public objects; every difference is a finding."""
+    problems: list[str] = []
+    name = "freeze_amendment"
+    a1 = repo.show_json(f"HEAD:{AMENDMENT_FILE}")
+    if a1 is None:
+        return result(name, [f"{AMENDMENT2_FILE} is present but {AMENDMENT_FILE} is missing"])
+    cmap = _commit_map(repo)
+    cf = pub.get("code_freeze") or {}
+    arms = [(lock.get("arms") or {}).get(a) or {} for a in FA.ARMS]
+    files = a2.get("files") or {}
+    cli2, mod2 = files.get("cli") or {}, files.get("module") or {}
+    cli_head = repo.blob_id(f"HEAD:{FA.FROZEN_CLI}")
+    mod_head = repo.blob_id(f"HEAD:{RA.NEW_MODULE}")
+    problems_shape: list[str] = []
+    RA._check_shape(a2, a1, problems_shape)
+    problems += problems_shape
+
+    # the published claim stays the pre-amendment one
+    old1, new1 = a1.get("old_blob"), a1.get("new_blob")
+    if {(cf.get("current_blobs") or {}).get("cli"), (cf.get("lock_blobs") or {}).get("cli")} != {old1}:
+        problems.append("amendment 1 old_blob differs from the published code_freeze record")
+    pub_mod = {(cf.get("current_blobs") or {}).get("module"), (cf.get("lock_blobs") or {}).get("module")}
+    if pub_mod != {mod2.get("old_blob")}:
+        problems.append("amendment 2 module old_blob differs from the published code_freeze record")
+
+    # amendment 1 from objects
+    if new1 != cli2.get("old_blob") or not (new1 and repo.has_object(str(new1))):
+        problems.append("amendment 1 new_blob is not the amendment 2 cli old_blob or is not reachable")
+    old_commit, a1_commit = a1.get("old_commit") or [None, None], a1.get("amendment_commit") or [None, None]
+    mapped_old = old_commit[0] if cmap is None else cmap.get(old_commit[0])
+    if not mapped_old:
+        problems.append("amendment 1 old_commit is not in RELEASE_HISTORY.json")
+    elif repo.blob_id(f"{mapped_old}:{FA.FROZEN_CLI}") != old1:
+        problems.append("amendment 1 old_blob is not scripts/acceptance.py at the public old commit")
+    if not (old1 and new1 and repo.has_object(str(old1)) and repo.has_object(str(new1))):
+        problems.append("amendment 1 blobs are not reachable in the public history")
+    else:
+        try:
+            recorded = tuple((r["name"], r["old"], r["new"]) for r in a1.get("replacements", []))
+            if recorded != FA.REPLACEMENTS:
+                problems.append("recorded replacements differ from the expected path constants")
+            FA.prove(repo.text("cat-file", "blob", old1), repo.text("cat-file", "blob", new1), FA.REPLACEMENTS)
+        except (FA.AmendmentError, GitError, KeyError, SyntaxError, UnicodeDecodeError) as e:
+            problems.append(f"amendment 1 proof does not recompute: {e}")
+    cli_log = _commit_at(repo, "-2", "HEAD", "--", FA.FROZEN_CLI)
+    if len(cli_log) != 2 or not _same_commit(cli_log[1], a1_commit, cmap):
+        problems.append("the second to last commit touching scripts/acceptance.py is not the recorded amendment 1 commit and date")
+    if a2.get("previous_amendment_commit") != a1_commit:
+        problems.append("amendment 2 previous_amendment_commit is not the amendment 1 commit")
+
+    # amendment 2 from objects
+    if not cli_head or cli_head != cli2.get("new_blob"):
+        problems.append("amendment 2 cli new_blob differs from the HEAD scripts/acceptance.py blob")
+    if not mod_head or mod_head != mod2.get("new_blob"):
+        problems.append(f"amendment 2 module new_blob differs from the HEAD {RA.NEW_MODULE} blob")
+    if repo.blob_id(f"HEAD:{RA.OLD_MODULE}"):
+        problems.append(f"{RA.OLD_MODULE} still exists at HEAD")
+    for label, old_ref, new_ref in (("cli", cli2.get("old_blob"), FA.FROZEN_CLI), ("module", mod2.get("old_blob"), RA.NEW_MODULE)):
+        try:
+            if not (old_ref and repo.has_object(str(old_ref))):
+                raise RA.AmendmentError("old blob is not reachable")
+            RA.prove_rename(repo.text("cat-file", "blob", str(old_ref)), (repo.show(f"HEAD:{new_ref}") or b"").decode("utf-8"))
+        except (RA.AmendmentError, GitError, UnicodeDecodeError) as e:
+            problems.append(f"amendment 2 {label} rename proof does not recompute: {e}")
+    if mod2.get("old_blob") != FA.MODULE_BLOB:
+        problems.append("amendment 2 module old_blob is not the frozen module blob")
+    want = {
+        "acceptance_cli_blob": cli2.get("new_blob"),
+        "acceptance_module_blob": mod2.get("new_blob"),
+        "acceptance_cli_blob_generated": old1,
+        RA.LOCK_NEW_KEY: mod2.get("old_blob"),
+        "freeze_amendment": AMENDMENT2_FILE,
+    }
+    for arm_name, a in zip(FA.ARMS, arms, strict=True):
+        for k, v in want.items():
+            if a.get(k) != v:
+                problems.append(f"RUN_LOCK {arm_name}: {k} differs from the amendment 2 record")
+    rl = a2.get("run_lock") or {}
+    if {c.get("key") for c in rl.get("changes") or []} - RA.LOCK_RENAME_KEYS:
+        problems.append("amendment 2 RUN_LOCK changes touch keys other than the rename ones")
+    lock_blob = repo.show(f"HEAD:{LOCK_PATH}") or b""
+    if hashlib.sha256(lock_blob).hexdigest() != rl.get("sha256_after"):
+        problems.append("RUN_LOCK.json sha256 differs from the amendment 2 sha256_after")
+    problems += _registry_problems(repo, a2)
+
+    a2_commit = a2.get("amendment_commit")
+    mod_log = _commit_at(repo, "HEAD", "--", RA.NEW_MODULE)
+    if len(mod_log) != 1 or not _same_commit(mod_log[0], a2_commit, cmap):
+        problems.append(f"{RA.NEW_MODULE} is not touched by exactly the recorded amendment 2 commit and date")
+    cli_last = _commit_at(repo, "-1", "HEAD", "--", FA.FROZEN_CLI)
+    if len(cli_last) != 1 or not _same_commit(cli_last[0], a2_commit, cmap):
+        problems.append("the last commit touching scripts/acceptance.py is not the recorded amendment 2 commit and date")
+    pin = a2.get("module_pin_commit")
+    pub_pin = (cf.get("commits") or {}).get(RA.OLD_MODULE)
+    if not (isinstance(pin, list | tuple) and len(pin) == 2 and list(pin) == list(pub_pin or [])):
+        problems.append("module_pin_commit is not the published code_freeze commit of the module")
+    else:
+        pinned = pin[0] if cmap is None else cmap.get(pin[0])
+        if not pinned or repo.blob_id(f"{pinned}:{RA.OLD_MODULE}") != FA.MODULE_BLOB:
+            problems.append("the module at the public pin commit is not the frozen module blob")
+        elif repo.text("show", "-s", "--format=%cI", pinned, check=False).strip() != pin[1]:
+            problems.append("the pin commit date differs from the recorded one")
+    RA._check_rerun(a2, problems)
+
+    note = None
+    a2_hash = a2_commit[0] if isinstance(a2_commit, list | tuple) and a2_commit else None
+    mapped = a2_hash if cmap is None else (cmap or {}).get(a2_hash)
+    if mapped is None:
+        problems.append("the amendment 2 commit is not in RELEASE_HISTORY.json")
+    else:
+        info: dict = {}
+        RA._check_rewrite(Path(repo.path), a2, mapped, info, problems)
+        cr = info.get("commit_rewrite")
+        if cr is not None:
+            note = (
+                f"rename commit pure_rewrite={cr['pure_rewrite']}; latest_only_unproven_in_clone="
+                f"{cr['latest_only_unproven_in_clone']}; accepted_latest_only={[e['path'] for e in cr['accepted_latest_only']]}"
+            )
+    return result(name, problems, note=note)
+
+
 def check_history_map(repo: Repo, published_results) -> dict:
     cmap = _commit_map(repo)
     if cmap is None:
@@ -438,6 +608,7 @@ def check_history_map(repo: Repo, published_results) -> dict:
         return result("history_map", ["published results.json is unreadable"])
     problems: list[str] = []
     am = repo.show_json(f"HEAD:{AMENDMENT_FILE}") or {}
+    a2 = repo.show_json(f"HEAD:{AMENDMENT2_FILE}") or {}
     for path, (commit, date) in ((pub.get("code_freeze") or {}).get("commits") or {}).items():
         mapped = cmap.get(commit)
         if not mapped:
@@ -447,13 +618,21 @@ def check_history_map(repo: Repo, published_results) -> dict:
         if got != date:
             problems.append(f"{path}: committer date of the mapped commit differs from the published date")
         last = repo.text("log", "-1", "--format=%H %cI", "HEAD", "--", path).split()
-        if path == FA.FROZEN_CLI and am:
+        if path in (FA.FROZEN_CLI, RA.OLD_MODULE) and a2:
+            ac = a2.get("amendment_commit") or [None, None]
+            want = (cmap.get(ac[0]), ac[1])
+        elif path == FA.FROZEN_CLI and am:
             ac = am.get("amendment_commit") or [None, None]
             want = (cmap.get(ac[0]), ac[1])
         else:
             want = (mapped, date)
         if len(last) != 2 or (last[0], last[1]) != want:
             problems.append(f"{path}: last commit at HEAD is not the mapped frozen commit")
+    if a2:
+        ac = a2.get("amendment_commit") or [None, None]
+        log = _commit_at(repo, "HEAD", "--", RA.NEW_MODULE)
+        if len(log) != 1 or not _same_commit(log[0], ac, cmap):
+            problems.append(f"{RA.NEW_MODULE}: not touched by exactly the mapped amendment 2 commit")
     return result("history_map", problems)
 
 
