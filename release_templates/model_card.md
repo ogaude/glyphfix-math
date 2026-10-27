@@ -72,8 +72,10 @@ and what this model wrote, both compiled with LaTeX so you see what each output 
 
 {{examples_md}}
 
-We show no example for primes read as the letter l, or for I read as 1: the base model made too few of those mistakes
-on the benchmark to find a clear case, which is also why the table below makes no claim for them.
+Some of these classes had very few base-model errors on the benchmark (see the table below). An example here shows that
+the model can do something in one case, not that it does so reliably: the prime and Greek-letter examples are single
+events, and we make no claim for those classes. We show no example for I read as 1, because the cases we found are long
+multi-line equations that are hard to read at this size.
 
 These examples were picked by hand to be readable, not drawn at random. The model also makes mistakes: {{r2w}} benchmark crops that the
 base model got right are wrong with this model. See Results and the limits below.
