@@ -11,12 +11,14 @@ curated mix that includes one the tuned model still gets wrong.
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
+import re
 import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 from glyphfix_math import render
 
@@ -32,10 +34,15 @@ EXAMPLES = (
     ("18395b29fe0f19ef", "greek_latin", "The base model read the Greek letter chi as the Latin x; this model read it correctly."),
     ("01d56f4f68d6d327", "decoration", "A miss: both models lose the bold on the Greek letter (the reference is `\\boldsymbol{\\theta}`)."),
 )
-WIDTH = 720
-PAD = 12
-LABEL_H = 18
+WIDTH = 860
+PAD = 14
+LABEL_H = 34
 BG = (255, 255, 255)
+GOOD, BAD, GREY = (22, 128, 61), (190, 30, 45), (60, 60, 60)
+_FONTS = ("/usr/share/fonts/TTF/DejaVuSans-Bold.ttf", "DejaVuSans-Bold.ttf")
+_TOKEN = re.compile(r"\\[A-Za-z]+|\\.|[A-Za-z]|[0-9]|\S")
+_NOISE = {"{", "}", "\\left", "\\right", "\\,", "\\!", "\\;"}
+_SAME = {"\\le": "\\leq", "\\ge": "\\geq"}
 
 
 class ExampleError(RuntimeError):
@@ -55,7 +62,7 @@ def _records(path: Path) -> dict[str, dict]:
 
 def _fit(img: Image.Image) -> Image.Image:
     """Scale to the common width without enlarging more than 1.6x, so every row stays readable."""
-    scale = min((WIDTH - 2 * PAD) / img.width, 1.6)
+    scale = min((WIDTH - 2 * PAD) / img.width, 2.0)
     return img.resize((max(1, round(img.width * scale)), max(1, round(img.height * scale))), Image.LANCZOS)
 
 
@@ -67,17 +74,57 @@ def _bitmap_to_image(arr: np.ndarray) -> Image.Image:
     return img.convert("RGB")
 
 
-def compose(rows: list[tuple[str, Image.Image]]) -> Image.Image:
-    fitted = [(label, _fit(img)) for label, img in rows]
-    height = PAD + sum(LABEL_H + im.height + PAD for _, im in fitted)
+def _font(size: int) -> ImageFont.ImageFont:
+    for f in _FONTS:
+        try:
+            return ImageFont.truetype(f, size)
+        except OSError:
+            continue
+    return ImageFont.load_default(size)
+
+
+def _tokens(latex: str) -> list[str]:
+    toks = [t for t in _TOKEN.findall(latex) if t not in _NOISE]
+    return [_SAME.get(t, t) for t in toks]
+
+
+def differs(reference: str, pred: str, limit: int = 3) -> str:
+    """The few token changes that turn the paper's LaTeX into the prediction, e.g. `\\mathsf A` -> `A`."""
+    a, b = _tokens(reference), _tokens(pred)
+    ops = [o for o in difflib.SequenceMatcher(None, a, b, autojunk=False).get_opcodes() if o[0] != "equal"]
+    counts: dict[str, int] = {}
+    for _, i1, i2, j1, j2 in ops:
+        key = f"{' '.join(a[i1:i2]) or '(nothing)'}  ->  {' '.join(b[j1:j2]) or '(nothing)'}"
+        counts[key] = counts.get(key, 0) + 1
+    parts = [k + (f"  (x{n})" if n > 1 else "") for k, n in counts.items()]
+    return "; ".join(parts[:limit]) + (" ..." if len(parts) > limit else "") if parts else "(same tokens)"
+
+
+def compose(rows: list[tuple[str, Image.Image, bool | None, str]]) -> Image.Image:
+    """rows: (label, image, matches the paper or None for the paper itself, one line saying what differs)."""
+    fitted = [(label, _fit(img), ok, note) for label, img, ok, note in rows]
+    note_h = 22
+    height = PAD + sum(LABEL_H + im.height + (note_h if note else 0) + PAD for _, im, _, note in fitted)
     canvas = Image.new("RGB", (WIDTH, height), BG)
     d = ImageDraw.Draw(canvas)
+    big, small = _font(22), _font(15)
     y = PAD
-    for label, im in fitted:
-        d.text((PAD, y), label, fill=(90, 90, 90))
+    for label, im, ok, note in fitted:
+        colour = GREY if ok is None else (GOOD if ok else BAD)
+        mark = "" if ok is None else ("   matches the paper" if ok else "   does not match the paper")
+        mark_glyph = "" if ok is None else ("OK" if ok else "X")
+        d.text((PAD, y), label, fill=colour, font=big)
+        if mark:
+            x = PAD + d.textlength(label, font=big) + 10
+            d.text((x, y + 4), f"[{mark_glyph}]{mark}", fill=colour, font=small)
         y += LABEL_H
+        d.rectangle((PAD - 4, y - 4, WIDTH - PAD + 4, y + im.height + 2), outline=colour, width=2)
         canvas.paste(im, (PAD, y))
-        y += im.height + PAD
+        y += im.height
+        if note:
+            d.text((PAD, y + 4), note, fill=colour, font=small)
+            y += note_h
+        y += PAD
     return canvas
 
 
@@ -106,9 +153,11 @@ def build(out: Path = OUT_DIR) -> list[dict]:
             raise ExampleError(f"example {rid}: a prediction did not compile ({rb.status}, {rt.status})")
         crop = CROP_DIR / b["paper_id"] / f"{rid}.png"
         rows = [
-            ("Goal: the paper", Image.open(crop).convert("RGB")),
-            ("Base model", _bitmap_to_image(render.load_bitmap(rb))),
-            ("This model", _bitmap_to_image(render.load_bitmap(rt))),
+            ("Goal: the paper", Image.open(crop).convert("RGB"), None, ""),
+            ("Base model", _bitmap_to_image(render.load_bitmap(rb)), bool(b["render_identical"]),
+             "paper -> base: " + differs(b["gt_latex"], b["pred_latex"])),
+            ("This model", _bitmap_to_image(render.load_bitmap(rt)), bool(t["render_identical"]),
+             "paper -> this model: " + differs(b["gt_latex"], t["pred_latex"])),
         ]
         name = f"example_{n + 1}_{cls}.png"
         compose(rows).save(out / name, optimize=True)
