@@ -16,6 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from scripts.release import card_examples
 from scripts.release.common import (
     ADAPTER_SHA256,
     ADAPTER_SUBDIR,
@@ -132,6 +133,37 @@ def files_table(rows: list[tuple[str, int, str]]) -> str:
     return "\n".join(lines)
 
 
+def per_class_table(per_class: list[dict]) -> str:
+    """Markdown table of the string-tier error counts per class, straight from results.json."""
+    lines = [
+        "| Class | Base model errors | This model errors | Of | Claim |",
+        "|-------|-------------------|-------------------|----|-------|",
+    ]
+    for c in per_class:
+        lines.append(
+            f"| `{c['class']}` | {c['stock_errors']} | {c['tuned_errors']} | {c['denom']} | {c['claim']} |"
+        )
+    return "\n".join(lines)
+
+
+def examples_md(examples: list[dict]) -> str:
+    """Markdown for the card's example images, each with its note and credit (paper, authors, license)."""
+    if not examples:
+        return "(Example images are added when the model is staged.)"
+    blocks = []
+    for e in examples:
+        src = e["source"]
+        verdict = "this model is right, the base model is not" if e["tuned_correct"] and not e["base_correct"] else (
+            "neither model is right" if not e["tuned_correct"] and not e["base_correct"] else "see the images")
+        blocks.append(
+            f"**{e['class']}.** {e['note']} ({verdict})\n\n"
+            f"![{e['class']}: the paper, the base model, this model](assets/{e['file']})\n\n"
+            f"<sub>Equation from [arXiv {src['arxiv_id']}]({src['arxiv_url']}), {', '.join(src['authors'])}, "
+            f"\u201c{src['title']}\u201d, licensed {src['license_spdx']}.</sub>"
+        )
+    return "\n\n".join(blocks)
+
+
 def render_model_card(
     template: str,
     results: dict,
@@ -139,6 +171,8 @@ def render_model_card(
     file_table: list[tuple[str, int, str]],
     modelfile: str,
     train_rows: int = EXPECTED["train_rows"],
+    train_papers: int = EXPECTED["train_papers"],
+    examples: list[dict] | None = None,
 ) -> str:
     h, t, rc, v = results["headline"], results["transfer"], entry["run_config"], entry["versions"]
     values = {
@@ -158,6 +192,9 @@ def render_model_card(
         "epochs": rc["epochs"],
         "step": entry["selection"]["chosen_step"],
         "train_rows": train_rows,
+        "train_papers": train_papers,
+        "per_class_table": per_class_table(results["per_class"]),
+        "examples_md": examples_md(examples or []),
         "trainset_sha256": entry["trainset_sha256"],
         "n": h["n"],
         "n_papers": h["n_papers"],
@@ -261,7 +298,8 @@ def stage(out: Path = MODEL_DIR, projector_blob: Path | None = None) -> dict:
             out / MMPROJ_NAME,
         )
     ]
-    card = render_model_card(CARD_TEMPLATE.read_text(encoding="utf-8"), results, entry, table, modelfile)
+    examples = card_examples.build(out / "assets")
+    card = render_model_card(CARD_TEMPLATE.read_text(encoding="utf-8"), results, entry, table, modelfile, examples=examples)
     (out / "README.md").write_text(card, encoding="utf-8")
     write_sha256sums(out)
     return {"out": str(out), "ollama_digest": OLLAMA_DIGEST, "files": len(table)}

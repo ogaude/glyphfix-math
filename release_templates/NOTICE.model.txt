@@ -20,5 +20,10 @@ Third-party components
 4. The conversion to GGUF and the Q8_0 quantization used llama.cpp (MIT License) at commit {{llama_cpp_commit}}.
    https://github.com/ggml-org/llama.cpp
 
+5. The images under assets/ are crops of equations from arXiv papers licensed CC BY 4.0 (or CC0 1.0), shown with the
+   rendered outputs of the two models. Each paper, its authors and its license are credited in README.md and in
+   assets/examples.json. These images are not covered by the Apache License of this packaging; they keep the license of
+   their paper (https://creativecommons.org/licenses/by/4.0/).
+
 This project is not affiliated with, endorsed by, or sponsored by LightOn. LightOn and LightOnOCR are used only to
 identify the base model.

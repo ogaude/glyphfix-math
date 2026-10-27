@@ -43,6 +43,7 @@ MODEL_ALLOW = (
         r"^(README\.md|NOTICE|LICENSE|PROVENANCE\.json|Modelfile|SHA256SUMS|text-q8_0\.gguf|mmproj-stock-q8_0\.gguf"
         r"|adapter_config\.json|adapter_model\.safetensors)$"
     ),
+    re.compile(r"^assets/(example_[0-9]+_[a-z_0-9]+\.png|examples\.json)$"),
 )
 
 
