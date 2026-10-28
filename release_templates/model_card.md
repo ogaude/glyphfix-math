@@ -45,6 +45,16 @@ expect rough edges. We plan to update it in a later version, with no date yet, w
 (primes, Greek letters, decorations, I and 1), because this version's training data was not built around them and the
 results below show it. Numbers on this page describe this version only and will change.
 
+## Why this project
+
+Mathematical formulas are the part of a PDF where OCR mistakes cost the most. One wrong glyph, a prime read as the
+letter l, a Greek letter read as a Latin one, a lost bold or bar, an I read as 1, can change which mathematical object
+is meant, and a reader may not notice. We want OCR of formulas in PDFs to be as close to correct as we can get it.
+
+This release is a first, small step. We work on images of single display equations because they are easy to measure,
+and we score them by whether the output typesets to the same bitmap as the paper's LaTeX. We checked full pages only on
+50 pages, and on full pages we have not shown an improvement yet (see Results).
+
 ## The problem
 
 A general OCR model reads an equation and returns LaTeX that usually looks right at a glance. On a closer look the
@@ -271,6 +281,8 @@ This release is meant to be updated, with no date yet. The plan, which may chang
 - a new, separate benchmark, because the current one is frozen and its counts for the named classes are too small;
   any claim about the new training would need it
 - a look at why the "same text, render differs" bucket grew
+- more evidence on full pages, since that is the real target: a larger and separate set of pages, and a look at the
+  unbalanced `$$` fences that cost this model equations on two test pages
 
 We would be glad to hear about equations this model gets wrong. Issues on the code repository are welcome.
 

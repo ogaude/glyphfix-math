@@ -2,6 +2,16 @@
 
 This is an independent project. It is not affiliated with, endorsed by, or sponsored by LightOn.
 
+## Why this project
+
+Mathematical formulas are the part of a PDF where OCR mistakes cost the most. One wrong glyph, a prime read as the
+letter l, a Greek letter read as a Latin one, a lost bold or bar, an I read as 1, can change which mathematical object
+is meant, and a reader may not notice. We want OCR of formulas in PDFs to be as close to correct as we can get it.
+
+This release is a first, small step. We work on images of single display equations because they are easy to measure,
+and we score them by whether the output typesets to the same bitmap as the paper's LaTeX. We checked full pages only on
+50 pages, and on full pages we have not shown an improvement yet (see Results below).
+
 ## Status: an initial release
 
 This is our first release, and we want to be honest about what it is. The adapter scores higher than the base model on the frozen benchmark, with a paper-level confidence interval that excludes zero, but about half of the drop in failures is in layout, spacing and alignment wrapper rows, and a broad group of errors is still not split into named classes. Of the classes that motivated the project, decorations show fewer errors, dropped primes show no significant change, and prime read as l, Greek read as Latin and I read as 1 have too few events in the benchmark to claim anything. The per-class table in the results shows each one. Treat the results as a starting point, not a finished product.
@@ -21,6 +31,8 @@ We want to build on it, with no date yet. The plan, which may change as we learn
 - a new, separate benchmark, because the current one is frozen and its counts for the named classes are too small;
   any claim about the new training would need it
 - a look at why the "same text, render differs" bucket grew
+- more evidence on full pages, since that is the real target: a larger and separate set of pages, and a look at the
+  unbalanced `$$` fences that cost this model equations on two test pages
 
 Reports of equations the model gets wrong are welcome as issues on this repository.
 
