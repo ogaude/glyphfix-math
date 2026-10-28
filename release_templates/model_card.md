@@ -41,9 +41,9 @@ A small LoRA adapter, and a merged Q8_0 GGUF for Ollama, that nudge the base mod
 into LaTeX closer to what the paper's author actually typed. Input is an image of one display equation, output is LaTeX.
 
 **This is a first, early release.** It is the first model of this project and a first attempt at the problem, so
-expect rough edges. We plan to update it soon with a dataset aimed more specifically at each error class (primes,
-Greek letters, decorations, I and 1), because this version's training data was not built around them and the results
-below show it. Numbers on this page describe this version only and will change.
+expect rough edges. We plan to update it in a later version, with no date yet, with a dataset aimed more specifically at each error class
+(primes, Greek letters, decorations, I and 1), because this version's training data was not built around them and the
+results below show it. Numbers on this page describe this version only and will change.
 
 ## The problem
 
@@ -59,8 +59,10 @@ Plain text metrics hide this: two LaTeX strings can differ in one glyph and scor
 mines the base model's own errors on real papers, trains a LoRA on them, and scores the result by compiling both the
 reference and the prediction and comparing the rendered bitmaps ("render-identical").
 
-What we can and cannot say so far (see Results): on this benchmark the base model made very few errors on primes,
-Greek letters or I and 1, so there was little to improve and we make no claim there. What we did measure is a smaller
+What we can and cannot say so far (see Results): on this benchmark the base model made few errors on a prime read as l
+(1), Greek read as Latin (18) or I read as 1 (3), so there was little to measure and we make no claim for those
+classes. The scorer flagged 31 rows as dropped primes and the change was not significant; the prime count is unchanged
+in most of those rows, so the flag is probably partly an artifact of the scorer. What we did measure is a smaller
 number of `decoration` errors (see the table below) and of errors in the large `other` group, which includes
 typesetting choices such as `\mathrm` against `\rm` or which script letter the author used. We are still learning
 what that group contains.
@@ -245,7 +247,8 @@ used for training. A row falls in the first bucket that fits, so the buckets do 
 
 {{buckets_table}}
 
-Most of the gain is in layout, spacing and convention, which are partly the author's typesetting choices. The
+About half of the drop in failures is in layout / sizing, spacing and alignment wrapper rows, which are partly the
+author's typesetting choices. The
 `content` bucket is still the largest and we have not yet read it closely. The last bucket grew from 35 to 51 crops
 and we have not yet found out why. `scripts/error_buckets.py` in the code repository reproduces the table.
 
@@ -259,12 +262,15 @@ training data. Always check the output of any OCR model before relying on it.
 
 ## What comes next
 
-This release will be updated soon. The plan, which may change as we learn more:
+This release is meant to be updated, with no date yet. The plan, which may change as we learn more:
 
-- a training set built around each error class, with more examples of primes, Greek letters, decorations and I
-  against 1, so that these classes have enough events to measure
-- a new, separate benchmark for those classes, because the current one is frozen and has too few errors in them
-- a check of what the large `other` group contains, so that it can be split into named classes
+- a training set built around each error class (primes, Greek letters, decorations, I against 1), so that these classes
+  have enough events to measure
+- possibly more training on the largest remaining buckets (layout / sizing, spacing, alignment wrappers, content),
+  after we have read the `content` bucket more closely
+- a new, separate benchmark, because the current one is frozen and its counts for the named classes are too small;
+  any claim about the new training would need it
+- a look at why the "same text, render differs" bucket grew
 
 We would be glad to hear about equations this model gets wrong. Issues on the code repository are welcome.
 
@@ -277,7 +283,7 @@ REPRODUCE.md at the repository root).
 
 Apache License 2.0 for the adapter, the merged GGUF and this packaging. See NOTICE and LICENSE. Third-party credits,
 including the base model, are in NOTICE. The example images (`example_*.png`) are our renderings of equations from
-papers licensed CC BY 4.0 or CC0 and keep the license of their paper, credited under each image; the charts
+papers licensed CC BY 3.0, CC BY 4.0 or CC0 and keep the license of their paper, credited under each image; the charts
 (`chart_*.svg`) are ours, built from the published results, under Apache 2.0.
 
 Versions: this is project release v1.0.0, with adapter tag `lora-v1.0.0`, dataset tag `dataset-v1.0.0` and benchmark

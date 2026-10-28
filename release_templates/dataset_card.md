@@ -41,13 +41,23 @@ This dataset is an independent project. It is not affiliated with, endorsed by, 
 
 This is our first release and we want to be honest about it. The train split is what the first LoRA was trained on, and
 the benchmark is the frozen set it was scored on. They were not built class by class: on this benchmark the base model
-made very few errors on primes, Greek letters or I against 1, so those classes have too few examples to measure
-anything, and most of the measured gain was in a large group of layout, spacing and convention errors. The model card
+made few errors on a prime read as l, Greek read as Latin or I read as 1 (and the dropped-prime flags are probably
+partly a scorer artifact), so those classes have too few examples to measure anything, and about half of the drop in
+failures was in layout, spacing and alignment wrapper rows. The model card
 has the per-class table and a breakdown of the remaining errors.
 
-We will build on it. The plan, which may change as we learn more, is a training set built around each error class and
-a new, separate benchmark for those classes, released as a new version of this dataset. The current benchmark stays
-frozen so that results on it remain comparable.
+We want to build on it, with no date yet. The plan, which may change as we learn more:
+
+- a training set built around each error class (primes, Greek letters, decorations, I against 1), so that these classes
+  have enough events to measure
+- possibly more training on the largest remaining buckets (layout / sizing, spacing, alignment wrappers, content),
+  after we have read the `content` bucket more closely
+- a new, separate benchmark, because the current one is frozen and its counts for the named classes are too small;
+  any claim about the new training would need it
+- a look at why the "same text, render differs" bucket grew
+
+New rows would come as a new version of this dataset. The current benchmark stays frozen so that results on it remain
+comparable.
 
 ## Splits
 
