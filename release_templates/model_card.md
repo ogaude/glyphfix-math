@@ -69,8 +69,10 @@ what that group contains.
 
 ### Examples
 
-Each image is a real benchmark equation: the paper's own typesetting on top (the goal), then what the base model wrote
-and what this model wrote, both compiled with LaTeX so you see what each output actually looks like.
+Each image is a real benchmark equation. The top image (the goal) is our rendering of the equation from the paper's
+LaTeX source with one fixed preamble, cropped to the ink, so it is not a scan of the printed paper and can differ from
+it in size and spacing. Below it are what the base model wrote and what this model wrote, both compiled with the same
+preamble, so you see what each output looks like.
 
 {{examples_md}}
 
@@ -199,7 +201,7 @@ are `scripts/export_merge.py` and `scripts/export_lora.sh` in the code repositor
 Trained on {{train_rows}} equation crops from {{train_papers}} arXiv papers, selected from the base model's own
 errors and oversampled by error class. Every paper is CC BY or CC0 and the dataset keeps per-record attribution:
 https://huggingface.co/datasets/@@HF_NAMESPACE@@/@@DATASET_NAME@@. The benchmark papers are split off by paper and
-frozen before any mining or training, and never used to train.
+frozen before any mining or training. We did not train on it, and a leak scan in the code repository checks this.
 
 ## Training
 
@@ -273,7 +275,13 @@ REPRODUCE.md at the repository root).
 
 ## License
 
-Apache License 2.0. See NOTICE and LICENSE. Third-party credits, including the base model, are in NOTICE.
+Apache License 2.0 for the adapter, the merged GGUF and this packaging. See NOTICE and LICENSE. Third-party credits,
+including the base model, are in NOTICE. The example images (`example_*.png`) are our renderings of equations from
+papers licensed CC BY 4.0 or CC0 and keep the license of their paper, credited under each image; the charts
+(`chart_*.svg`) are ours, built from the published results, under Apache 2.0.
+
+Versions: this is project release v1.0.0, with adapter tag `lora-v1.0.0`, dataset tag `dataset-v1.0.0` and benchmark
+`benchmark-v1` (see VERSIONING.md in the code repository).
 
 Contact: @@CONTACT_EMAIL@@
 

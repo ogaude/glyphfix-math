@@ -160,7 +160,8 @@ def examples_md(examples: list[dict]) -> str:
             f"**{e['class']}.** {e['note']} ({verdict})\n\n"
             f"![{e['class']}: the paper, the base model, this model](assets/{e['file']})\n\n"
             f"<sub>Equation from [arXiv {src['arxiv_id']}]({src['arxiv_url']}), {', '.join(src['authors'])}, "
-            f"\u201c{src['title']}\u201d, licensed {src['license_spdx']}.</sub>"
+            f"\u201c{src['title']}\u201d, licensed [{src['license_spdx']}]({src.get('license_uri', '')}). "
+            "Changed from the paper: re-typeset by us from its LaTeX source and cropped.</sub>"
         )
     return "\n\n".join(blocks)
 

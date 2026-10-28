@@ -112,7 +112,7 @@ def compose(rows: list[tuple[str, Image.Image, bool | None, str]]) -> Image.Imag
     y = PAD
     for label, im, ok, note in fitted:
         colour = GREY if ok is None else (GOOD if ok else BAD)
-        mark = "" if ok is None else ("   matches the paper" if ok else "   does not match the paper")
+        mark = "" if ok is None else ("   matches the goal" if ok else "   does not match the goal")
         mark_glyph = "" if ok is None else ("OK" if ok else "X")
         d.text((PAD, y), label, fill=colour, font=big)
         if mark:
@@ -154,11 +154,11 @@ def build(out: Path = OUT_DIR) -> list[dict]:
             raise ExampleError(f"example {rid}: a prediction did not compile ({rb.status}, {rt.status})")
         crop = CROP_DIR / b["paper_id"] / f"{rid}.png"
         rows = [
-            ("Goal: the paper", Image.open(crop).convert("RGB"), None, ""),
+            ("Goal: the paper's LaTeX", Image.open(crop).convert("RGB"), None, ""),
             ("Base model", _bitmap_to_image(render.load_bitmap(rb)), bool(b["render_identical"]),
-             "paper -> base: " + differs(b["gt_latex"], b["pred_latex"])),
+             "goal -> base: " + differs(b["gt_latex"], b["pred_latex"])),
             ("This model", _bitmap_to_image(render.load_bitmap(rt)), bool(t["render_identical"]),
-             "paper -> this model: " + differs(b["gt_latex"], t["pred_latex"])),
+             "goal -> this model: " + differs(b["gt_latex"], t["pred_latex"])),
         ]
         name = f"example_{n + 1}_{cls}.png"
         compose(rows).save(out / name, optimize=True)

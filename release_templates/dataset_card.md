@@ -30,9 +30,10 @@ configs:
 # @@DATASET_NAME@@
 
 Images of display equations from open-access mathematics papers, paired with the canonicalized LaTeX that produced
-them. The images are rendered from the papers' own LaTeX source, so the label is exact for the rendered glyphs. The
-set targets glyph-level notation errors made by OCR models: primes, Greek letters read as Latin ones, bold, bar and
-underline decorations, and the letter I read as the digit 1.
+them. The images are rendered by us from the papers' own LaTeX source, so each label should match the rendered glyphs,
+though we have not checked every row by hand. The set was put together with glyph-level notation errors of OCR models
+in mind: primes, Greek letters read as Latin ones, bold, bar and underline decorations, and the letter I read as the
+digit 1. It does not yet contain enough examples of those classes to measure them (see the status below).
 
 This dataset is an independent project. It is not affiliated with, endorsed by, or sponsored by LightOn.
 
@@ -114,8 +115,10 @@ class with few rows cannot support a claim about a model, so check the counts be
 ## License
 
 The dataset repository is licensed CC BY 4.0. Every record carries the license of its source paper in
-`license_spdx` and `license_uri`; only papers under CC BY 3.0, CC BY 4.0 or CC0 are included. {{train_cc0}} train rows
-and {{bench_cc0}} benchmark rows come from CC0-1.0 papers. Our added labels and annotations are CC BY 4.0.
+`license_spdx` and `license_uri`; we included only papers that our checks found under CC BY 3.0, CC BY 4.0 or CC0, with the version pinned because the license is per paper version. Please check the license of a paper yourself before you rely on it. {{train_cc0}} train rows
+and {{bench_cc0}} benchmark rows come from CC0-1.0 papers. Our added labels and annotations are CC BY 4.0, Copyright 2026 @@COPYRIGHT_HOLDER@@.
+
+Versions: this is project release v1.0.0, dataset tag `dataset-v1.0.0`, benchmark `benchmark-v1` (see VERSIONING.md in the code repository).
 
 ## Attribution
 

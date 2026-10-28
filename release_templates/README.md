@@ -4,7 +4,7 @@ This is an independent project. It is not affiliated with, endorsed by, or spons
 
 ## Status: an initial release
 
-This is our first release, and we want to be honest about what it is. The adapter gives a measurable gain on the frozen benchmark, but most of that gain comes from a broad group of errors we have not yet split into named classes. Of the classes that motivated the project, decorations show fewer errors, dropped primes show no significant change, and prime read as l, Greek read as Latin and I read as 1 have too few events in the benchmark to claim anything. The per-class table in the results shows each one. Treat the results as a starting point, not a finished product.
+This is our first release, and we want to be honest about what it is. The adapter scores higher than the base model on the frozen benchmark, with a paper-level confidence interval that excludes zero, but most of that gain comes from a broad group of errors we have not yet split into named classes. Of the classes that motivated the project, decorations show fewer errors, dropped primes show no significant change, and prime read as l, Greek read as Latin and I read as 1 have too few events in the benchmark to claim anything. The per-class table in the results shows each one. Treat the results as a starting point, not a finished product.
 
 ![Render-identical rate, base model against this model](results/charts/chart_headline.svg)
 
@@ -14,6 +14,8 @@ Of the 1,543 crops the base model gets wrong on the benchmark, 935 remain wrong 
 
 We will build on it, including more training on the layout, spacing and content buckets above: a training set built around each error class, a new and separate benchmark for those classes, and a closer look at what the large `other` group contains. The plan may change as we learn more. Reports of equations the model gets wrong are welcome as issues on this repository.
 
+Versions: this is project release v1.0.0 (see `VERSIONING.md`), with tags `lora-v1.0.0`, `dataset-v1.0.0` and `benchmark-v1`.
+
 ## What the project is
 
 A LoRA adapter for LightOnOCR-3-4B, trained to reduce math-notation errors when the model transcribes equations from research papers. The errors that motivated it are a prime read as the letter l or dropped, a Greek letter read as a Latin one (upsilon as v), decorations such as bold, bar and underline lost, and I read as 1. See the status above for what the benchmark does and does not show for each.
@@ -21,7 +23,7 @@ A LoRA adapter for LightOnOCR-3-4B, trained to reduce math-notation errors when 
 The repository holds the code, the evaluation and the evidence behind three published artifacts:
 
 - the adapter and a merged Q8_0 GGUF for Ollama: https://huggingface.co/@@HF_NAMESPACE@@/@@MODEL_NAME@@
-- the license-clean equation dataset, {{train_rows}} training rows from {{train_papers}} papers and a frozen held-out benchmark of {{bench_rows}} rows from {{bench_papers}} papers, every row from a CC BY or CC0 arXiv paper with its attribution: https://huggingface.co/datasets/@@HF_NAMESPACE@@/@@DATASET_NAME@@
+- the equation dataset, built only from CC BY and CC0 arXiv papers with the license checked per paper version as far as we could, {{train_rows}} training rows from {{train_papers}} papers and a frozen held-out benchmark of {{bench_rows}} rows from {{bench_papers}} papers, every row with its paper's attribution: https://huggingface.co/datasets/@@HF_NAMESPACE@@/@@DATASET_NAME@@
 - the evaluation: the frozen scorer, the predictions of both models and the scored results, all under this repository
 
 ## Use the model
@@ -77,7 +79,8 @@ This history was filtered from the development repository to leave out unrelease
 
 ## Licenses
 
-- Code: Apache-2.0 (see `LICENSE` and `NOTICE`).
+- Code: Apache-2.0 (see `LICENSE` and `NOTICE`). The charts under `results/charts/` are ours, also Apache-2.0.
+- Model files (the adapter and the merged GGUF) on the model page: Apache-2.0. Its example images keep the license of their papers.
 - Data rows: CC BY 4.0 or CC0 1.0 per record, as listed with authors and sources in `ATTRIBUTION.md` and `ATTRIBUTION.jsonl`.
 - Our labels and annotations: CC BY 4.0.
 - The base model LightOnOCR-3-4B is Apache-2.0, by LightOn.
