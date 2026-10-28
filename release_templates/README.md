@@ -50,6 +50,8 @@ The model page has the full steps, including llama.cpp and PEFT: https://hugging
 
 ## Results
 
+The verdict below is our pre-registered rule applied to this one benchmark. It says the gain on these crops is unlikely to be chance. It does not say the model is better on other equations, and the page-level numbers further down are less certain.
+
 {{results_md}}
 Full report: [evidence/acceptance/ACCEPTANCE.md](evidence/acceptance/ACCEPTANCE.md). Index of every result file with its sha256: [results/README.md](results/README.md).
 
