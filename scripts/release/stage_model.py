@@ -16,7 +16,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from scripts.release import card_examples
+from scripts import error_buckets
+from scripts.release import card_examples, charts
 from scripts.release.common import (
     ADAPTER_SHA256,
     ADAPTER_SUBDIR,
@@ -173,6 +174,7 @@ def render_model_card(
     train_rows: int = EXPECTED["train_rows"],
     train_papers: int = EXPECTED["train_papers"],
     examples: list[dict] | None = None,
+    buckets_table: str = "",
 ) -> str:
     h, t, rc, v = results["headline"], results["transfer"], entry["run_config"], entry["versions"]
     values = {
@@ -195,6 +197,8 @@ def render_model_card(
         "train_papers": train_papers,
         "per_class_table": per_class_table(results["per_class"]),
         "examples_md": examples_md(examples or []),
+        "buckets_table": buckets_table,
+        "ollama_version": OLLAMA_VERSION,
         "trainset_sha256": entry["trainset_sha256"],
         "n": h["n"],
         "n_papers": h["n_papers"],
@@ -299,7 +303,11 @@ def stage(out: Path = MODEL_DIR, projector_blob: Path | None = None) -> dict:
         )
     ]
     examples = card_examples.build(out / "assets")
-    card = render_model_card(CARD_TEMPLATE.read_text(encoding="utf-8"), results, entry, table, modelfile, examples=examples)
+    charts.build(out / "assets", results)
+    buckets = error_buckets.render(*(error_buckets.count(error_buckets.load(d)) for d in error_buckets.DEFAULT_DIRS))
+    card = render_model_card(
+        CARD_TEMPLATE.read_text(encoding="utf-8"), results, entry, table, modelfile, examples=examples, buckets_table=buckets
+    )
     (out / "README.md").write_text(card, encoding="utf-8")
     write_sha256sums(out)
     return {"out": str(out), "ollama_digest": OLLAMA_DIGEST, "files": len(table)}

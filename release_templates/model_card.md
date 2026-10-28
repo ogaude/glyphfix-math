@@ -65,6 +65,8 @@ number of `decoration` errors (see the table below) and of errors in the large `
 typesetting choices such as `\mathrm` against `\rm` or which script letter the author used. We are still learning
 what that group contains.
 
+![How the dataset, the LoRA and the evaluation fit together](assets/chart_pipeline.svg)
+
 ### Examples
 
 Each image is a real benchmark equation: the paper's own typesetting on top (the goal), then what the base model wrote
@@ -74,8 +76,9 @@ and what this model wrote, both compiled with LaTeX so you see what each output 
 
 Some of these classes had very few base-model errors on the benchmark (see the table below). An example here shows that
 the model can do something in one case, not that it does so reliably: the prime and Greek-letter examples are single
-events, and we make no claim for those classes. We show no example for I read as 1, because the cases we found are long
-multi-line equations that are hard to read at this size.
+events, and we make no claim for those classes. We show no example for a dropped prime, because the benchmark has no
+clear case: most rows the scorer flags still have all their primes, and the rest lost whole lines or cells. We show none
+for I read as 1 either, because the cases we found are long multi-line equations that are hard to read at this size.
 
 These examples were picked by hand to be readable, not drawn at random. The model also makes mistakes: {{r2w}} benchmark crops that the
 base model got right are wrong with this model. See Results and the limits below.
@@ -97,18 +100,58 @@ base model got right are wrong with this model. See Results and the limits below
 
 The adapter is safetensors only and the repository contains no custom code and no pickle files.
 
-## Use with Ollama
+## Download
 
-Download the whole folder, change into it and build the model:
+You need the Hugging Face CLI (`pip install -U huggingface_hub`). For Ollama or llama.cpp, download the whole
+repository. It is about 5 GB, mostly the Q8_0 text GGUF (see the file sizes above):
 
 ```
-cd <downloaded folder>
+hf download @@HF_NAMESPACE@@/@@MODEL_NAME@@ --local-dir @@MODEL_NAME@@
+```
+
+For PEFT you only need the adapter files, about 250 MB. The base model, about 9 GB in bf16, is
+downloaded separately by transformers the first time you load it:
+
+```
+hf download @@HF_NAMESPACE@@/@@MODEL_NAME@@ --include "adapter_*" --local-dir @@MODEL_NAME@@-adapter
+```
+
+Without the CLI, the same from Python:
+
+```python
+from huggingface_hub import snapshot_download
+
+snapshot_download("@@HF_NAMESPACE@@/@@MODEL_NAME@@", local_dir="@@MODEL_NAME@@")
+```
+
+The PEFT snippet below loads the adapter by repository id, so it needs no manual download at all.
+
+## Use with Ollama
+
+From the downloaded folder, build the model:
+
+```
+cd @@MODEL_NAME@@
 ollama create @@MODEL_NAME@@ -f Modelfile
+ollama run @@MODEL_NAME@@
 ```
 
 The Modelfile uses relative paths, so run the command from inside the downloaded folder. The prompt is the image alone
 with no text, and decoding is greedy (temperature 0). The Modelfile sets the context to {{num_ctx}} tokens and the
 output cap to {{num_predict}} tokens.
+
+## Use with llama.cpp
+
+The two GGUF files in the repository (`text-q8_0.gguf` and `mmproj-stock-q8_0.gguf`) also load in `llama-server`:
+
+```
+llama-server -m text-q8_0.gguf --mmproj mmproj-stock-q8_0.gguf -c 8192 --host 127.0.0.1 --port 8080
+```
+
+Send one user message that holds only the image, with `temperature` 0 and `"chat_template_kwargs": {"enable_thinking": false}`
+in the request to `/v1/chat/completions`. We tested this path only with the `llama-server` build that ships with
+Ollama {{ollama_version}}, on CPU, as a second-engine check of the benchmark (see the code repository); we did not test
+other llama.cpp builds.
 
 ## Use with PEFT
 
@@ -175,6 +218,10 @@ training), decided on the render-identical metric:
 - page-level transfer ({{page_n}} equations from {{page_papers}} papers): {{page_stock_rate}} for the base model,
   {{page_tuned_rate}} with this model
 
+![Render-identical rate, base model against this model](assets/chart_headline.svg)
+
+![Crop by crop: what changed](assets/chart_flips.svg)
+
 "Render-identical" means the reference LaTeX and the prediction are compiled with the same preamble and the two
 rendered bitmaps are identical. It is stricter than string matching and catches a changed glyph that a text metric
 would forgive. The confidence interval resamples papers, not equations, because equations in one paper are correlated.
@@ -185,6 +232,20 @@ Counts are from the string-level scorer over the benchmark. A class with too few
 "not enough events to claim" instead of a result. `other` collects everything that is not one of the named classes.
 
 {{per_class_table}}
+
+### Where the remaining errors are
+
+The `other` class is large, so we also sorted every render-identical failure on the benchmark into six buckets. The
+buckets come from a simple pattern heuristic, are for reporting only, are not part of the frozen scorer, and were not
+used for training. A row falls in the first bucket that fits, so the buckets do not overlap.
+
+![Render-identical failures by bucket, base model against this model](assets/chart_buckets.svg)
+
+{{buckets_table}}
+
+Most of the gain is in layout, spacing and convention, which are partly the author's typesetting choices. The
+`content` bucket is still the largest and we have not yet read it closely. The last bucket grew from 35 to 51 crops
+and we have not yet found out why. `scripts/error_buckets.py` in the code repository reproduces the table.
 
 ## Intended use and limits
 
@@ -221,7 +282,7 @@ Contact: @@CONTACT_EMAIL@@
 ```bibtex
 @misc{@@MODEL_NAME@@,
   title  = {@@MODEL_NAME@@: a LoRA for mathematical notation in LightOnOCR-3},
-  author = {@@GH_OWNER@@},
+  author = {@@COPYRIGHT_HOLDER@@},
   year   = {2026},
   url    = {https://huggingface.co/@@HF_NAMESPACE@@/@@MODEL_NAME@@}
 }

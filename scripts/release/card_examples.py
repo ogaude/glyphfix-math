@@ -31,7 +31,6 @@ OUT_DIR = Path("release/model/assets")
 # (id, class shown in the card, one line saying what the example shows)
 EXAMPLES = (
     ("8424e5e5e48206f9", "prime_l", "The base model made two errors: it read the triple prime as the Roman numeral III and dropped the minus on x_c; this model got both right."),
-    ("4e3ee823f3fdd711", "dropped_prime", "The base model moved the prime away from M to after the subscript; this model kept it on M."),
     ("0bfbeba7077c27ed", "decoration", "The base model lost the sans-serif style of A and B; this model kept it."),
     ("18395b29fe0f19ef", "greek_latin", "The base model read the Greek letter chi as the Latin x; this model read it correctly."),
     ("01d56f4f68d6d327", "decoration", "A miss: both models lose the bold on the Greek letter (the reference is `\\boldsymbol{\\theta}`)."),

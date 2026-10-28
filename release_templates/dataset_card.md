@@ -100,7 +100,7 @@ of this dataset. The raw equation body and its source file position are not ship
 ```bibtex
 @misc{@@DATASET_NAME@@,
   title  = {@@DATASET_NAME@@: equation crops for glyph-level math OCR},
-  author = {@@GH_OWNER@@},
+  author = {@@COPYRIGHT_HOLDER@@},
   year   = {2026},
   url    = {https://huggingface.co/datasets/@@HF_NAMESPACE@@/@@DATASET_NAME@@}
 }

@@ -2,15 +2,39 @@
 
 This is an independent project. It is not affiliated with, endorsed by, or sponsored by LightOn.
 
+## Status: an initial release
+
+This is our first release, and we want to be honest about what it is. The adapter gives a measurable gain on the frozen benchmark, but most of that gain comes from a broad group of errors we have not yet split into named classes. Of the classes that motivated the project, decorations show fewer errors, dropped primes show no significant change, and prime read as l, Greek read as Latin and I read as 1 have too few events in the benchmark to claim anything. The per-class table in the results shows each one. Treat the results as a starting point, not a finished product.
+
+![Render-identical rate, base model against this model](results/charts/chart_headline.svg)
+
+![Crop by crop: what changed](results/charts/chart_flips.svg)
+
+Of the 1,543 crops the base model gets wrong on the benchmark, 935 remain wrong with the adapter. The largest remaining buckets are real content differences (304) and layout or sizing (236); the model card has the full six-bucket table, and `scripts/error_buckets.py` reproduces it. The buckets are a pattern heuristic for reporting, not part of the frozen scorer.
+
+We will build on it, including more training on the layout, spacing and content buckets above: a training set built around each error class, a new and separate benchmark for those classes, and a closer look at what the large `other` group contains. The plan may change as we learn more. Reports of equations the model gets wrong are welcome as issues on this repository.
+
 ## What the project is
 
-A LoRA adapter for LightOnOCR-3-4B that reduces math-notation errors when the model transcribes equations from research papers: a prime read as the letter l or dropped, a Greek letter read as a Latin one (upsilon as v), decorations such as bold, bar and underline lost, and I read as 1.
+A LoRA adapter for LightOnOCR-3-4B, trained to reduce math-notation errors when the model transcribes equations from research papers. The errors that motivated it are a prime read as the letter l or dropped, a Greek letter read as a Latin one (upsilon as v), decorations such as bold, bar and underline lost, and I read as 1. See the status above for what the benchmark does and does not show for each.
 
 The repository holds the code, the evaluation and the evidence behind three published artifacts:
 
 - the adapter and a merged Q8_0 GGUF for Ollama: https://huggingface.co/@@HF_NAMESPACE@@/@@MODEL_NAME@@
 - the license-clean equation dataset, {{train_rows}} training rows from {{train_papers}} papers and a frozen held-out benchmark of {{bench_rows}} rows from {{bench_papers}} papers, every row from a CC BY or CC0 arXiv paper with its attribution: https://huggingface.co/datasets/@@HF_NAMESPACE@@/@@DATASET_NAME@@
 - the evaluation: the frozen scorer, the predictions of both models and the scored results, all under this repository
+
+## Use the model
+
+You do not need this repository to use the model. For Ollama:
+
+```bash
+hf download @@HF_NAMESPACE@@/@@MODEL_NAME@@ --local-dir @@MODEL_NAME@@
+cd @@MODEL_NAME@@
+ollama create @@MODEL_NAME@@ -f Modelfile
+```
+
+The model page has the full steps, including llama.cpp and PEFT: https://huggingface.co/@@HF_NAMESPACE@@/@@MODEL_NAME@@
 
 ## Results
 
@@ -33,7 +57,7 @@ The command prints a verdict and writes a report. [REPRODUCE.md](REPRODUCE.md) e
 
 ## Hardware
 
-The published model files and the benchmark rerun do not depend on a particular GPU: the GGUF runs in Ollama or llama.cpp on any backend they support, and Tier 1 above uses no GPU. Training, export and the full rebuild were done and tested only on AMD ROCm (a gfx1200 card with 16 GB). The pinned training environment installs the ROCm build of PyTorch, so other GPUs need the matching PyTorch build and have not been tried. The resource guard also reads free VRAM through `nvidia-smi` and torch, but that path was tested only with mocked output, not on NVIDIA hardware.
+The published model files and the benchmark rerun do not depend on a particular GPU: the GGUF is meant to run in Ollama or llama.cpp on any backend they support (we tested it with Ollama on ROCm, and with Ollama's bundled `llama-server` on CPU), and Tier 1 above uses no GPU. Training, export and the full rebuild were done and tested only on AMD ROCm (a gfx1200 card with 16 GB). The pinned training environment installs the ROCm build of PyTorch, so other GPUs need the matching PyTorch build and have not been tried. The resource guard also reads free VRAM through `nvidia-smi` and torch, but that path was tested only with mocked output, not on NVIDIA hardware.
 
 ## Rebuild
 
