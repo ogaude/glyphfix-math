@@ -124,6 +124,8 @@ split and row count. If you reuse rows, keep the attribution of their papers.
 
 ## How it was built
 
+![How the dataset, the LoRA and the evaluation fit together](assets/chart_pipeline.svg)
+
 Equations were extracted from each paper's LaTeX source, canonicalized, and re-rendered to images with pdflatex in a
 pinned TeX Live image. The `latex` column is the canonicalized LaTeX, not the author's original source, which is an
 indication of modification under CC BY 4.0 section 3(a)(1)(B). The page images used for page-level checks are not part

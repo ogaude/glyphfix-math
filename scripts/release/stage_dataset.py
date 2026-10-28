@@ -18,6 +18,7 @@ from collections import Counter, defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
 
+from scripts.release import charts
 from scripts.release.common import (
     ALLOWED_SPDX,
     BENCH_COLUMNS,
@@ -381,6 +382,7 @@ def stage(out: Path = DATASET_DIR, root: Path = Path(".")) -> dict:
         if tok not in card:
             raise StageError(f"rendered card lost placeholder {tok}")
     (out / "README.md").write_text(card, encoding="utf-8")
+    charts.write_pipeline(out / "assets")
 
     write_sha256sums(out)
     return manifest

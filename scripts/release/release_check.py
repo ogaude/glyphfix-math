@@ -37,6 +37,7 @@ DATASET_ALLOW = (
     re.compile(r"^(README\.md|ATTRIBUTION\.md|ATTRIBUTION\.jsonl|DATASET_MANIFEST\.json|SHA256SUMS)$"),
     re.compile(r"^data/train-[^/]+\.parquet$"),
     re.compile(r"^data/benchmark-[^/]+\.parquet$"),
+    re.compile(r"^assets/chart_pipeline\.svg$"),
 )
 MODEL_ALLOW = (
     re.compile(

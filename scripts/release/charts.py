@@ -203,6 +203,13 @@ def build(out: Path = OUT_DIR, results: dict | None = None) -> list[str]:
     return list(FILES)
 
 
+def write_pipeline(out: Path) -> str:
+    """Only the data-free pipeline diagram, for repositories that do not carry the benchmark charts."""
+    out.mkdir(parents=True, exist_ok=True)
+    (out / FILES[3]).write_text(pipeline_chart(), encoding="utf-8")
+    return FILES[3]
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", type=Path, default=OUT_DIR)
