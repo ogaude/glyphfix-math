@@ -36,6 +36,18 @@ underline decorations, and the letter I read as the digit 1.
 
 This dataset is an independent project. It is not affiliated with, endorsed by, or sponsored by LightOn.
 
+## Status: an initial release
+
+This is our first release and we want to be honest about it. The train split is what the first LoRA was trained on, and
+the benchmark is the frozen set it was scored on. They were not built class by class: on this benchmark the base model
+made very few errors on primes, Greek letters or I against 1, so those classes have too few examples to measure
+anything, and most of the measured gain was in a large group of layout, spacing and convention errors. The model card
+has the per-class table and a breakdown of the remaining errors.
+
+We will build on it. The plan, which may change as we learn more, is a training set built around each error class and
+a new, separate benchmark for those classes, released as a new version of this dataset. The current benchmark stays
+frozen so that results on it remain comparable.
+
 ## Splits
 
 | Split | Rows | Papers | CC0-1.0 rows |
@@ -69,6 +81,26 @@ crops, which is more than the train split holds.
 | group, mining_class, control_glyph, tags | train only: how the row was selected |
 | render_image_digest, preamble_sha256, canon_version, builder_version, env | benchmark only: render provenance |
 
+## Download and use
+
+Download everything with the Hugging Face CLI (`pip install -U huggingface_hub`):
+
+```
+hf download @@HF_NAMESPACE@@/@@DATASET_NAME@@ --repo-type dataset --local-dir @@DATASET_NAME@@
+```
+
+Or load a split with the `datasets` library:
+
+```python
+from datasets import load_dataset
+
+train = load_dataset("@@HF_NAMESPACE@@/@@DATASET_NAME@@", split="train")
+benchmark = load_dataset("@@HF_NAMESPACE@@/@@DATASET_NAME@@", split="benchmark")
+print(train[0]["latex"])
+```
+
+Keep the `ATTRIBUTION.md` file with any rows you reuse.
+
 ## Intended use and limitations
 
 Intended for training and evaluating OCR models on display equations, in particular on glyph-level notation. All
@@ -76,6 +108,8 @@ equations come from arXiv mathematics papers typeset in LaTeX and rendered with 
 are clean renderings: no handwriting, scans, noise or page context. Papers are limited to CC BY 3.0, CC BY 4.0 and
 CC0 versions, which is a small and self-selected part of arXiv. The `latex` label is canonicalized, so a model can
 be correct and still differ from it as a string; the released benchmark scores by rendering, not by string match.
+If you slice the benchmark by the `flags` field, expect small counts for primes, Greek letters and I against 1: a
+class with few rows cannot support a claim about a model, so check the counts before you compare.
 
 ## License
 
