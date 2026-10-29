@@ -8,13 +8,13 @@ Mathematical formulas are the part of a PDF where OCR mistakes cost the most. On
 letter l, a Greek letter read as a Latin one, a lost bold or bar, an I read as 1, can change which mathematical object
 is meant, and a reader may not notice. We want OCR of formulas in PDFs to be as close to correct as we can get it.
 
-This release is a first, small step. We work on images of single display equations because they are easy to measure,
+This release is a first step. We work on images of single display equations because they are easy to measure,
 and we score them by whether the output typesets to the same bitmap as the paper's LaTeX. We checked full pages only on
 50 pages, and on full pages we have not shown an improvement yet (see Results below).
 
 ## Status: an initial release
 
-This is our first release, and we want to be honest about what it is. The adapter scores higher than the base model on the frozen benchmark, with a paper-level confidence interval that excludes zero, but about half of the drop in failures is in layout, spacing and alignment wrapper rows, and a broad group of errors is still not split into named classes. Of the classes that motivated the project, decorations show fewer errors, dropped primes show no significant change, and prime read as l, Greek read as Latin and I read as 1 have too few events in the benchmark to claim anything. The per-class table in the results shows each one. Treat the results as a starting point, not a finished product.
+This is our first release, and we want to be honest about what it is. The adapter scores higher than the base model on the frozen benchmark, with a paper-level confidence interval that excludes zero, and the benchmark has {{fewer_wrong_pct}} fewer wrong crops ({{wrong_before}} down to {{wrong_after}}), with {{w2r}} crops fixed for every {{r2w}} broken. About half of the drop in failures is in layout, spacing and alignment wrapper rows, which follow the conventions of the papers' own LaTeX and so count as gains for a reader who wants that match, but they are not the rare glyph classes that motivated the project. A broad group of errors is still not split into named classes. Of the classes that motivated the project, decorations show fewer errors, dropped primes show no significant change, and prime read as l, Greek read as Latin and I read as 1 have too few events in the benchmark to claim anything. The per-class table in the results shows each one. Treat the results as a starting point, not a finished product.
 
 ![Render-identical rate, base model against this model](results/charts/chart_headline.svg)
 

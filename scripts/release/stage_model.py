@@ -38,6 +38,7 @@ from scripts.release.common import (
     TRAINSET_SHA256,
     caveats,
     load_json,
+    relative_summary,
     render_template,
     sha256_stream,
     write_sha256sums,
@@ -215,6 +216,7 @@ def render_model_card(
         "page_stock_rate": _fmt(t["stock_rate"]),
         "page_tuned_rate": _fmt(t["tuned_rate"]),
         "limits": "\n".join(f"- {s}" for s in caveats(results)),
+        **relative_summary(h),
     }
     return render_template(template, values)
 

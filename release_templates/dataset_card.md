@@ -43,7 +43,7 @@ Mathematical formulas are the part of a PDF where OCR mistakes cost the most. On
 letter l, a Greek letter read as a Latin one, a lost bold or bar, an I read as 1, can change which mathematical object
 is meant, and a reader may not notice. We want OCR of formulas in PDFs to be as close to correct as we can get it.
 
-This release is a first, small step. We work on images of single display equations because they are easy to measure,
+This release is a first step. We work on images of single display equations because they are easy to measure,
 and we score them by whether the output typesets to the same bitmap as the paper's LaTeX. We checked full pages only on
 50 pages, and on full pages we have not shown an improvement yet (see the model card).
 

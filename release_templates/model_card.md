@@ -37,7 +37,7 @@ model-index:
 
 Base model: lightonai/LightOnOCR-3-4B at revision {{base_revision}}.
 
-A small LoRA adapter, and a merged Q8_0 GGUF for Ollama, that nudge the base model toward transcribing equation images
+A LoRA adapter, and a merged Q8_0 GGUF for Ollama, that move the base model toward transcribing equation images
 into LaTeX closer to what the paper's author actually typed. Input is an image of one display equation, output is LaTeX.
 
 **This is a first, early release.** It is the first model of this project and a first attempt at the problem, so
@@ -51,7 +51,7 @@ Mathematical formulas are the part of a PDF where OCR mistakes cost the most. On
 letter l, a Greek letter read as a Latin one, a lost bold or bar, an I read as 1, can change which mathematical object
 is meant, and a reader may not notice. We want OCR of formulas in PDFs to be as close to correct as we can get it.
 
-This release is a first, small step. We work on images of single display equations because they are easy to measure,
+This release is a first step. We work on images of single display equations because they are easy to measure,
 and we score them by whether the output typesets to the same bitmap as the paper's LaTeX. We checked full pages only on
 50 pages, and on full pages we have not shown an improvement yet (see Results).
 
@@ -229,6 +229,9 @@ training), decided on the render-identical metric:
 - render-identical rate: {{stock_rate}} for the base model, {{tuned_rate}} with this model
 - difference: {{delta}}, paired paper-level 95% CI [{{ci_low}}, {{ci_high}}]
 - crops the base model got right and this model got wrong: {{r2w}}; wrong to right: {{w2r}}
+- in relative terms: {{fewer_wrong_pct}} fewer wrong crops ({{wrong_before}} down to {{wrong_after}}), {{more_right_pct}} more
+  correct crops, and {{w2r}} fixed for every {{r2w}} broken (about {{flip_ratio}} to 1). The {{r2w}} broken crops are
+  {{r2w_of_right_pct}} of the crops the base model got right.
 - page-level transfer ({{page_n}} equations from {{page_papers}} papers): {{page_stock_rate}} for the base model,
   {{page_tuned_rate}} with this model
 
@@ -259,7 +262,8 @@ not a scored metric, and the counts are approximate.
 - About 44 are the same formula spelled differently, for example `cases` written as `dcases`,
   `\left(` `\right)` written as `\bigl` `\bigr`, `\le` for `\leq`, `\mathrm` for `\text`, or an alignment wrapper left
   out. The render-identical metric counts these as wrong because the bitmap differs.
-- The gain comes from the same place. On the dev split, 82% of the crops fixed are in `other` (layout, wrappers,
+- The gain comes from the same place, and it is a real gain for a reader who wants the output to match the paper's
+  LaTeX. On the dev split, 82% of the crops fixed are in `other` (layout, wrappers,
   spacing) and 15% in `decoration`, so the model mostly learned the conventions of the training papers, and that
   also costs a few crops where the base model matched the paper's spelling.
 - Greedy decoding is not stable across engines, so a single flip can be a near-tie. All {{r2w}} were rerun on CPU
