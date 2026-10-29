@@ -247,6 +247,24 @@ Counts are from the string-level scorer over the benchmark. A class with too few
 
 {{per_class_table}}
 
+### What this model gets wrong that the base model got right
+
+This model is not strictly better: on {{r2w}} benchmark crops the base model was right and this model is wrong
+(each one is listed in `evidence/acceptance/ACCEPTANCE.md`). We read all of them by hand. This is our own reading,
+not a scored metric, and the counts are approximate.
+
+- About 20 are real errors. Five change a glyph the project targets: `\Lambda` read as `\wedge`, `\#` as `\sharp`,
+  `\boxplus` as `\oplus`, `\vdash` as `\dashv`, and `\bar f_\Gamma` as `\overline{f_\Gamma}`. The others drop a
+  subscript, add a prime, repeat a symbol or lose a bracket.
+- About 44 are the same formula spelled differently, for example `cases` written as `dcases`,
+  `\left(` `\right)` written as `\bigl` `\bigr`, `\le` for `\leq`, `\mathrm` for `\text`, or an alignment wrapper left
+  out. The render-identical metric counts these as wrong because the bitmap differs.
+- The gain comes from the same place. On the dev split, 82% of the crops fixed are in `other` (layout, wrappers,
+  spacing) and 15% in `decoration`, so the model mostly learned the conventions of the training papers, and that
+  also costs a few crops where the base model matched the paper's spelling.
+- Greedy decoding is not stable across engines, so a single flip can be a near-tie. All {{r2w}} were rerun on CPU
+  and none reversed.
+
 ### Where the remaining errors are
 
 The `other` class is large, so we also sorted every render-identical failure on the benchmark into six buckets. The
