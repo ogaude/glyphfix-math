@@ -21,23 +21,23 @@ Pass conditions:
 - the rehearsal report `release/rehearsal/<stamp>/REHEARSAL.json` shows the tier 1 compare verdict `identical_modulo_history_and_amendment`, the freeze amendment verified and 0 failed tests
 - `release/NAMES.json` holds the names you chose and none of them contains the LightOn name
 
-## 2. Name collisions (read only)
+## 2. Log in
 
-Each command must print `404` (the name is free):
+Interactive logins only. Tokens are never written into a file or a command line. Skip this if both commands below already show your account.
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://huggingface.co/api/datasets/@@HF_NAMESPACE@@/@@DATASET_NAME@@
-curl -s -o /dev/null -w "%{http_code}\n" https://huggingface.co/api/models/@@HF_NAMESPACE@@/@@MODEL_NAME@@
-curl -s -o /dev/null -w "%{http_code}\n" https://api.github.com/repos/@@GH_OWNER@@/@@REPO_NAME@@
+hf auth whoami || hf auth login
+gh auth status || gh auth login
 ```
 
-## 3. Log in
+## 3. Name collisions (read only, logged in)
 
-Interactive logins only. Tokens are never written into a file or a command line.
+Unauthenticated Hugging Face lookups answer 401 for a name that does not exist, so check while logged in. Each Hugging Face command must print "not found" and the GitHub one must print 404 (the name is free):
 
 ```bash
-hf auth login
-gh auth login
+hf datasets info @@HF_NAMESPACE@@/@@DATASET_NAME@@
+hf models info @@HF_NAMESPACE@@/@@MODEL_NAME@@
+gh api repos/@@GH_OWNER@@/@@REPO_NAME@@
 ```
 
 ## 4. Dataset repository
@@ -64,7 +64,7 @@ Push from the bare filtered repository, never from the development repository.
 
 ```bash
 gh repo create @@GH_OWNER@@/@@REPO_NAME@@ --private
-git -C release/code/public.git push git@github.com:@@GH_OWNER@@/@@REPO_NAME@@.git main
+git -C release/code/public.git -c credential.helper= -c credential.helper='!gh auth git-credential' push https://github.com/@@GH_OWNER@@/@@REPO_NAME@@.git main
 ```
 
 ## 7. Verify the uploads
@@ -77,7 +77,7 @@ hf download @@HF_NAMESPACE@@/@@DATASET_NAME@@ SHA256SUMS data/benchmark-00000-of
 (cd "$tmp/dataset" && sha256sum -c --ignore-missing SHA256SUMS)
 hf download @@HF_NAMESPACE@@/@@MODEL_NAME@@ SHA256SUMS mmproj-stock-q8_0.gguf --repo-type model --local-dir "$tmp/model"
 (cd "$tmp/model" && sha256sum -c --ignore-missing SHA256SUMS)
-git clone git@github.com:@@GH_OWNER@@/@@REPO_NAME@@.git "$tmp/code"
+git -c credential.helper= -c credential.helper='!gh auth git-credential' clone https://github.com/@@GH_OWNER@@/@@REPO_NAME@@.git "$tmp/code"
 (cd "$tmp/code" && uv sync --frozen && uv run python -m scripts.release.reproduce)
 ```
 
@@ -107,4 +107,4 @@ gh repo edit @@GH_OWNER@@/@@REPO_NAME@@ --visibility public --accept-visibility-
 | dataset/data/train-00000-of-00001.parquet | {{dataset_train_size}} | {{dataset_train_sha256}} |
 | dataset/data/benchmark-00000-of-00001.parquet | {{dataset_bench_size}} | {{dataset_bench_sha256}} |
 
-The commit author email in the public history is the one already used in the development repository.
+The commit author email in the public history is the one passed to `export_public --identity-email` (see `git -C release/code/public.git log -1 --format=%ae`).
