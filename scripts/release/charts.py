@@ -171,7 +171,9 @@ def review_counts(review: dict) -> dict[str, dict[str, int]]:
 def review_chart(review: dict) -> str:
     c = review_counts(review)
     rows = (("Fixed", "base model wrong, this model right", c["fixed"]), ("Broken", "base model right, this model wrong", c["broken"]))
-    parts = (("good", "real", "Changes the mathematics or a glyph"), ("mid", "borderline", "Borderline (trailing punctuation, roman or italic)"), ("neutral", "style", "Same formula, spelled differently"))
+    parts = [("good", "real", "Changes the mathematics or a glyph"), ("mid", "borderline", "Borderline (trailing punctuation, roman or italic)"), ("neutral", "style", "Same formula, spelled differently")]
+    if not (c["fixed"]["borderline"] or c["broken"]["borderline"]):
+        parts = [p for p in parts if p[1] != "borderline"]
     x0, bar_w = 24, W - 48
     body = _text(24, 34, "Hand review: what changed in the crops that flipped", "ink", 17, weight=600)
     body += _text(24, 56, "Approximate: our own reading under one written rule, not part of the scored result", "sub", 13)
@@ -198,7 +200,8 @@ def review_chart(review: dict) -> str:
     f, b = c["fixed"], c["broken"]
     ratio = f["real"] / b["real"]
     upper = (f["real"] + f["borderline"]) / b["real"]
-    body += _text(24, ly + 14, f"Real fixes per real break: {ratio:.1f} (up to {upper:.1f} if every borderline fix is real).", "ink", 13, weight=600)
+    tail = f" (up to {upper:.1f} if every borderline fix is real)" if f["borderline"] else ""
+    body += _text(24, ly + 14, f"Real fixes per real break: {ratio:.1f}{tail}.", "ink", 13, weight=600)
     height = ly + 40
     desc = "; ".join(f"{n}: " + ", ".join(f"{k} {v}" for k, v in cts.items()) for n, _, cts in rows)
     return _svg(height, "Hand review of the flipped crops", desc, body)

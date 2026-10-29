@@ -254,16 +254,16 @@ Counts are from the string-level scorer over the benchmark. A class with too few
 
 This model is not strictly better: on {{r2w}} benchmark crops the base model was right and this model is wrong
 (each one is listed in `evidence/acceptance/ACCEPTANCE.md`). We also read the crops that flipped. The labels were made
-by language-model labelling under one written rule and spot-checked by hand. They are approximate and are not part of
+by language-model labelling under one written rule; we then read the 46 borderline fixes ourselves and spot-checked the rest. They are approximate and are not part of
 the scored result. The per-crop labels are not published yet.
 
 ![Hand review: what changed in the crops that flipped](assets/chart_review.svg)
 
-- About 19% of the {{w2r}} fixed crops (131) and about a third of the {{r2w}} broken crops (21) change the mathematics
-  or a glyph. The rest differ only in how the same formula is spelled: delimiter sizing (`\left` against `\bigl`),
+- About 21% of the {{w2r}} fixed crops (139) and about a third of the {{r2w}} broken crops (21) change the mathematics
+  or a glyph, including the cases where upright against italic carries meaning (`\\max`, `\\mathrm{d}x`). The rest differ only in how the same formula is spelled: delimiter sizing (`\left` against `\bigl`),
   `cases` against `dcases`, `\le` against `\leq`, `\text` against `\mathrm`, an alignment wrapper, spacing.
-- That is roughly 6 real fixes for every real break (up to 8 if every borderline fix counts). In points, the real net
-  gain is about 4 to 6 of the {{delta}} difference above; most of the rest is matching the papers' LaTeX conventions.
+- That is roughly 6.6 real fixes for every real break. In points, the real net gain is about 4 to 5 of the
+  {{delta}} difference above; most of the rest is matching the papers' LaTeX conventions.
 - Matching the author's spelling is a gain for a reader who wants the author's LaTeX, but it is not the same as fewer
   notation mistakes, which was the motivation for this project.
 - The real breaks include five glyph swaps: `\Lambda` read as `\wedge`, `\#` as `\sharp`, `\boxplus` as `\oplus`,
