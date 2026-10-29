@@ -665,10 +665,11 @@ def check_names(cfg: Config, final: bool) -> dict:
         if key in ("dataset_name", "model_name", "repo_name") and not NAME_RE.match(v):
             problems.append(f"{key} is not a valid repository name")
     mail = names.get("contact_email")
-    if isinstance(mail, str) and mail.strip() and (not EMAIL_RE.match(mail) or mail in cfg.contact_forbidden):
-        problems.append("contact_email is invalid or is the arXiv User-Agent address")
-    elif isinstance(mail, str) and mail.strip().lower().endswith(".invalid"):
+    # The placeholder test comes first: in the public clone the scrubbed User-Agent contact is itself a .invalid address.
+    if isinstance(mail, str) and mail.strip().lower().endswith(".invalid"):
         problems.append("contact_email is still a placeholder (.invalid); supply the real takedown address")
+    elif isinstance(mail, str) and mail.strip() and (not EMAIL_RE.match(mail) or mail in cfg.contact_forbidden):
+        problems.append("contact_email is invalid or is the arXiv User-Agent address")
     return result("names", problems)
 
 
