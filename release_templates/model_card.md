@@ -250,23 +250,26 @@ Counts are from the string-level scorer over the benchmark. A class with too few
 
 {{per_class_table}}
 
-### What this model gets wrong that the base model got right
+### What changed, by our own hand review
 
 This model is not strictly better: on {{r2w}} benchmark crops the base model was right and this model is wrong
-(each one is listed in `evidence/acceptance/ACCEPTANCE.md`). We read all of them by hand. This is our own reading,
-not a scored metric, and the counts are approximate.
+(each one is listed in `evidence/acceptance/ACCEPTANCE.md`). We also read the crops that flipped. The labels were made
+by language-model labelling under one written rule and spot-checked by hand. They are approximate and are not part of
+the scored result. The per-crop labels are not published yet.
 
-- About 20 are real errors. Five change a glyph the project targets: `\Lambda` read as `\wedge`, `\#` as `\sharp`,
-  `\boxplus` as `\oplus`, `\vdash` as `\dashv`, and `\bar f_\Gamma` as `\overline{f_\Gamma}`. The others drop a
-  subscript, add a prime, repeat a symbol or lose a bracket.
-- About 44 are the same formula spelled differently, for example `cases` written as `dcases`,
-  `\left(` `\right)` written as `\bigl` `\bigr`, `\le` for `\leq`, `\mathrm` for `\text`, or an alignment wrapper left
-  out. The render-identical metric counts these as wrong because the bitmap differs.
-- The gain comes from the same place, and it is a real gain for a reader who wants the output to match the paper's
-  LaTeX. On the dev split, 82% of the crops fixed are in `other` (layout, wrappers,
-  spacing) and 15% in `decoration`, so the model mostly learned the conventions of the training papers, and that
-  also costs a few crops where the base model matched the paper's spelling.
-- Greedy decoding is not stable across engines, so a single flip can be a near-tie. All {{r2w}} were rerun on CPU
+![Hand review: what changed in the crops that flipped](assets/chart_review.svg)
+
+- About 19% of the {{w2r}} fixed crops (131) and about a third of the {{r2w}} broken crops (21) change the mathematics
+  or a glyph. The rest differ only in how the same formula is spelled: delimiter sizing (`\left` against `\bigl`),
+  `cases` against `dcases`, `\le` against `\leq`, `\text` against `\mathrm`, an alignment wrapper, spacing.
+- That is roughly 6 real fixes for every real break (up to 8 if every borderline fix counts). In points, the real net
+  gain is about 4 to 6 of the {{delta}} difference above; most of the rest is matching the papers' LaTeX conventions.
+- Matching the author's spelling is a gain for a reader who wants the author's LaTeX, but it is not the same as fewer
+  notation mistakes, which was the motivation for this project.
+- The real breaks include five glyph swaps: `\Lambda` read as `\wedge`, `\#` as `\sharp`, `\boxplus` as `\oplus`,
+  `\vdash` as `\dashv`, and `\bar f_\Gamma` as `\overline{f_\Gamma}`.
+- On the dev split, 82% of the crops fixed are in `other` (layout, wrappers, spacing) and 15% in `decoration`.
+- Greedy decoding is not stable across engines, so a single flip can be a near-tie. All {{r2w}} breaks were rerun on CPU
   and none reversed.
 
 ### Where the remaining errors are

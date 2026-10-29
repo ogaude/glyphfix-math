@@ -5,6 +5,7 @@ Usage: uv run python -m scripts.release.charts [--out release/model/assets]
 chart_headline.svg  render-identical rate of the base model and this model on the frozen benchmark
 chart_buckets.svg   render-identical failures by bucket (scripts/error_buckets.py), base model against this model
 chart_flips.svg     crops right or wrong with each model, and the crops this model got wrong that the base model got right
+chart_review.svg    hand review: how many fixed and broken crops change the mathematics, against spelling only
 chart_pipeline.svg  how the dataset, the LoRA and the evaluation fit together (no data)
 
 Every number is read from evidence/acceptance/results.json and the scored benchmark rows, never typed in. Bars start
@@ -25,18 +26,19 @@ from scripts import error_buckets
 
 RESULTS = Path("evidence/acceptance/results.json")
 OUT_DIR = Path("release/model/assets")
-FILES = ("chart_headline.svg", "chart_buckets.svg", "chart_flips.svg", "chart_pipeline.svg")
+REVIEW_JSON = Path(".planning/phases/06-publish/evidence/hand_review.json")
+FILES = ("chart_headline.svg", "chart_buckets.svg", "chart_flips.svg", "chart_pipeline.svg", "chart_review.svg")
 FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
 W = 760
 STYLE = f"""<style>
 svg{{font-family:{FONT}}}
 .bg{{fill:#fcfcfb}} .ink{{fill:#0b0b0b}} .sub{{fill:#52514e}} .grid{{stroke:#d9d8d4;stroke-width:1}}
 .base{{fill:#eb6834}} .tuned{{fill:#2a78d6}} .box{{fill:#f1f0ec;stroke:#d9d8d4}} .arrow{{stroke:#52514e;fill:none;stroke-width:2}}
-.good{{fill:#2a78d6}} .bad{{fill:#eb6834}} .neutral{{fill:#b9b8b2}}
+.good{{fill:#2a78d6}} .bad{{fill:#eb6834}} .neutral{{fill:#b9b8b2}} .mid{{fill:#8f8e88}}
 @media (prefers-color-scheme:dark){{
 .bg{{fill:#1a1a19}} .ink{{fill:#f0efec}} .sub{{fill:#c3c2b7}} .grid{{stroke:#3a3a38}}
 .base{{fill:#d95926}} .tuned{{fill:#3987e5}} .box{{fill:#262625;stroke:#3a3a38}} .arrow{{stroke:#c3c2b7}}
-.good{{fill:#3987e5}} .bad{{fill:#d95926}} .neutral{{fill:#6b6a66}}
+.good{{fill:#3987e5}} .bad{{fill:#d95926}} .neutral{{fill:#6b6a66}} .mid{{fill:#8f8e88}}
 }}
 </style>"""
 
@@ -157,6 +159,51 @@ def flips_chart(results: dict, tuned_rows: dict[str, dict]) -> str:
     return _svg(height, "Crop by crop: what changed", desc, body)
 
 
+def review_counts(review: dict) -> dict[str, dict[str, int]]:
+    """Counts of real / borderline / style for the fixed and the broken crops, from the saved hand review."""
+    out = {"fixed": dict.fromkeys(("real", "borderline", "style"), 0), "broken": dict.fromkeys(("real", "borderline", "style"), 0)}
+    for v in review["labels"].values():
+        out["fixed" if v["direction"] == "wrong_to_right" else "broken"][v["label"]] += 1
+    out["fixed"]["style"] += review["mechanical_style_fixes"]["count"]
+    return out
+
+
+def review_chart(review: dict) -> str:
+    c = review_counts(review)
+    rows = (("Fixed", "base model wrong, this model right", c["fixed"]), ("Broken", "base model right, this model wrong", c["broken"]))
+    parts = (("good", "real", "Changes the mathematics or a glyph"), ("mid", "borderline", "Borderline (trailing punctuation, roman or italic)"), ("neutral", "style", "Same formula, spelled differently"))
+    x0, bar_w = 24, W - 48
+    body = _text(24, 34, "Hand review: what changed in the crops that flipped", "ink", 17, weight=600)
+    body += _text(24, 56, "Approximate: our own reading under one written rule, not part of the scored result", "sub", 13)
+    y = 92
+    for name, sub, counts in rows:
+        total = sum(counts.values())
+        body += _text(24, y, f"{name}: {total:,} crops", "ink", 14, weight=600)
+        body += _text(24 + 190, y, sub, "sub", 12)
+        x = float(x0)
+        for cls, key, _ in parts:
+            v = counts[key]
+            w = v / total * bar_w
+            if v:
+                body += f'<rect class="{cls}" x="{x:.1f}" y="{y + 10}" width="{max(w - 2, 1):.1f}" height="34" rx="3"/>\n'
+                if w > 70:
+                    body += _text(x + 6, y + 32, f"{v:,} ({v / total:.0%})", "ink", 13, weight=600)
+            x += w
+        y += 78
+    ly = y - 8
+    for cls, _, label in parts:
+        body += f'<rect class="{cls}" x="24" y="{ly - 10}" width="12" height="12" rx="2"/>\n'
+        body += _text(44, ly, label, "sub", 13)
+        ly += 22
+    f, b = c["fixed"], c["broken"]
+    ratio = f["real"] / b["real"]
+    upper = (f["real"] + f["borderline"]) / b["real"]
+    body += _text(24, ly + 14, f"Real fixes per real break: {ratio:.1f} (up to {upper:.1f} if every borderline fix is real).", "ink", 13, weight=600)
+    height = ly + 40
+    desc = "; ".join(f"{n}: " + ", ".join(f"{k} {v}" for k, v in cts.items()) for n, _, cts in rows)
+    return _svg(height, "Hand review of the flipped crops", desc, body)
+
+
 PIPELINE = (
     ("Papers", "arXiv papers under CC BY or CC0, with attribution"),
     ("Equation crops", "Display equations rendered from the LaTeX source; split by paper"),
@@ -200,6 +247,7 @@ def build(out: Path = OUT_DIR, results: dict | None = None) -> list[str]:
     tuned_rows = {r["id"]: r for r in error_buckets.load(error_buckets.DEFAULT_DIRS[1])}
     (out / FILES[2]).write_text(flips_chart(results, tuned_rows), encoding="utf-8")
     (out / FILES[3]).write_text(pipeline_chart(), encoding="utf-8")
+    (out / FILES[4]).write_text(review_chart(json.loads(REVIEW_JSON.read_text(encoding="utf-8"))), encoding="utf-8")
     return list(FILES)
 
 

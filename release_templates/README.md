@@ -20,6 +20,10 @@ This is our first release, and we want to be honest about what it is. The adapte
 
 ![Crop by crop: what changed](results/charts/chart_flips.svg)
 
+![Hand review: what changed in the crops that flipped](results/charts/chart_review.svg)
+
+The last chart is our own approximate hand review of the crops that flipped, made under one written rule and not part of the scored result. About 19% of the {{w2r}} fixes (131) and about a third of the {{r2w}} breaks (21) change the mathematics or a glyph; the rest differ only in how the same formula is spelled. That is roughly 6 real fixes per real break, so most of the headline gain is the model matching the papers' LaTeX conventions.
+
 Of the 1,543 crops the base model gets wrong on the benchmark, 935 remain wrong with the adapter. The largest remaining buckets are real content differences (304) and layout or sizing (236); the model card has the full six-bucket table, and `scripts/error_buckets.py` reproduces it. The buckets are a pattern heuristic for reporting, not part of the frozen scorer.
 
 We want to build on it, with no date yet. The plan, which may change as we learn more:
