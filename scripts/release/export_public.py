@@ -138,6 +138,20 @@ def _scrub_blobs(work: Path, spec, replacements) -> dict[str, str]:
     return mapping
 
 
+def _scrubbed_equal(source: Path, src_sha: str | None, public_sha: str, replacements) -> bool:
+    """True when the public blob is the source HEAD blob after the scrub patterns (and nothing else)."""
+    if src_sha is None:
+        return False
+    raw = subprocess.run(["git", "-C", str(source), "cat-file", "blob", src_sha], capture_output=True, check=True).stdout
+    text = raw.decode("utf-8", "surrogateescape")
+    new = text
+    for pat, repl in replacements:
+        new = pat.sub(repl, new)
+    if new == text:
+        return False
+    return git(source, "hash-object", "--stdin", input=new.encode("utf-8", "surrogateescape")) == public_sha
+
+
 def _read_map(path: Path) -> list[tuple[str, str]]:
     if not path.is_file():
         return []
@@ -271,7 +285,7 @@ def export(
     }
     for line in git(work, "ls-tree", "-r", "main").splitlines():
         path = line.partition("\t")[2]
-        if src_head.get(path) != line.split()[2]:
+        if src_head.get(path) != line.split()[2] and not _scrubbed_equal(source, src_head.get(path), line.split()[2], scrub):
             raise ExportError(f"{path} at the public HEAD differs from the source HEAD blob")
 
     history_map = {}
