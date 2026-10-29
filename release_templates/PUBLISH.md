@@ -32,12 +32,12 @@ gh auth status || gh auth login
 
 ## 3. Name collisions (read only, logged in)
 
-Unauthenticated Hugging Face lookups answer 401 for a name that does not exist, so check while logged in. Each Hugging Face command must print "not found" and the GitHub one must print 404 (the name is free):
+Unauthenticated Hugging Face lookups answer 401 for a name that does not exist, so check while logged in. Each Hugging Face command must print "not found" and the GitHub one must say it could not resolve the repository (the name is free):
 
 ```bash
 hf datasets info @@HF_NAMESPACE@@/@@DATASET_NAME@@
 hf models info @@HF_NAMESPACE@@/@@MODEL_NAME@@
-gh api repos/@@GH_OWNER@@/@@REPO_NAME@@
+gh repo view @@GH_OWNER@@/@@REPO_NAME@@
 ```
 
 ## 4. Dataset repository
