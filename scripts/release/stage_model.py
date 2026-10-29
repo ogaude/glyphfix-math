@@ -81,7 +81,9 @@ def stage_adapter(src_dir: Path | str, dst_dir: Path | str, expected_safetensors
         if not (src_dir / name).is_file():
             raise StageError(f"adapter file missing: {src_dir / name}")
     dst_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(src_dir / "adapter_config.json", dst_dir / "adapter_config.json")
+    cfg = (src_dir / "adapter_config.json").read_text(encoding="utf-8")
+    # The Hub rejects a null task_type ("must be a string"); the training run left it unset.
+    (dst_dir / "adapter_config.json").write_text(cfg.replace('"task_type": null', '"task_type": "CAUSAL_LM"'), encoding="utf-8")
     copy_verified(src_dir / "adapter_model.safetensors", dst_dir / "adapter_model.safetensors", expected_safetensors)
 
 
