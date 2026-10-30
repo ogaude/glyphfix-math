@@ -21,7 +21,7 @@ from pathlib import Path
 
 from scripts.release import common as C
 
-TEXT_SUFFIXES = {".md", ".json", ".jsonl", ".txt", ".yaml", ".yml"}
+TEXT_SUFFIXES = {".md", ".json", ".jsonl", ".txt", ".yaml", ".yml", ".cff"}
 TEXT_NAMES = {"Modelfile", "NOTICE", "LICENSE"}
 TOKEN_RE = re.compile(r"@@[A-Z_]+@@")
 

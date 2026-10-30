@@ -26,7 +26,7 @@ from scripts.release import common as C
 from scripts.release import public_paths, rename_amendment
 
 MAX_DETAILS = 20
-TEXT_SUFFIXES = {".md", ".json", ".jsonl", ".txt", ".yaml", ".yml"}
+TEXT_SUFFIXES = {".md", ".json", ".jsonl", ".txt", ".yaml", ".yml", ".cff"}
 TEXT_NAMES = {"Modelfile", "NOTICE", "LICENSE", "SHA256SUMS"}
 PLACEHOLDER_RE = re.compile(r"@@[A-Z_]+@@")
 VERSION_RE = re.compile(r"^v\d+$")

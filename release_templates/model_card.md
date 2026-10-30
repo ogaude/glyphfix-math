@@ -338,3 +338,5 @@ Contact: @@CONTACT_EMAIL@@
   url    = {https://huggingface.co/@@HF_NAMESPACE@@/@@MODEL_NAME@@}
 }
 ```
+
+If you use the benchmark or the scorer, also cite the dataset (https://huggingface.co/datasets/@@HF_NAMESPACE@@/@@DATASET_NAME@@) and the code repository (https://github.com/@@GH_OWNER@@/@@REPO_NAME@@, which has a `CITATION.cff`).

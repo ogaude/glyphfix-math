@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this model, dataset, benchmark or scorer, please cite it as below."
+title: "@@REPO_NAME@@: a LoRA for mathematical notation in LightOnOCR-3, with its dataset and benchmark"
+type: software
+authors:
+  - name: "@@COPYRIGHT_HOLDER@@"
+license: Apache-2.0
+repository-code: "https://github.com/@@GH_OWNER@@/@@REPO_NAME@@"
+url: "https://github.com/@@GH_OWNER@@/@@REPO_NAME@@"
+date-released: "2026-10-30"
+references:
+  - type: dataset
+    title: "@@DATASET_NAME@@: equation crops for glyph-level math OCR"
+    authors:
+      - name: "@@COPYRIGHT_HOLDER@@"
+    year: 2026
+    url: "https://huggingface.co/datasets/@@HF_NAMESPACE@@/@@DATASET_NAME@@"
+  - type: software
+    title: "@@MODEL_NAME@@: a LoRA for mathematical notation in LightOnOCR-3"
+    authors:
+      - name: "@@COPYRIGHT_HOLDER@@"
+    year: 2026
+    url: "https://huggingface.co/@@HF_NAMESPACE@@/@@MODEL_NAME@@"

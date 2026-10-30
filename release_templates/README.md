@@ -1,6 +1,20 @@
 # @@REPO_NAME@@
 
+A LoRA adapter for LightOnOCR-3-4B that makes fewer mistakes on mathematical notation, with the dataset and the benchmark it was trained and tested on. This repository is the code and the evidence: anyone can rescore the published results and rebuild the pipeline from it.
+
 This is an independent project. It is not affiliated with, endorsed by, or sponsored by LightOn.
+
+## What is where
+
+| You want to | Go to |
+|-------------|-------|
+| Use the model (adapter and Q8_0 GGUF for Ollama or llama.cpp) | https://huggingface.co/@@HF_NAMESPACE@@/@@MODEL_NAME@@ |
+| Use the data: {{train_rows}} training rows from {{train_papers}} papers and a frozen held-out benchmark of {{bench_rows}} rows from {{bench_papers}} papers, built only from CC BY and CC0 arXiv papers (license checked per paper version as far as we could), every row with its paper's attribution | https://huggingface.co/datasets/@@HF_NAMESPACE@@/@@DATASET_NAME@@ |
+| Check the result: rescore the published predictions with the frozen scorer on CPU and Docker | [Reproduce](#reproduce) |
+| Rebuild the pipeline from arXiv | [REBUILD.md](REBUILD.md) |
+| See the numbers and the evidence | [Results](#results), [evidence/acceptance/ACCEPTANCE.md](evidence/acceptance/ACCEPTANCE.md) |
+
+The errors that motivated the project are a prime read as the letter l or dropped, a Greek letter read as a Latin one (upsilon as v), decorations such as bold, bar and underline lost, and I read as 1. The status section says what the benchmark does and does not show for each.
 
 ## Why this project
 
@@ -41,16 +55,6 @@ We want to build on it, with no date yet. The plan, which may change as we learn
 Reports of equations the model gets wrong are welcome as issues on this repository.
 
 Versions: this is project release v1.0.0 (see `VERSIONING.md`), with tags `lora-v1.0.0`, `dataset-v1.0.0` and `benchmark-v1`.
-
-## What the project is
-
-A LoRA adapter for LightOnOCR-3-4B, trained to reduce math-notation errors when the model transcribes equations from research papers. The errors that motivated it are a prime read as the letter l or dropped, a Greek letter read as a Latin one (upsilon as v), decorations such as bold, bar and underline lost, and I read as 1. See the status above for what the benchmark does and does not show for each.
-
-The repository holds the code, the evaluation and the evidence behind three published artifacts:
-
-- the adapter and a merged Q8_0 GGUF for Ollama: https://huggingface.co/@@HF_NAMESPACE@@/@@MODEL_NAME@@
-- the equation dataset, built only from CC BY and CC0 arXiv papers with the license checked per paper version as far as we could, {{train_rows}} training rows from {{train_papers}} papers and a frozen held-out benchmark of {{bench_rows}} rows from {{bench_papers}} papers, every row with its paper's attribution: https://huggingface.co/datasets/@@HF_NAMESPACE@@/@@DATASET_NAME@@
-- the evaluation: the frozen scorer, the predictions of both models and the scored results, all under this repository
 
 ## Use the model
 

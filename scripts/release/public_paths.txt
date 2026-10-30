@@ -1,0 +1,78 @@
+# Allow-list of what the public GitHub history may contain (fail-closed: a path that matches no rule is dropped).
+# Rules are evaluated over all sections in file order, the last match wins, a leading `!` drops the path.
+# `**` matches across slashes, `*` and `?` stay within one segment, a trailing `/**` matches the directory's files.
+
+[history]
+# Kept in every public commit: code, tests, templates, requirements and project config.
+src/**
+scripts/**
+# Copies derived from the private origin project stay private (user answer O5).
+!scripts/utils/**
+# Synthetic probe tooling stays private (flagged default).
+!scripts/synth_glyph_probe.py
+!**/__pycache__/**
+tests/**
+!tests/test_frozen_exp001.py
+!tests/test_synth_glyph_probe.py
+release_templates/**
+requirements/**
+pyproject.toml
+uv.lock
+.python-version
+.gitignore
+# No docs/ rule at all: docs/ (docs/notes included) is dropped entirely (user decision 2026-10-17).
+# No .planning rule at all: planning documents never leave the machine (user decision 2026-10-17).
+
+[latest-only]
+# The files that define or test the private-string scans named those strings in earlier versions, so only the version
+# at the exported HEAD (written without those literals) is published; their earlier versions never reach the history.
+scripts/release/common.py
+scripts/release/stage_results.py
+scripts/release/public_paths.txt
+tests/test_release_*.py
+tests/test_export_public.py
+tests/test_rename_map.py
+# Kept only in commits whose blob equals the blob at the exported source HEAD, so earlier versions holding rows that
+# are no longer released never reach the public history (D-03).
+data/benchmark/**
+data/splits/**
+data/catalog/**
+data/candidates.jsonl
+data/candidates_excluded_ids.txt
+data/mining/taxonomy.json
+data/mining/taxonomy_candidates.json
+data/mining/MINING_MANIFEST.json
+# ids and classes only (D-04)
+data/mining/labels.jsonl
+data/models/REGISTRY.json
+data/train/sets/full/**
+# all 1500 rows are inside the 8000 rows of the full set (D-03)
+data/train/sets/sweep1500/**
+data/corpus/CANON_FREEZE.json
+data/corpus/SELECTION_CONFIG.json
+data/corpus/SCALE_UP.json
+data/corpus/selection_manifest.json
+data/corpus/fetch_order.json
+# Scorer evidence moved out of .planning by the freeze amendment: literal paths, so an unexpected file dropped
+# into evidence/ is not published (equals common.PUBLIC_EVIDENCE_FILES, enforced by tests).
+evidence/acceptance/results.json
+evidence/acceptance/flips.jsonl
+evidence/acceptance/env_check.json
+evidence/acceptance/sensitivity.json
+evidence/acceptance/ACCEPTANCE.md
+evidence/acceptance/FREEZE_AMENDMENT.json
+evidence/acceptance/FREEZE_AMENDMENT_2.json
+
+[overlay]
+# Allowed only in the release commit that export adds on top. The old README.md, ORIGIN.md and CLAUDE.md never
+# appear in public history (flagged default O6).
+README.md
+LICENSE
+NOTICE
+ATTRIBUTION.md
+ATTRIBUTION.jsonl
+RELEASE_HISTORY.json
+results/**
+REPRODUCE.md
+REBUILD.md
+CITATION.cff

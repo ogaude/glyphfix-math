@@ -167,7 +167,7 @@ of this dataset. The raw equation body and its source file position are not ship
 }
 ```
 
-Please also cite the source papers listed in `ATTRIBUTION.md` for any rows you reuse.
+Please also cite the source papers listed in `ATTRIBUTION.md` for any rows you reuse. If you use the benchmark or the scorer, also cite the model (https://huggingface.co/@@HF_NAMESPACE@@/@@MODEL_NAME@@) and the code repository (https://github.com/@@GH_OWNER@@/@@REPO_NAME@@, which has a `CITATION.cff`).
 
 ## Links and contact
 
