@@ -1,0 +1,699 @@
+{
+  "checkpoint": "step-875",
+  "hf_mini_136": {
+    "by_class_of_stock_error": {
+      "decoration": {
+        "both_right": 0,
+        "both_wrong": 8,
+        "n": 10,
+        "right_to_wrong": 0,
+        "wrong_to_right": 2
+      },
+      "dropped_prime": {
+        "both_right": 0,
+        "both_wrong": 7,
+        "n": 7,
+        "right_to_wrong": 0,
+        "wrong_to_right": 0
+      },
+      "other": {
+        "both_right": 0,
+        "both_wrong": 35,
+        "n": 58,
+        "right_to_wrong": 0,
+        "wrong_to_right": 23
+      },
+      "stock_right": {
+        "both_right": 56,
+        "both_wrong": 0,
+        "n": 59,
+        "right_to_wrong": 3,
+        "wrong_to_right": 0
+      },
+      "symbol_swap": {
+        "both_right": 0,
+        "both_wrong": 1,
+        "n": 2,
+        "right_to_wrong": 0,
+        "wrong_to_right": 1
+      }
+    },
+    "excluded_none": 0,
+    "n_common": 136,
+    "right_to_wrong_by_tuned_error_class": {
+      "other": 3
+    },
+    "right_to_wrong_ids": [
+      "1b952bd4c878b967",
+      "abff90fa90278e85",
+      "edbfe9f0cd58d40d"
+    ],
+    "stock_error_kind": {
+      "exact_norm_other/fixed": 1,
+      "spacing_only/fixed": 10,
+      "spacing_only/still_wrong": 10,
+      "token_diff/fixed": 15,
+      "token_diff/still_wrong": 41
+    },
+    "stock_right": 59,
+    "symbol_swap_clusters": {
+      "c28 (\\vert -> |)": {
+        "both_right": 0,
+        "both_wrong": 0,
+        "n": 1,
+        "right_to_wrong": 0,
+        "wrong_to_right": 1
+      },
+      "c32 (\\ast -> *)": {
+        "both_right": 0,
+        "both_wrong": 1,
+        "n": 1,
+        "right_to_wrong": 0,
+        "wrong_to_right": 0
+      }
+    },
+    "top_stock_pairs_in_fixed_crops": [
+      [
+        " -> &",
+        4,
+        17
+      ],
+      [
+        "\\left -> ",
+        3,
+        8
+      ],
+      [
+        " -> \\begin { a l i g n e d }",
+        3,
+        10
+      ],
+      [
+        " -> \\\\",
+        3,
+        4
+      ],
+      [
+        " -> \\left",
+        2,
+        8
+      ],
+      [
+        " -> \\right",
+        2,
+        10
+      ],
+      [
+        " -> \\text {",
+        2,
+        4
+      ],
+      [
+        " -> }",
+        2,
+        6
+      ],
+      [
+        "{ -> ",
+        2,
+        7
+      ],
+      [
+        "} \\right -> ",
+        2,
+        2
+      ],
+      [
+        " -> . \\end { a l i g n e d }",
+        2,
+        5
+      ],
+      [
+        "\\ -> . \\end { a l i g n e d }",
+        1,
+        2
+      ],
+      [
+        " -> \\begin { a l i g n e d } &",
+        1,
+        3
+      ],
+      [
+        "| | -> \\left \\|",
+        1,
+        1
+      ],
+      [
+        "| | -> \\right \\|",
+        1,
+        1
+      ]
+    ],
+    "totals": {
+      "both_right": 56,
+      "both_wrong": 51,
+      "right_to_wrong": 3,
+      "wrong_to_right": 26
+    },
+    "tuned_right": 82,
+    "wrong_to_right_ids_by_class": {
+      "decoration": [
+        "37a8900764abd11c",
+        "894a49b89c2941c0"
+      ],
+      "other": [
+        "0d364ae0dc223d2f",
+        "0d4543f1c048deae",
+        "1052371733b5c7a2",
+        "1325df433f072bec",
+        "42291dcc43693c0b",
+        "42312a69aa0d8a46",
+        "428986944a4f3b37",
+        "4f56925b141891dc",
+        "506e43678f6e9177",
+        "593c0a111890f9cc",
+        "5a650e5602ddf8db",
+        "6996c2f4b921e264",
+        "69aaebc33ff79896",
+        "77b376ef14ddfb65",
+        "7c5ee5868fe1cf18",
+        "b14ab16432e9b909",
+        "b713ea5f4308e5ab",
+        "c39ed0283ed99276",
+        "dae734cb34b7d53e",
+        "e12bc5c0cf8b11ba",
+        "e21a8a5733fc7f2b",
+        "eb2c9f95aaaebd8b",
+        "ef551b951787df2b"
+      ],
+      "symbol_swap": [
+        "9566161a44345105"
+      ]
+    }
+  },
+  "ollama_dev_926": {
+    "by_class_of_stock_error": {
+      "decoration": {
+        "both_right": 0,
+        "both_wrong": 50,
+        "n": 88,
+        "right_to_wrong": 0,
+        "wrong_to_right": 38
+      },
+      "dropped_prime": {
+        "both_right": 0,
+        "both_wrong": 9,
+        "n": 11,
+        "right_to_wrong": 0,
+        "wrong_to_right": 2
+      },
+      "greek_latin": {
+        "both_right": 0,
+        "both_wrong": 3,
+        "n": 3,
+        "right_to_wrong": 0,
+        "wrong_to_right": 0
+      },
+      "i_1": {
+        "both_right": 0,
+        "both_wrong": 1,
+        "n": 1,
+        "right_to_wrong": 0,
+        "wrong_to_right": 0
+      },
+      "other": {
+        "both_right": 0,
+        "both_wrong": 229,
+        "n": 439,
+        "right_to_wrong": 0,
+        "wrong_to_right": 210
+      },
+      "prime_l": {
+        "both_right": 0,
+        "both_wrong": 1,
+        "n": 1,
+        "right_to_wrong": 0,
+        "wrong_to_right": 0
+      },
+      "stock_right": {
+        "both_right": 345,
+        "both_wrong": 0,
+        "n": 365,
+        "right_to_wrong": 20,
+        "wrong_to_right": 0
+      },
+      "symbol_swap": {
+        "both_right": 0,
+        "both_wrong": 12,
+        "n": 18,
+        "right_to_wrong": 0,
+        "wrong_to_right": 6
+      }
+    },
+    "excluded_none": 0,
+    "n_common": 926,
+    "right_to_wrong_by_tuned_error_class": {
+      "decoration": 3,
+      "other": 17
+    },
+    "right_to_wrong_ids": [
+      "02e63ec7d8d4a99e",
+      "079d27c1a52e232a",
+      "0d209993687481c2",
+      "0d7f173f72121104",
+      "14b83d5547266c96",
+      "1b952bd4c878b967",
+      "3815352bc4eb625a",
+      "44891793a2327c3b",
+      "694cd9f46b710b37",
+      "739e73c76ea86841",
+      "9690a67f03e7e5ae",
+      "a9190da982bd645b",
+      "abff90fa90278e85",
+      "bbf68ce42a51ec52",
+      "c00db7349c16a92c",
+      "c0712dbf0e5f0576",
+      "c8b7f5486176f660",
+      "d71d2888396a6a46",
+      "d8a90f79d958a16b",
+      "edbfe9f0cd58d40d"
+    ],
+    "stock_error_kind": {
+      "exact_norm_other/fixed": 7,
+      "exact_norm_other/still_wrong": 5,
+      "spacing_only/fixed": 77,
+      "spacing_only/still_wrong": 43,
+      "token_diff/fixed": 172,
+      "token_diff/still_wrong": 257
+    },
+    "stock_right": 365,
+    "symbol_swap_clusters": {
+      "c24 (\\coloneqq -> : =)": {
+        "both_right": 0,
+        "both_wrong": 1,
+        "n": 2,
+        "right_to_wrong": 0,
+        "wrong_to_right": 1
+      },
+      "c27 (| | -> \\|)": {
+        "both_right": 0,
+        "both_wrong": 0,
+        "n": 1,
+        "right_to_wrong": 0,
+        "wrong_to_right": 1
+      },
+      "c28 (\\vert -> |)": {
+        "both_right": 0,
+        "both_wrong": 3,
+        "n": 5,
+        "right_to_wrong": 0,
+        "wrong_to_right": 2
+      },
+      "c30 (| -> \\mid)": {
+        "both_right": 0,
+        "both_wrong": 6,
+        "n": 7,
+        "right_to_wrong": 0,
+        "wrong_to_right": 1
+      },
+      "c32 (\\ast -> *)": {
+        "both_right": 0,
+        "both_wrong": 1,
+        "n": 2,
+        "right_to_wrong": 0,
+        "wrong_to_right": 1
+      },
+      "c36 (\\star -> *)": {
+        "both_right": 0,
+        "both_wrong": 1,
+        "n": 1,
+        "right_to_wrong": 0,
+        "wrong_to_right": 0
+      }
+    },
+    "top_stock_pairs_in_fixed_crops": [
+      [
+        " -> \\right",
+        57,
+        119
+      ],
+      [
+        " -> \\left",
+        56,
+        113
+      ],
+      [
+        " -> &",
+        29,
+        92
+      ],
+      [
+        "\\left -> ",
+        23,
+        49
+      ],
+      [
+        "\\right -> ",
+        21,
+        46
+      ],
+      [
+        " -> \\begin { a l i g n e d }",
+        20,
+        48
+      ],
+      [
+        "} -> ",
+        17,
+        68
+      ],
+      [
+        "{ -> ",
+        13,
+        46
+      ],
+      [
+        " -> . \\end { a l i g n e d }",
+        11,
+        25
+      ],
+      [
+        "\\mathrm -> \\text",
+        8,
+        16
+      ],
+      [
+        "\\ -> ",
+        7,
+        12
+      ],
+      [
+        "\\dots -> \\ldots",
+        7,
+        16
+      ],
+      [
+        " -> }",
+        7,
+        19
+      ],
+      [
+        "\\ -> . \\end { a l i g n e d }",
+        6,
+        16
+      ],
+      [
+        " -> \\begin { a l i g n e d } &",
+        6,
+        11
+      ]
+    ],
+    "totals": {
+      "both_right": 345,
+      "both_wrong": 305,
+      "right_to_wrong": 20,
+      "wrong_to_right": 256
+    },
+    "tuned_right": 601,
+    "wrong_to_right_ids_by_class": {
+      "decoration": [
+        "1147fa2bbc8a2bb9",
+        "1467cdb612797541",
+        "1b2db87528f3d1cf",
+        "1cc8cc4cdafdf8b0",
+        "201bbf0b8e1f4b53",
+        "20cf3cc40007a404",
+        "20f85e53c9639e61",
+        "2606d9113c0ef38d",
+        "3018253ae4249d79",
+        "37a8900764abd11c",
+        "420483bc9fdfbd41",
+        "4b8a8daedb8b9ac5",
+        "53953087aae7467f",
+        "5818dfdd1437ea7a",
+        "644f5c4a160c197c",
+        "66274bda525108f4",
+        "68de480dfbc616bc",
+        "6d7ac0799abfaac1",
+        "73f80b8a3b05d16e",
+        "77bd97651708a68f",
+        "7c1b2f3c89740461",
+        "7ec1effa17b4f5eb",
+        "894a49b89c2941c0",
+        "8dd1d6628c3de05a",
+        "946ec9ff9372ddab",
+        "9486384525447ab3",
+        "a4bb822b4269affe",
+        "aba7cc86b917795f",
+        "ac51a7bfbd612a7a",
+        "b0117445b769a2ab",
+        "b2069efc48273f97",
+        "b33e038a453fbdc3",
+        "b822b5612ab84fcd",
+        "bd1241ded16dabe5",
+        "bee5897828a6bf51",
+        "cbea27c00ca692e9",
+        "e44463525dd7111c",
+        "e8f50caf618b595a"
+      ],
+      "dropped_prime": [
+        "57671edf759ee5e9",
+        "787639e234d34a19"
+      ],
+      "other": [
+        "0151029d2c448d81",
+        "061901e09ce4fb6b",
+        "06ef491e417b9983",
+        "08d66010f891fb08",
+        "0ad813ffa908f4fe",
+        "0d364ae0dc223d2f",
+        "0d4543f1c048deae",
+        "0e0a4335f56301b1",
+        "0e94415c72a487b8",
+        "0ed472774bd77083",
+        "0f2fd6fe65303e0f",
+        "102a5800fa22b4a8",
+        "10ee449e6a425b4d",
+        "12847105c6db1010",
+        "1325df433f072bec",
+        "1702115f64639054",
+        "17558f13d92db24e",
+        "17a919eb244d8fef",
+        "1ba93ee8f3b0f014",
+        "1d3fc779b0fd8af9",
+        "1e651e9796de6799",
+        "1e9f816134ee3ea4",
+        "21f4b74c30b0abfb",
+        "2521e58173dafa24",
+        "26760720e4bbf7b6",
+        "271dd84e49e5e9bd",
+        "2864c28f8342f76a",
+        "28e41f1b0473b67e",
+        "28e42ffc8b271236",
+        "2950785853e242c1",
+        "2acdfd5fc0a7acd4",
+        "2b6bedcbbc1d440f",
+        "2bf329d65ea47b71",
+        "2cdfa2e24f4c7922",
+        "2dbfeb7c2aa108e5",
+        "2f86c8c317923917",
+        "31c63321b31e0855",
+        "31e2831ebd43e65e",
+        "3203b4df71224392",
+        "3276f44f144ce2ba",
+        "32c223485c84354c",
+        "3305e77c311ccac4",
+        "33719d8d87ac5d79",
+        "34f8aa474b93a52f",
+        "3b3e1227a2703083",
+        "3ced847554a656f5",
+        "3dc6e78edba75e1d",
+        "3e083f9a87e9d634",
+        "41525fa5f20f8b54",
+        "41714627da5d6234",
+        "4193daabbf61f49b",
+        "42291dcc43693c0b",
+        "42312a69aa0d8a46",
+        "426c3866fcd85d0b",
+        "428986944a4f3b37",
+        "435b14d40db56000",
+        "446c3fcf45554050",
+        "45b2a9f22a8a7799",
+        "48e9d6152e6c1676",
+        "4aaf1ccb85e3a351",
+        "4b7897c529dc8294",
+        "4bb52d3a5b8f2c2e",
+        "4d4b5e242a3bcf8a",
+        "4d4cd098591e4cd7",
+        "4e8017f791480136",
+        "4f56925b141891dc",
+        "506e43678f6e9177",
+        "50c156efecf76f39",
+        "50e20ccd28eb5cd2",
+        "550e0a8af27906a5",
+        "55b45029a91a5a75",
+        "591300c4bf272729",
+        "593c0a111890f9cc",
+        "5a30a34830e3317b",
+        "5a4bbf6ba79ad3cd",
+        "5a650e5602ddf8db",
+        "5c231db2986e655e",
+        "5cf88ebbd3aed207",
+        "5d118782baf5099a",
+        "62a6ecd884caa1a1",
+        "62e2ce0b5c2436ce",
+        "63a02d5983c71bf1",
+        "640c23fcbaecb3ef",
+        "649d19b1861989a4",
+        "64d3cf1ac1098e0e",
+        "6996c2f4b921e264",
+        "69aaebc33ff79896",
+        "69ad8836939c1ed8",
+        "6a5b7642baa3a039",
+        "70ef9b8726fcacf3",
+        "716b4cdf352b56f7",
+        "71fbc2a7b0542774",
+        "720e26ac3e1c1ae8",
+        "737c3d67e7d954c3",
+        "75570f7f5b289d93",
+        "755cdb1de0b47b10",
+        "759fd95dd28421ad",
+        "77b376ef14ddfb65",
+        "78c972c4429fd227",
+        "792ee7451578ba35",
+        "79dae069ca24114b",
+        "7b2ebbbf3d836326",
+        "7ba44c628c9631e1",
+        "7c5ee5868fe1cf18",
+        "7cb4a7a3502cada4",
+        "7cc351c72fd6d6e7",
+        "7cf1a089ad57913d",
+        "7dc9dac7c579487d",
+        "7e878b5510d8d401",
+        "82b05aff9390499d",
+        "837614434811821f",
+        "840debcc37737ad8",
+        "8459f4c76c888cc5",
+        "84f838f0ce1c8eee",
+        "8621a2a92126905c",
+        "865591179e58f2b4",
+        "867e7708fdfc4e61",
+        "88a92abf500e0df2",
+        "8b1d703fe1872a40",
+        "8d8cdfd964a796cf",
+        "901a19189b7dc807",
+        "9031f580804dfc25",
+        "9330707427a19f3f",
+        "93fdb98efd1de652",
+        "94693ef62be5e2ae",
+        "95f5c10399d28886",
+        "967baa65f024025d",
+        "974f308274e63fd8",
+        "988bfb0912546045",
+        "98ac3ca818eb70ba",
+        "992c36614b12b454",
+        "993f9f8a3ced8216",
+        "9a04b599dc4df0de",
+        "9d16905d63580130",
+        "9fcc0d27f3bc556a",
+        "a0b301399743c2b8",
+        "a1d5a45cb6f9417f",
+        "a1fa594786b88375",
+        "a5b57c500b7f541a",
+        "a7e2353ce0962e5c",
+        "a9a3a27bc502241f",
+        "ad6220011ce47efe",
+        "adc40847d21f87ee",
+        "afcceb54666cd7dd",
+        "b14ab16432e9b909",
+        "b1517b4184b62853",
+        "b1e275f6111e9e09",
+        "b6dd0caf2ccc1b5e",
+        "b713ea5f4308e5ab",
+        "b81c795cad3052a2",
+        "bde8a1241c6348a0",
+        "bf26c5f9191fe93b",
+        "bf9f57a6106d87fc",
+        "c0f124b5ce5bc051",
+        "c141674105a3523d",
+        "c154a29a2d200e5f",
+        "c158de6595c4a527",
+        "c32e1e1a8d89a51f",
+        "c3895de968cd5c12",
+        "c47f178e4e40e103",
+        "c4ef5dea7c661c93",
+        "c5e5d8b48a3a566b",
+        "c61078017112ccca",
+        "c62d22f616a68116",
+        "c6daeb36da1817b8",
+        "c801c0d33ba17979",
+        "c8910c6655e2ae38",
+        "c89dbfcc6cd0005d",
+        "cb034725d5a36edf",
+        "cbd20e53b2270978",
+        "cbf3169cbd13e541",
+        "cc15197d776c7601",
+        "cf65516bfabb279b",
+        "cfa5174a7b8b094e",
+        "d123da8bcf362b82",
+        "d3183672a7027b97",
+        "d347c4e5201493fc",
+        "d7c168465a83fddc",
+        "d9f8e81abd6eea34",
+        "da8cd03e07589e5e",
+        "dabd1181d5f62a05",
+        "dae734cb34b7d53e",
+        "dd47a30f73ee13cd",
+        "dd9cd178d7d2b2c2",
+        "dfe47486e65d8d7c",
+        "e12bc5c0cf8b11ba",
+        "e1f767be27af04b4",
+        "e21a8a5733fc7f2b",
+        "e46c99d9e8609695",
+        "e7158559d674b068",
+        "eb2c9f95aaaebd8b",
+        "ec7f8c3e5624ded9",
+        "ee3a4eb3afc4c81f",
+        "ef333fd55855b78c",
+        "ef551b951787df2b",
+        "f04c590a8cdcfa10",
+        "f08626a1f1c992ed",
+        "f0dfea8057dfebae",
+        "f36b38b074d7e873",
+        "f3b6d3c896e49a9b",
+        "f4a1265bcb98df2b",
+        "f4f21e364eacd13f",
+        "f56d81c96a045110",
+        "f82e8c8d74c7bbaa",
+        "f86f2d3c29dab606",
+        "f934e650908a8359",
+        "fa0d9ef01147447c",
+        "fa6ce47505ca0dfd",
+        "fdcb0cf49bf3d365",
+        "ff4d3554dfa7b94d"
+      ],
+      "symbol_swap": [
+        "1052371733b5c7a2",
+        "2e87494103c351d6",
+        "5ce03ed5cfd80b6f",
+        "8b3cf67d552a5ea6",
+        "8c27edb9d846c4c6",
+        "9566161a44345105"
+      ]
+    }
+  },
+  "rarity_from_train_labels": {
+    "decoration": 1783,
+    "dropped_prime": 162,
+    "greek_latin": 115,
+    "i_1": 21,
+    "prime_l": 10
+  },
+  "run_id": "p4-full-1",
+  "sources": {
+    "hf_stock": "data/train/dev_eval/base.score/records.jsonl",
+    "hf_tuned": "data/train/runs/p4-full-1/dev_eval/step-875.score/records.jsonl",
+    "ollama_stock": "data/runs/p4-full-1/dev_stock.score/records.jsonl",
+    "ollama_tuned": "data/runs/p4-full-1/dev_cand.score/records.jsonl"
+  }
+}

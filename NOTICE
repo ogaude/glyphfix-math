@@ -1,0 +1,12 @@
+glyphfix-math
+Copyright 2026 Olivier Gaude
+
+The code in this repository is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The repository includes data derived from arXiv papers licensed under CC BY 4.0 (or CC BY 3.0) and CC0 1.0. The
+papers, their authors and their licenses are listed in ATTRIBUTION.md and ATTRIBUTION.jsonl. Those files keep their
+own licenses and are not covered by the Apache License. The labels and annotations made for this project are
+licensed under CC BY 4.0.
+
+This work fine-tunes and evaluates LightOnOCR-3-4B by LightOn, which is released under the Apache License 2.0.
+It is not affiliated with, endorsed by, or sponsored by LightOn.

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 480" width="760" height="480" role="img" aria-labelledby="t d">
+<title id="t">Render-identical failures by bucket</title>
+<desc id="d">content: 464 base, 304 this model; layout / sizing: 441 base, 236 this model; glyph classes: 281 base, 153 this model; spacing: 249 base, 135 this model; alignment wrapper: 73 base, 56 this model; same text, render differs: 35 base, 51 this model</desc>
+<style>
+svg{font-family:system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}
+.bg{fill:#fcfcfb} .ink{fill:#0b0b0b} .sub{fill:#52514e} .grid{stroke:#d9d8d4;stroke-width:1}
+.base{fill:#eb6834} .tuned{fill:#2a78d6} .box{fill:#f1f0ec;stroke:#d9d8d4} .arrow{stroke:#52514e;fill:none;stroke-width:2}
+.good{fill:#2a78d6} .bad{fill:#eb6834} .neutral{fill:#b9b8b2} .mid{fill:#8f8e88}
+@media (prefers-color-scheme:dark){
+.bg{fill:#1a1a19} .ink{fill:#f0efec} .sub{fill:#c3c2b7} .grid{stroke:#3a3a38}
+.base{fill:#d95926} .tuned{fill:#3987e5} .box{fill:#262625;stroke:#3a3a38} .arrow{stroke:#c3c2b7}
+.good{fill:#3987e5} .bad{fill:#d95926} .neutral{fill:#6b6a66} .mid{fill:#8f8e88}
+}
+</style>
+<rect class="bg" width="760" height="480" rx="8"/>
+<text x="24" y="34" class="ink" font-size="17" text-anchor="start" font-weight="600">Where the remaining errors are</text>
+<text x="24" y="56" class="sub" font-size="13" text-anchor="start" font-weight="400">Render-identical failures on the benchmark, by bucket; fewer is better</text>
+<rect class="base" x="24" y="74" width="12" height="12" rx="2"/>
+<text x="42" y="84" class="sub" font-size="13" text-anchor="start" font-weight="400">Base model</text>
+<rect class="tuned" x="154" y="74" width="12" height="12" rx="2"/>
+<text x="172" y="84" class="sub" font-size="13" text-anchor="start" font-weight="400">This model</text>
+<line class="grid" x1="230" y1="98" x2="230" y2="446"/>
+<text x="736" y="104" class="sub" font-size="12" text-anchor="end" font-weight="400">Change</text>
+<text x="220" y="136" class="ink" font-size="13" text-anchor="end" font-weight="400">content</text>
+<rect class="base" x="230" y="112" width="420.0" height="18" rx="3"/>
+<text x="656.0" y="126" class="ink" font-size="12" text-anchor="start" font-weight="600">464</text>
+<rect class="tuned" x="230" y="132" width="275.2" height="18" rx="3"/>
+<text x="511.17241379310343" y="146" class="ink" font-size="12" text-anchor="start" font-weight="600">304</text>
+<text x="736" y="136" class="ink" font-size="13" text-anchor="end" font-weight="600">−34%</text>
+<text x="220" y="190" class="ink" font-size="13" text-anchor="end" font-weight="400">layout / sizing</text>
+<rect class="base" x="230" y="166" width="399.2" height="18" rx="3"/>
+<text x="635.1810344827586" y="180" class="ink" font-size="12" text-anchor="start" font-weight="600">441</text>
+<rect class="tuned" x="230" y="186" width="213.6" height="18" rx="3"/>
+<text x="449.62068965517244" y="200" class="ink" font-size="12" text-anchor="start" font-weight="600">236</text>
+<text x="736" y="190" class="ink" font-size="13" text-anchor="end" font-weight="600">−46%</text>
+<text x="220" y="244" class="ink" font-size="13" text-anchor="end" font-weight="400">glyph classes</text>
+<rect class="base" x="230" y="220" width="254.4" height="18" rx="3"/>
+<text x="490.3534482758621" y="234" class="ink" font-size="12" text-anchor="start" font-weight="600">281</text>
+<rect class="tuned" x="230" y="240" width="138.5" height="18" rx="3"/>
+<text x="374.4913793103448" y="254" class="ink" font-size="12" text-anchor="start" font-weight="600">153</text>
+<text x="736" y="244" class="ink" font-size="13" text-anchor="end" font-weight="600">−46%</text>
+<text x="220" y="298" class="ink" font-size="13" text-anchor="end" font-weight="400">spacing</text>
+<rect class="base" x="230" y="274" width="225.4" height="18" rx="3"/>
+<text x="461.3879310344828" y="288" class="ink" font-size="12" text-anchor="start" font-weight="600">249</text>
+<rect class="tuned" x="230" y="294" width="122.2" height="18" rx="3"/>
+<text x="358.19827586206895" y="308" class="ink" font-size="12" text-anchor="start" font-weight="600">135</text>
+<text x="736" y="298" class="ink" font-size="13" text-anchor="end" font-weight="600">−46%</text>
+<text x="220" y="352" class="ink" font-size="13" text-anchor="end" font-weight="400">alignment wrapper</text>
+<rect class="base" x="230" y="328" width="66.1" height="18" rx="3"/>
+<text x="302.07758620689657" y="342" class="ink" font-size="12" text-anchor="start" font-weight="600">73</text>
+<rect class="tuned" x="230" y="348" width="50.7" height="18" rx="3"/>
+<text x="286.6896551724138" y="362" class="ink" font-size="12" text-anchor="start" font-weight="600">56</text>
+<text x="736" y="352" class="ink" font-size="13" text-anchor="end" font-weight="600">−23%</text>
+<text x="220" y="406" class="ink" font-size="13" text-anchor="end" font-weight="400">same text, render differs</text>
+<rect class="base" x="230" y="382" width="31.7" height="18" rx="3"/>
+<text x="267.6810344827586" y="396" class="ink" font-size="12" text-anchor="start" font-weight="600">35</text>
+<rect class="tuned" x="230" y="402" width="46.2" height="18" rx="3"/>
+<text x="282.16379310344826" y="416" class="ink" font-size="12" text-anchor="start" font-weight="600">51</text>
+<text x="736" y="406" class="ink" font-size="13" text-anchor="end" font-weight="600">+46%</text>
+<text x="24" y="466" class="sub" font-size="12" text-anchor="start" font-weight="400">Total: 1,543 failures for the base model, 935 for this model. Buckets are a pattern heuristic, for reporting only.</text>
+</svg>

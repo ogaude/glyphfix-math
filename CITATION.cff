@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this model, dataset, benchmark or scorer, please cite it as below."
+title: "glyphfix-math: a LoRA for mathematical notation in LightOnOCR-3, with its dataset and benchmark"
+type: software
+authors:
+  - name: "Olivier Gaude"
+license: Apache-2.0
+repository-code: "https://github.com/ogaude/glyphfix-math"
+url: "https://github.com/ogaude/glyphfix-math"
+date-released: "2026-10-30"
+references:
+  - type: dataset
+    title: "glyphfix-math-equations: equation crops for glyph-level math OCR"
+    authors:
+      - name: "Olivier Gaude"
+    year: 2026
+    url: "https://huggingface.co/datasets/ogaude/glyphfix-math-equations"
+  - type: software
+    title: "glyphfix-math-lora: a LoRA for mathematical notation in LightOnOCR-3"
+    authors:
+      - name: "Olivier Gaude"
+    year: 2026
+    url: "https://huggingface.co/ogaude/glyphfix-math-lora"

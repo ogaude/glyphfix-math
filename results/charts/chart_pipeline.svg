@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 224" width="760" height="224" role="img" aria-labelledby="t d">
+<title id="t">Pipeline</title>
+<desc id="d">Papers, equation crops, mining the base model's errors, training a LoRA, evaluating on a frozen benchmark.</desc>
+<style>
+svg{font-family:system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}
+.bg{fill:#fcfcfb} .ink{fill:#0b0b0b} .sub{fill:#52514e} .grid{stroke:#d9d8d4;stroke-width:1}
+.base{fill:#eb6834} .tuned{fill:#2a78d6} .box{fill:#f1f0ec;stroke:#d9d8d4} .arrow{stroke:#52514e;fill:none;stroke-width:2}
+.good{fill:#2a78d6} .bad{fill:#eb6834} .neutral{fill:#b9b8b2} .mid{fill:#8f8e88}
+@media (prefers-color-scheme:dark){
+.bg{fill:#1a1a19} .ink{fill:#f0efec} .sub{fill:#c3c2b7} .grid{stroke:#3a3a38}
+.base{fill:#d95926} .tuned{fill:#3987e5} .box{fill:#262625;stroke:#3a3a38} .arrow{stroke:#c3c2b7}
+.good{fill:#3987e5} .bad{fill:#d95926} .neutral{fill:#6b6a66} .mid{fill:#8f8e88}
+}
+</style>
+<rect class="bg" width="760" height="224" rx="8"/>
+<text x="24" y="34" class="ink" font-size="17" text-anchor="start" font-weight="600">How the dataset, the LoRA and the evaluation fit together</text>
+<text x="24" y="56" class="sub" font-size="13" text-anchor="start" font-weight="400">The benchmark papers are set aside and frozen before any mining or training</text>
+<rect class="box" x="24.0" y="80" width="128.0" height="122" rx="6"/>
+<text x="88.0" y="106" class="ink" font-size="14" text-anchor="middle" font-weight="600">Papers</text>
+<text x="88.0" y="128" class="sub" font-size="11" text-anchor="middle" font-weight="400">arXiv papers</text>
+<text x="88.0" y="143" class="sub" font-size="11" text-anchor="middle" font-weight="400">under CC BY or</text>
+<text x="88.0" y="158" class="sub" font-size="11" text-anchor="middle" font-weight="400">CC0, with</text>
+<text x="88.0" y="173" class="sub" font-size="11" text-anchor="middle" font-weight="400">attribution</text>
+<path class="arrow" d="M154.0 136 h12 m-6 -5 l6 5 l-6 5"/>
+<rect class="box" x="170.0" y="80" width="128.0" height="122" rx="6"/>
+<text x="234.0" y="106" class="ink" font-size="14" text-anchor="middle" font-weight="600">Equation crops</text>
+<text x="234.0" y="128" class="sub" font-size="11" text-anchor="middle" font-weight="400">Display equations</text>
+<text x="234.0" y="143" class="sub" font-size="11" text-anchor="middle" font-weight="400">rendered from the</text>
+<text x="234.0" y="158" class="sub" font-size="11" text-anchor="middle" font-weight="400">LaTeX source;</text>
+<text x="234.0" y="173" class="sub" font-size="11" text-anchor="middle" font-weight="400">split by paper</text>
+<path class="arrow" d="M300.0 136 h12 m-6 -5 l6 5 l-6 5"/>
+<rect class="box" x="316.0" y="80" width="128.0" height="122" rx="6"/>
+<text x="380.0" y="106" class="ink" font-size="14" text-anchor="middle" font-weight="600">Mine errors</text>
+<text x="380.0" y="128" class="sub" font-size="11" text-anchor="middle" font-weight="400">Base model</text>
+<text x="380.0" y="143" class="sub" font-size="11" text-anchor="middle" font-weight="400">transcribes the</text>
+<text x="380.0" y="158" class="sub" font-size="11" text-anchor="middle" font-weight="400">training split;</text>
+<text x="380.0" y="173" class="sub" font-size="11" text-anchor="middle" font-weight="400">compare rendered</text>
+<text x="380.0" y="188" class="sub" font-size="11" text-anchor="middle" font-weight="400">bitmaps</text>
+<path class="arrow" d="M446.0 136 h12 m-6 -5 l6 5 l-6 5"/>
+<rect class="box" x="462.0" y="80" width="128.0" height="122" rx="6"/>
+<text x="526.0" y="106" class="ink" font-size="14" text-anchor="middle" font-weight="600">Train a LoRA</text>
+<text x="526.0" y="128" class="sub" font-size="11" text-anchor="middle" font-weight="400">Language model</text>
+<text x="526.0" y="143" class="sub" font-size="11" text-anchor="middle" font-weight="400">only, on the</text>
+<text x="526.0" y="158" class="sub" font-size="11" text-anchor="middle" font-weight="400">training split</text>
+<path class="arrow" d="M592.0 136 h12 m-6 -5 l6 5 l-6 5"/>
+<rect class="box" x="608.0" y="80" width="128.0" height="122" rx="6"/>
+<text x="672.0" y="106" class="ink" font-size="14" text-anchor="middle" font-weight="600">Evaluate</text>
+<text x="672.0" y="128" class="sub" font-size="11" text-anchor="middle" font-weight="400">Frozen held-out</text>
+<text x="672.0" y="143" class="sub" font-size="11" text-anchor="middle" font-weight="400">benchmark, same</text>
+<text x="672.0" y="158" class="sub" font-size="11" text-anchor="middle" font-weight="400">render</text>
+<text x="672.0" y="173" class="sub" font-size="11" text-anchor="middle" font-weight="400">comparison, both</text>
+<text x="672.0" y="188" class="sub" font-size="11" text-anchor="middle" font-weight="400">models</text>
+</svg>

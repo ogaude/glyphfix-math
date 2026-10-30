@@ -1,0 +1,15 @@
+{
+  "commit_map": {
+    "0a3aff0e66504ff2b8d69f40c61cda7221c28c9d": "151d80ec389860a887c092b0eaf5120b9c6b4231",
+    "83e897688a87fc2848b8ebd772ca595677500a29": "f310c6f0653baa7bb91fe49ef6bad283a9e705a9",
+    "8bff9421db6ab8f95e69e527b7775f1356e7b25c": "2f193c856823361b78c6fe6d9de06aae18d582b9",
+    "d477b10090ca93fbb36b4cdfc94e927a116adbfb": "3d1915a3a132afdf76ef49a54a62d453bec877f3"
+  },
+  "n_public_commits": 243,
+  "n_source_commits": 493,
+  "public_branch": "main",
+  "public_paths_sha256": "8a235af6133cf9fad4e499952ede1dd66a847d7f3a1aa7ab432ad1abc26addc6",
+  "schema": 1,
+  "source_branch": "master",
+  "source_head": "4bbbdfa888196b8b8f51355fc7ee2dbf173b6ba7"
+}

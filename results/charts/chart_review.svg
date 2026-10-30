@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 324" width="760" height="324" role="img" aria-labelledby="t d">
+<title id="t">Hand review of the flipped crops</title>
+<desc id="d">Fixed: real 139, borderline 0, style 533; Broken: real 21, borderline 0, style 43</desc>
+<style>
+svg{font-family:system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}
+.bg{fill:#fcfcfb} .ink{fill:#0b0b0b} .sub{fill:#52514e} .grid{stroke:#d9d8d4;stroke-width:1}
+.base{fill:#eb6834} .tuned{fill:#2a78d6} .box{fill:#f1f0ec;stroke:#d9d8d4} .arrow{stroke:#52514e;fill:none;stroke-width:2}
+.good{fill:#2a78d6} .bad{fill:#eb6834} .neutral{fill:#b9b8b2} .mid{fill:#8f8e88}
+@media (prefers-color-scheme:dark){
+.bg{fill:#1a1a19} .ink{fill:#f0efec} .sub{fill:#c3c2b7} .grid{stroke:#3a3a38}
+.base{fill:#d95926} .tuned{fill:#3987e5} .box{fill:#262625;stroke:#3a3a38} .arrow{stroke:#c3c2b7}
+.good{fill:#3987e5} .bad{fill:#d95926} .neutral{fill:#6b6a66} .mid{fill:#8f8e88}
+}
+</style>
+<rect class="bg" width="760" height="324" rx="8"/>
+<text x="24" y="34" class="ink" font-size="17" text-anchor="start" font-weight="600">Hand review: what changed in the crops that flipped</text>
+<text x="24" y="56" class="sub" font-size="13" text-anchor="start" font-weight="400">Approximate: our own reading under one written rule, not part of the scored result</text>
+<text x="24" y="92" class="ink" font-size="14" text-anchor="start" font-weight="600">Fixed: 672 crops</text>
+<text x="214" y="92" class="sub" font-size="12" text-anchor="start" font-weight="400">base model wrong, this model right</text>
+<rect class="good" x="24.0" y="102" width="145.3" height="34" rx="3"/>
+<text x="30.0" y="124" class="ink" font-size="13" text-anchor="start" font-weight="600">139 (21%)</text>
+<rect class="neutral" x="171.3" y="102" width="562.7" height="34" rx="3"/>
+<text x="177.27380952380952" y="124" class="ink" font-size="13" text-anchor="start" font-weight="600">533 (79%)</text>
+<text x="24" y="170" class="ink" font-size="14" text-anchor="start" font-weight="600">Broken: 64 crops</text>
+<text x="214" y="170" class="sub" font-size="12" text-anchor="start" font-weight="400">base model right, this model wrong</text>
+<rect class="good" x="24.0" y="180" width="231.6" height="34" rx="3"/>
+<text x="30.0" y="202" class="ink" font-size="13" text-anchor="start" font-weight="600">21 (33%)</text>
+<rect class="neutral" x="257.6" y="180" width="476.4" height="34" rx="3"/>
+<text x="263.625" y="202" class="ink" font-size="13" text-anchor="start" font-weight="600">43 (67%)</text>
+<rect class="good" x="24" y="230" width="12" height="12" rx="2"/>
+<text x="44" y="240" class="sub" font-size="13" text-anchor="start" font-weight="400">Changes the mathematics or a glyph</text>
+<rect class="neutral" x="24" y="252" width="12" height="12" rx="2"/>
+<text x="44" y="262" class="sub" font-size="13" text-anchor="start" font-weight="400">Same formula, spelled differently</text>
+<text x="24" y="298" class="ink" font-size="13" text-anchor="start" font-weight="600">Real fixes per real break: 6.6.</text>
+</svg>

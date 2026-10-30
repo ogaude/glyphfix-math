@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 252" width="760" height="252" role="img" aria-labelledby="t d">
+<title id="t">Render-identical rate, base model against this model</title>
+<desc id="d">Render-identical rate on 2688 crops: base model 42.6%, this model 65.2%, difference +22.6 points.</desc>
+<style>
+svg{font-family:system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}
+.bg{fill:#fcfcfb} .ink{fill:#0b0b0b} .sub{fill:#52514e} .grid{stroke:#d9d8d4;stroke-width:1}
+.base{fill:#eb6834} .tuned{fill:#2a78d6} .box{fill:#f1f0ec;stroke:#d9d8d4} .arrow{stroke:#52514e;fill:none;stroke-width:2}
+.good{fill:#2a78d6} .bad{fill:#eb6834} .neutral{fill:#b9b8b2} .mid{fill:#8f8e88}
+@media (prefers-color-scheme:dark){
+.bg{fill:#1a1a19} .ink{fill:#f0efec} .sub{fill:#c3c2b7} .grid{stroke:#3a3a38}
+.base{fill:#d95926} .tuned{fill:#3987e5} .box{fill:#262625;stroke:#3a3a38} .arrow{stroke:#c3c2b7}
+.good{fill:#3987e5} .bad{fill:#d95926} .neutral{fill:#6b6a66} .mid{fill:#8f8e88}
+}
+</style>
+<rect class="bg" width="760" height="252" rx="8"/>
+<text x="24" y="34" class="ink" font-size="17" text-anchor="start" font-weight="600">Render-identical rate on the held-out benchmark</text>
+<text x="24" y="56" class="sub" font-size="13" text-anchor="start" font-weight="400">2,688 equation crops from 150 papers; higher is better</text>
+<rect class="base" x="24" y="74" width="12" height="12" rx="2"/>
+<text x="42" y="84" class="sub" font-size="13" text-anchor="start" font-weight="400">Base model</text>
+<rect class="tuned" x="154" y="74" width="12" height="12" rx="2"/>
+<text x="172" y="84" class="sub" font-size="13" text-anchor="start" font-weight="400">This model</text>
+<line class="grid" x1="150.0" y1="100" x2="150.0" y2="190"/>
+<text x="150.0" y="208" class="sub" font-size="12" text-anchor="middle" font-weight="400">0%</text>
+<line class="grid" x1="287.5" y1="100" x2="287.5" y2="190"/>
+<text x="287.5" y="208" class="sub" font-size="12" text-anchor="middle" font-weight="400">25%</text>
+<line class="grid" x1="425.0" y1="100" x2="425.0" y2="190"/>
+<text x="425.0" y="208" class="sub" font-size="12" text-anchor="middle" font-weight="400">50%</text>
+<line class="grid" x1="562.5" y1="100" x2="562.5" y2="190"/>
+<text x="562.5" y="208" class="sub" font-size="12" text-anchor="middle" font-weight="400">75%</text>
+<line class="grid" x1="700.0" y1="100" x2="700.0" y2="190"/>
+<text x="700.0" y="208" class="sub" font-size="12" text-anchor="middle" font-weight="400">100%</text>
+<text x="140" y="132" class="ink" font-size="13" text-anchor="end" font-weight="400">Base model</text>
+<rect class="base" x="150" y="110" width="234.3" height="34" rx="3"/>
+<text x="392.28199404761904" y="132" class="ink" font-size="14" text-anchor="start" font-weight="600">42.6%</text>
+<text x="140" y="176" class="ink" font-size="13" text-anchor="end" font-weight="400">This model</text>
+<rect class="tuned" x="150" y="154" width="358.7" height="34" rx="3"/>
+<text x="516.686755952381" y="176" class="ink" font-size="14" text-anchor="start" font-weight="600">65.2%</text>
+<text x="24" y="238" class="sub" font-size="13" text-anchor="start" font-weight="400">Difference +22.6 points, paired paper-level 95% CI +19.8 to +25.5</text>
+</svg>
